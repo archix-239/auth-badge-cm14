@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { PARTICIPANTS, getResultConfig, getCategoryColor } from '../../data/mockData'
 import { Html5Qrcode } from 'html5-qrcode'
 import { verifyBadge } from '../../utils/badgeCrypto'
+import { playScanFeedback } from '../../utils/scanFeedback'
 
 export default function Scanner() {
   const { user } = useAuth()
@@ -96,6 +97,7 @@ export default function Scanner() {
         else resultat = 'autorisé'
       }
       const scanResult = { id: `S-${Date.now()}`, participant, resultat, zone: currentZone, timestamp: new Date(), agentId: user?.id }
+      playScanFeedback(resultat)
       setResult(scanResult)
       setScanLog(prev => [scanResult, ...prev].slice(0, 20))
       setPhase('result')
