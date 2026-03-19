@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const { login, locked } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [id, setId] = useState('')
   const [password, setPassword] = useState('')
@@ -36,15 +38,15 @@ export default function Login() {
           <div className="bg-primary/10 text-primary p-3 rounded-full mb-4">
             <span className="material-symbols-outlined text-4xl">shield_lock</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Terminal Agent CM14</h1>
-          <p className="text-slate-500 text-sm mt-1">Accès Restreint — Niveau d'Accréditation 4</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('login.title')}</h1>
+          <p className="text-slate-500 text-sm mt-1">{t('login.subtitle')}</p>
         </div>
 
         {/* Form */}
         <div className="p-8 space-y-6">
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-slate-900">Connexion Sécurisée</h2>
-            <p className="text-sm text-slate-500 mt-1">Entrez vos identifiants pour accéder au terminal CM14.</p>
+            <h2 className="text-lg font-semibold text-slate-900">{t('login.section')}</h2>
+            <p className="text-sm text-slate-500 mt-1">{t('login.section_sub')}</p>
           </div>
 
           {error && (
@@ -57,7 +59,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Agent ID */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">Identifiant Agent</label>
+              <label className="block text-sm font-medium text-slate-700">{t('login.field.id')}</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                   <span className="material-symbols-outlined text-lg">badge</span>
@@ -66,7 +68,7 @@ export default function Login() {
                   type="text"
                   value={id}
                   onChange={e => setId(e.target.value)}
-                  placeholder="Ex: AG-8824 ou ADMIN-001"
+                  placeholder={t('login.field.id_placeholder')}
                   required
                   disabled={locked}
                   className="block w-full pl-10 pr-3 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm disabled:opacity-50"
@@ -76,7 +78,7 @@ export default function Login() {
 
             {/* Password */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">Mot de passe fort</label>
+              <label className="block text-sm font-medium text-slate-700">{t('login.field.password')}</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                   <span className="material-symbols-outlined text-lg">key</span>
@@ -104,11 +106,11 @@ export default function Login() {
             <div className="pt-2">
               <div className="relative flex py-3 items-center">
                 <div className="flex-grow border-t border-slate-200"></div>
-                <span className="flex-shrink mx-3 text-xs text-slate-400 font-medium uppercase tracking-wider">Authentification 2FA</span>
+                <span className="flex-shrink mx-3 text-xs text-slate-400 font-medium uppercase tracking-wider">{t('login.field.otp_divider')}</span>
                 <div className="flex-grow border-t border-slate-200"></div>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">Code OTP (6 chiffres)</label>
+                <label className="block text-sm font-medium text-slate-700">{t('login.field.otp')}</label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                     <span className="material-symbols-outlined text-lg">pin</span>
@@ -117,14 +119,14 @@ export default function Login() {
                     type="text"
                     value={otp}
                     onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="123456"
+                    placeholder={t('login.field.otp_placeholder')}
                     maxLength={6}
                     required
                     disabled={locked}
                     className="block w-full pl-10 pr-3 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm tracking-[0.4em] font-mono disabled:opacity-50"
                   />
                 </div>
-                <p className="text-xs text-slate-400">Code généré par votre application d'authentification. En mode démo : entrez 6 chiffres quelconques.</p>
+                <p className="text-xs text-slate-400">{t('login.field.otp_hint')}</p>
               </div>
             </div>
 
@@ -137,17 +139,17 @@ export default function Login() {
               {loading ? (
                 <>
                   <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
-                  Vérification en cours...
+                  {t('login.btn.loading')}
                 </>
               ) : locked ? (
                 <>
                   <span className="material-symbols-outlined text-lg">lock</span>
-                  Compte bloqué
+                  {t('login.btn.locked')}
                 </>
               ) : (
                 <>
                   <span className="material-symbols-outlined text-lg">login</span>
-                  Accéder au terminal
+                  {t('login.btn.submit')}
                 </>
               )}
             </button>
@@ -155,11 +157,11 @@ export default function Login() {
 
           {/* Demo hint */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-            <p className="text-xs text-amber-700 font-medium mb-1">Mode démonstration</p>
+            <p className="text-xs text-amber-700 font-medium mb-1">{t('login.demo.title')}</p>
             <p className="text-xs text-amber-600">
               Agent : <span className="font-mono font-bold">AG-8824</span> / <span className="font-mono font-bold">Agent@CM14!</span><br />
               Admin : <span className="font-mono font-bold">ADMIN-001</span> / <span className="font-mono font-bold">Admin@CM14!</span><br />
-              OTP : n'importe quels 6 chiffres (ex: <span className="font-mono font-bold">123456</span>)
+              OTP : <span className="font-mono font-bold">123456</span>
             </p>
           </div>
         </div>
@@ -170,14 +172,14 @@ export default function Login() {
             onClick={() => navigate('/otp-recovery')}
             className="text-xs text-slate-400 hover:text-primary transition-colors"
           >
-            Code OTP perdu ?{' '}
-            <span className="font-semibold underline underline-offset-2">Récupérer l'accès 2FA</span>
+            {t('login.otp_lost')}{' '}
+            <span className="font-semibold underline underline-offset-2">{t('login.otp_recover')}</span>
           </button>
         </div>
 
         {/* Footer */}
         <div className="px-8 pb-6 text-center">
-          <p className="text-xs text-slate-400">AUTH-BADGE CM14 — OMC Yaoundé 2025</p>
+          <p className="text-xs text-slate-400">{t('login.footer')}</p>
           <p className="text-xs text-slate-300 mt-1">Système de contrôle d'accès sécurisé — v2.0</p>
         </div>
       </div>

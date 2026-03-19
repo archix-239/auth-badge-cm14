@@ -1,0 +1,377 @@
+{
+  "app": {
+    "name": "AUTH-BADGE CM14",
+    "subtitle": "Administración OMC",
+    "footer": "AUTH-BADGE CM14 · OMC Yaoundé 2025 · v2.4.12"
+  },
+  "common": {
+    "btn": {
+      "cancel": "Cancelar",
+      "confirm": "Confirmar",
+      "save": "Guardar",
+      "logout": "CERRAR SESIÓN",
+      "search": "Buscar",
+      "export_csv": "Exportar CSV",
+      "view_all": "Ver todo"
+    },
+    "label": {
+      "delegation": "Delegación",
+      "category": "Categoría",
+      "zone": "Zona",
+      "timestamp": "Marca de tiempo",
+      "status": "Estado",
+      "agent": "Agente",
+      "participant": "Participante"
+    },
+    "status": {
+      "online": "En línea",
+      "offline": "Sin conexión",
+      "active": "activo",
+      "revoked": "revocado",
+      "suspended": "suspendido",
+      "alert": "alerta",
+      "blocked": "BLOQUEADO"
+    },
+    "no_results": "Sin resultados"
+  },
+  "login": {
+    "title": "Terminal Agente CM14",
+    "subtitle": "Acceso Restringido — Nivel de Acreditación 4",
+    "section": "Inicio de Sesión Seguro",
+    "section_sub": "Ingrese sus credenciales para acceder al terminal CM14.",
+    "field": {
+      "id": "ID de Agente",
+      "id_placeholder": "Ej: AG-8824 o ADMIN-001",
+      "password": "Contraseña segura",
+      "otp": "Código OTP (6 dígitos)",
+      "otp_placeholder": "123456",
+      "otp_hint": "Código generado por su app de autenticación. Modo demo: ingrese cualquier 6 dígitos.",
+      "otp_divider": "Autenticación 2FA"
+    },
+    "btn": {
+      "submit": "Acceder al terminal",
+      "loading": "Verificando...",
+      "locked": "Cuenta bloqueada"
+    },
+    "demo": {
+      "title": "Modo demostración",
+      "desc": "Agente: {{agentId}} / {{agentPwd}}\nAdmin: {{adminId}} / {{adminPwd}}\nOTP: cualquier 6 dígitos (ej: 123456)"
+    },
+    "otp_lost": "¿Código OTP perdido?",
+    "otp_recover": "Recuperar acceso 2FA",
+    "footer": "AUTH-BADGE CM14 — OMC Yaoundé 2025"
+  },
+  "scanner": {
+    "idle": {
+      "hint": "Posicione la credencial en el marco",
+      "checkpoint": "Punto de control activo",
+      "active": "Activo",
+      "btn_start": "Iniciar escaneo",
+      "btn_nfc": "Modo NFC",
+      "btn_manual": "Manual",
+      "manual_placeholder": "ID credencial (ej: P-001)",
+      "manual_verify": "Verificar",
+      "scans_count": "{{count}} escaneos"
+    },
+    "scanning": {
+      "label": "Leyendo..."
+    },
+    "result": {
+      "label": "Resultado de verificación",
+      "btn_next": "Escanear siguiente credencial",
+      "authorized": "ACCESO AUTORIZADO",
+      "revoked": "CREDENCIAL REVOCADA",
+      "zone_denied": "ZONA NO AUTORIZADA",
+      "unknown": "CREDENCIAL DESCONOCIDA",
+      "sub_authorized": "Identidad verificada — acceso autorizado",
+      "sub_revoked": "Alerta de supervisor activada",
+      "sub_zone_denied": "Redirigir a zona autorizada",
+      "sub_unknown": "Alertar al supervisor inmediatamente",
+      "zone_warning_title": "Zona no autorizada para esta acreditación",
+      "zone_warning_redirect": "Dirigir al participante a: Entrada General Z1",
+      "alert_title": "Supervisor notificado automáticamente",
+      "alert_sub": "Alerta enviada · No dejar pasar",
+      "unknown_title": "Credencial no reconocida",
+      "unknown_desc": "Esta credencial no está registrada en el sistema CM14.",
+      "unknown_alert": "Supervisor notificado — no dejar pasar"
+    },
+    "detail": {
+      "zone_scanned": "Zona escaneada",
+      "badge_id": "ID Credencial",
+      "scan_time": "Hora del escaneo",
+      "zones_allowed": "Zonas autorizadas"
+    },
+    "btn_cancel": "Cancelar"
+  },
+  "agent_layout": {
+    "header_title": "CM14 SOVEREIGN",
+    "header_sub": "Terminal agente"
+  },
+  "agent_dashboard": {
+    "greeting": "Hola, {{name}} 👋",
+    "terminal_status": "Terminal activo · Caché sincronizado",
+    "unassigned": "Sin punto de control asignado",
+    "stats": {
+      "scans": "Escaneos",
+      "authorized": "Autorizados",
+      "alerts": "Alertas"
+    },
+    "btn_scan": "Escanear credencial",
+    "btn_scan_sub": "Presione para activar la cámara",
+    "status": {
+      "network_title": "Red",
+      "network_val": "En línea",
+      "cache_title": "Caché",
+      "cache_val": "Sincronizado hace 2min",
+      "zones_title": "Zonas activas",
+      "offline_title": "Modo sin conexión",
+      "offline_val": "4h disponibles"
+    },
+    "recent_title": "Escaneos recientes",
+    "recent_empty": "Sin escaneos para esta sesión"
+  },
+  "agent_history": {
+    "search_placeholder": "Buscar un participante...",
+    "filter": {
+      "today": "Hoy",
+      "week": "Esta semana",
+      "month": "Este mes",
+      "all": "Todos",
+      "authorized": "Autorizado",
+      "alerts": "Alertas"
+    },
+    "entries_one": "{{count}} entrada",
+    "entries_other": "{{count}} entradas",
+    "detail": {
+      "delegation": "Delegación",
+      "category": "Categoría",
+      "checkpoint": "Punto de control",
+      "timestamp": "Marca de tiempo",
+      "event_id": "ID de evento"
+    }
+  },
+  "agent_profile": {
+    "role": {
+      "agent": "Agente Nivel 4",
+      "admin": "Administrador",
+      "supervisor": "Supervisor"
+    },
+    "info": {
+      "badge_number": "Matrícula",
+      "checkpoint": "Puesto asignado",
+      "unassigned": "Sin asignar"
+    },
+    "settings": {
+      "title": "Configuración",
+      "language": "Idioma",
+      "dark_mode": "Modo Oscuro",
+      "biometrics": "Biometría"
+    },
+    "system": {
+      "title": "Información del Sistema",
+      "subtitle": "Integridad de sesión segura",
+      "cache_synced": "Caché Sincronizado",
+      "cache_ago": "hace 2min",
+      "protocol": "Protocolo",
+      "encryption": "Cifrado",
+      "session": "Sesión"
+    },
+    "otp": {
+      "title": "Recuperar mi OTP",
+      "subtitle": "Restablecer acceso 2FA"
+    }
+  },
+  "admin_sidebar": {
+    "nav": {
+      "dashboard": "Tablero",
+      "inscription": "Inscripción y Credencial",
+      "history": "Historial",
+      "users": "Usuarios",
+      "supervision": "Consola de Supervisión"
+    },
+    "critical_zone": "Zona crítica",
+    "btn_emergency": "Revocación de emergencia",
+    "theme": {
+      "dark": "Modo oscuro",
+      "light": "Modo claro"
+    },
+    "btn_close": "Cerrar menú",
+    "btn_open": "Abrir menú"
+  },
+  "admin_dashboard": {
+    "title": "Tablero",
+    "subtitle": "Supervisión en tiempo real — CM14 Yaoundé",
+    "system_ok": "Sistema operativo",
+    "kpi": {
+      "scans": "Escaneos hoy",
+      "scans_sub": "Todas las zonas",
+      "authorized": "Accesos autorizados",
+      "authorized_sub": "{{value}}% del total",
+      "alerts": "Alertas activas",
+      "alerts_sub": "Revocaciones + desconocidos",
+      "badges": "Credenciales activas",
+      "badges_sub": "de {{total}} acreditados"
+    },
+    "checkpoints": {
+      "title": "Puntos de control activos",
+      "link": "Consola de supervisión →",
+      "scans": "escaneos"
+    },
+    "feed": {
+      "title": "Transmisión en vivo",
+      "link": "Historial completo →"
+    },
+    "accreditations": {
+      "title": "Estado de acreditaciones",
+      "link": "Gestionar credenciales →"
+    }
+  },
+  "inscription": {
+    "title": "Inscripción y Credenciales",
+    "subtitle": "Registrar un participante y generar su credencial QR",
+    "form": {
+      "title": "Nuevo participante",
+      "firstname": "Nombre *",
+      "lastname": "Apellido *",
+      "delegation": "Delegación / Organización *",
+      "category": "Categoría *",
+      "expiration": "Vencimiento",
+      "zones": "Zonas de acceso autorizadas *"
+    },
+    "btn": {
+      "generate": "Generar credencial QR",
+      "new": "Nuevo participante",
+      "print": "Imprimir",
+      "download": "Descargar"
+    },
+    "badge": {
+      "success": "Credencial generada y registrada con éxito"
+    },
+    "list": {
+      "title": "Participantes registrados",
+      "search": "Buscar...",
+      "count": "{{filtered}} / {{total}}"
+    },
+    "revoke": {
+      "title": "¿Revocar esta credencial?",
+      "desc": "Esta acción es inmediata y se propagará a todos los terminales de agentes en menos de 60 segundos.",
+      "btn": "Revocar ahora"
+    }
+  },
+  "passages": {
+    "title": "Historial de Accesos",
+    "events_one": "{{count}} evento encontrado",
+    "events_other": "{{count}} eventos encontrados",
+    "filter": {
+      "search": "Nombre, delegación, zona...",
+      "all_results": "Todos",
+      "all_zones": "Todas"
+    },
+    "table": {
+      "participant": "Participante",
+      "delegation": "Delegación",
+      "category": "Cat.",
+      "zone": "Zona",
+      "result": "Resultado",
+      "agent": "Agente",
+      "timestamp": "Marca de tiempo",
+      "empty": "Sin resultados para estos criterios"
+    }
+  },
+  "users": {
+    "title": "Gestión de Usuarios",
+    "system_admin": "Administración del Sistema",
+    "page_subtitle": "Supervisión de accesos soberanos y control granular de privilegios de agentes en el perímetro CM14.",
+    "search_placeholder": "Buscar por matrícula o nombre...",
+    "filters_label": "FILTROS:",
+    "showing": "Mostrando {{count}} de {{total}} agentes",
+    "not_found": "Ningún usuario encontrado",
+    "filters": {
+      "all_roles": "Todos los roles",
+      "all_statuts": "Todos los estados",
+      "all_zones": "Todas las zonas"
+    },
+    "table": {
+      "name": "Usuario",
+      "role": "Rol",
+      "zone": "Punto de Control",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "btn": {
+      "add": "Agregar usuario",
+      "edit": "Editar",
+      "block": "Bloquear",
+      "unblock": "Desbloquear",
+      "delete": "Eliminar"
+    },
+    "kpi": {
+      "active": "Accesos Activos",
+      "alerts": "Alertas de Seguridad",
+      "sync": "Última Sincronización",
+      "action_required": "ACCIÓN REQUERIDA",
+      "no_alert": "Sin alertas",
+      "protocol": "Protocolo AES-256"
+    },
+    "modal": {
+      "add_title": "Agregar un usuario",
+      "edit_title": "Editar usuario",
+      "field_name": "Nombre completo",
+      "field_id": "ID de inicio de sesión",
+      "field_zone": "Zona / Punto de control",
+      "field_password": "Contraseña",
+      "field_role": "Rol",
+      "btn_create": "Crear usuario",
+      "btn_save": "Guardar"
+    },
+    "delete": {
+      "title": "¿Eliminar este usuario?",
+      "desc": "El usuario {{name}} ({{id}}) será eliminado permanentemente del sistema.",
+      "btn": "Eliminar"
+    }
+  },
+  "supervision": {
+    "title": "Consola de Supervisión",
+    "subtitle": "Sala de Guerra — CM14",
+    "war_room": "CM14 — Sala de Guerra — Nivel 4",
+    "system_active": "SISTEMA ACTIVO",
+    "system_status": "Sistema activo",
+    "live_feed": "Eventos en vivo",
+    "alert_banner_title": "ALERTA GENERAL ACTIVA",
+    "alert_banner_sub": "Todos los terminales de agentes han sido notificados",
+    "alert_disable": "Desactivar",
+    "feed_title": "Flujo de eventos en vivo",
+    "events_count": "{{count}} eventos",
+    "checkpoints_title": "Puntos de control",
+    "critical_actions": "Acciones críticas",
+    "emergency_btn": "ALERTA GENERAL DE EMERGENCIA",
+    "quick_revoke": "Revocación rápida",
+    "revoke_placeholder": "ID Credencial (ej: P-006)",
+    "revoke_btn": "REVOCAR",
+    "decommission_btn": "Descomisionar un terminal",
+    "export_logs_btn": "Exportar registros de seguridad",
+    "revoked_title": "Credenciales revocadas / suspendidas",
+    "btn": {
+      "emergency": "ALERTA GENERAL",
+      "revoke": "Revocar credencial",
+      "decommission": "Descomisionar terminal",
+      "export_logs": "Exportar registros"
+    },
+    "kpi": {
+      "live_scans": "Escaneos en vivo",
+      "auth_rate": "Tasa de autorización",
+      "security_alerts": "Alertas de seguridad",
+      "active_terminals": "Terminales activos"
+    }
+  },
+  "otp_recovery": {
+    "title": "Recuperación OTP",
+    "subtitle": "Restablezca su acceso 2FA en 4 pasos",
+    "steps": {
+      "identity": "Identidad",
+      "email": "Correo",
+      "code": "Código",
+      "success": "Éxito"
+    }
+  }
+}

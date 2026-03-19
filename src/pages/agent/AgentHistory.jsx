@@ -1,28 +1,42 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LOGS, getResultConfig, formatDateTime, getCategoryColor } from '../../data/mockData'
 import { useAuth } from '../../context/AuthContext'
 
-const TIME_FILTERS   = ["Aujourd'hui", 'Cette semaine', 'Ce mois']
-const RESULT_FILTERS = ['Tous', 'Autorisé', 'Alertes']
-
 export default function AgentHistory() {
   const { user } = useAuth()
-  const [search, setSearch]   = useState('')
-  const [filter, setFilter]   = useState("Aujourd'hui")
-  const [resultF, setResultF] = useState('Tous')
+  const { t } = useTranslation()
+  const [search, setSearch]     = useState('')
+  const [filter, setFilter]     = useState('today')
+  const [resultF, setResultF]   = useState('all')
   const [selected, setSelected] = useState(null)
 
-  const allLogs = LOGS.filter(l => l.agentId === user?.id)
+  const TIME_FILTERS   = [
+    { key: 'today', label: t('agent_history.filter.today') },
+    { key: 'week',  label: t('agent_history.filter.week') },
+    { key: 'month', label: t('agent_history.filter.month') },
+  ]
+  const RESULT_FILTERS = [
+    { key: 'all',        label: t('agent_history.filter.all') },
+    { key: 'authorized', label: t('agent_history.filter.authorized') },
+    { key: 'alerts',     label: t('agent_history.filter.alerts') },
+  ]
+
+  const allLogs  = LOGS.filter(l => l.agentId === user?.id)
   const filtered = allLogs.filter(log => {
     const matchSearch = !search ||
       log.nom.toLowerCase().includes(search.toLowerCase()) ||
       log.delegation.toLowerCase().includes(search.toLowerCase())
     const matchResult =
-      resultF === 'Tous'     ? true :
-      resultF === 'Autorisé' ? log.resultat === 'autorisé' :
+      resultF === 'all'        ? true :
+      resultF === 'authorized' ? log.resultat === 'autorisé' :
       ['révoqué','inconnu','zone-refusée'].includes(log.resultat)
     return matchSearch && matchResult
   })
+
+  const entryLabel = filtered.length === 1
+    ? t('agent_history.entries_one',   { count: filtered.length })
+    : t('agent_history.entries_other', { count: filtered.length })
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 dark:bg-bg-dark">
@@ -37,7 +51,7 @@ export default function AgentHistory() {
             </div>
             <input
               className="flex w-full border-none bg-transparent focus:outline-none text-sm px-3 text-slate-900 dark:text-white placeholder-slate-400"
-              placeholder="Rechercher un participant..."
+              placeholder={t('agent_history.search_placeholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -52,11 +66,11 @@ export default function AgentHistory() {
         {/* Time chips */}
         <div className="flex gap-2 px-4 pb-2 overflow-x-auto no-scrollbar">
           {TIME_FILTERS.map(f => (
-            <button key={f} onClick={() => setFilter(f)}
+            <button key={f.key} onClick={() => setFilter(f.key)}
               className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-colors ${
-                filter === f ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                filter === f.key ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
               }`}>
-              {f}
+              {f.label}
             </button>
           ))}
         </div>
@@ -64,15 +78,15 @@ export default function AgentHistory() {
         {/* Result chips */}
         <div className="flex gap-2 px-4 pb-3 items-center overflow-x-auto no-scrollbar">
           {RESULT_FILTERS.map(f => (
-            <button key={f} onClick={() => setResultF(f)}
+            <button key={f.key} onClick={() => setResultF(f.key)}
               className={`flex h-8 shrink-0 items-center rounded-full px-3 text-xs font-semibold transition-colors ${
-                resultF === f ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-900' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400'
+                resultF === f.key ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-900' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400'
               }`}>
-              {f}
+              {f.label}
             </button>
           ))}
           <span className="ml-auto shrink-0 text-xs text-slate-400 dark:text-slate-500 font-medium">
-            {filtered.length} entrée{filtered.length !== 1 ? 's' : ''}
+            {entryLabel}
           </span>
         </div>
       </div>
@@ -82,11 +96,11 @@ export default function AgentHistory() {
         {filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500">
             <span className="material-symbols-outlined text-5xl mb-3">search_off</span>
-            <p className="text-sm font-medium">Aucun résultat</p>
+            <p className="text-sm font-medium">{t('common.no_results')}</p>
           </div>
         )}
         {filtered.map(log => {
-          const cfg = getResultConfig(log.resultat)
+          const cfg    = getResultConfig(log.resultat)
           const isOpen = selected?.id === log.id
           return (
             <button key={log.id}
@@ -114,11 +128,11 @@ export default function AgentHistory() {
               {isOpen && (
                 <div className="px-4 pb-4 border-t border-slate-50 dark:border-slate-800 pt-3 grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Délégation', value: log.delegation },
-                    { label: 'Catégorie', value: log.categorie, badge: true },
-                    { label: 'Point de contrôle', value: log.pointControle },
-                    { label: 'Horodatage', value: formatDateTime(log.timestamp), mono: true },
-                    { label: 'ID événement', value: log.id, mono: true, full: true },
+                    { label: t('agent_history.detail.delegation'),  value: log.delegation },
+                    { label: t('agent_history.detail.category'),    value: log.categorie, badge: true },
+                    { label: t('agent_history.detail.checkpoint'),  value: log.pointControle },
+                    { label: t('agent_history.detail.timestamp'),   value: formatDateTime(log.timestamp), mono: true },
+                    { label: t('agent_history.detail.event_id'),    value: log.id, mono: true, full: true },
                   ].map(item => (
                     <div key={item.label} className={item.full ? 'col-span-2' : ''}>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-1 font-semibold uppercase tracking-wider">{item.label}</p>

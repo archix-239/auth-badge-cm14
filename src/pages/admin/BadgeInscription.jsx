@@ -1,16 +1,18 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
 import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
 
 const emptyForm = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: ['Z1'], dateExpiration: '' }
 
 export default function BadgeInscription() {
-  const [form, setForm]           = useState(emptyForm)
+  const { t } = useTranslation()
+  const [form, setForm]                 = useState(emptyForm)
   const [participants, setParticipants] = useState(PARTICIPANTS)
-  const [generated, setGenerated] = useState(null)
-  const [search, setSearch]       = useState('')
-  const [step, setStep]           = useState('form') // form | badge
-  const [revoking, setRevoking]   = useState(null)
+  const [generated, setGenerated]       = useState(null)
+  const [search, setSearch]             = useState('')
+  const [step, setStep]                 = useState('form')
+  const [revoking, setRevoking]         = useState(null)
 
   const handleChange = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -51,18 +53,19 @@ export default function BadgeInscription() {
   )
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Inscription & Badges</h2>
-          <p className="text-slate-500 text-sm mt-1">Enregistrer un participant et générer son badge QR</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('inscription.title')}</h2>
+          <p className="text-slate-500 text-sm mt-1">{t('inscription.subtitle')}</p>
         </div>
         {step === 'badge' && (
           <button onClick={() => { setStep('form'); setGenerated(null); setForm(emptyForm) }}
             className="flex items-center gap-2 text-sm text-primary font-medium hover:underline">
             <span className="material-symbols-outlined text-lg">add</span>
-            Nouveau participant
+            {t('inscription.btn.new')}
           </button>
         )}
       </div>
@@ -72,20 +75,20 @@ export default function BadgeInscription() {
         <div>
           {step === 'form' && (
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
-              <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <h3 className="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">how_to_reg</span>
-                Nouveau participant
+                {t('inscription.form.title')}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Prénom *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('inscription.form.firstname')}</label>
                     <input required value={form.prenom} onChange={e => handleChange('prenom', e.target.value)}
                       className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       placeholder="Emmanuel" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Nom *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('inscription.form.lastname')}</label>
                     <input required value={form.nom} onChange={e => handleChange('nom', e.target.value)}
                       className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       placeholder="Kofi Asante" />
@@ -93,7 +96,7 @@ export default function BadgeInscription() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Délégation / Organisation *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('inscription.form.delegation')}</label>
                   <input required value={form.delegation} onChange={e => handleChange('delegation', e.target.value)}
                     className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="Ghana" />
@@ -101,21 +104,21 @@ export default function BadgeInscription() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Catégorie *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('inscription.form.category')}</label>
                     <select value={form.categorie} onChange={e => handleChange('categorie', e.target.value)}
                       className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white">
                       {CATEGORIES.map(c => <option key={c.code} value={c.code}>{c.code} — {c.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Expiration</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('inscription.form.expiration')}</label>
                     <input type="date" value={form.dateExpiration} onChange={e => handleChange('dateExpiration', e.target.value)}
                       className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Zones d'accès autorisées *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t('inscription.form.zones')}</label>
                   <div className="grid grid-cols-2 gap-2">
                     {ZONES.map(z => (
                       <label key={z.id}
@@ -136,7 +139,7 @@ export default function BadgeInscription() {
                 <button type="submit"
                   className="w-full bg-primary text-white rounded-lg py-3 font-semibold text-sm hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm">
                   <span className="material-symbols-outlined text-lg">qr_code_2</span>
-                  Générer le badge QR
+                  {t('inscription.btn.generate')}
                 </button>
               </form>
             </div>
@@ -155,9 +158,7 @@ export default function BadgeInscription() {
                 <h3 className="text-xl font-bold">{generated.prenom} {generated.nom}</h3>
                 <p className="text-slate-300 text-sm mt-1">{generated.delegation}</p>
                 <div className="flex items-center justify-center gap-3 mt-3">
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full bg-white/20 text-white`}>
-                    {generated.categorie}
-                  </span>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/20 text-white">{generated.categorie}</span>
                   <span className="text-xs text-slate-400 font-mono">{generated.id}</span>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
@@ -170,17 +171,17 @@ export default function BadgeInscription() {
               <div className="p-4 flex gap-3">
                 <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-primary-dark transition-colors">
                   <span className="material-symbols-outlined text-lg">print</span>
-                  Imprimer
+                  {t('inscription.btn.print')}
                 </button>
                 <button className="flex-1 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-200 transition-colors">
                   <span className="material-symbols-outlined text-lg">download</span>
-                  Télécharger
+                  {t('inscription.btn.download')}
                 </button>
               </div>
               <div className="px-4 pb-4">
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-emerald-600 text-lg">check_circle</span>
-                  <p className="text-sm text-emerald-700 font-medium">Badge généré et enregistré avec succès</p>
+                  <p className="text-sm text-emerald-700 font-medium">{t('inscription.badge.success')}</p>
                 </div>
               </div>
             </div>
@@ -191,14 +192,14 @@ export default function BadgeInscription() {
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-slate-800 dark:text-white">Participants enregistrés</h3>
-              <span className="text-xs text-slate-400">{filtered.length} / {participants.length}</span>
+              <h3 className="font-bold text-slate-800 dark:text-white">{t('inscription.list.title')}</h3>
+              <span className="text-xs text-slate-400">{t('inscription.list.count', { filtered: filtered.length, total: participants.length })}</span>
             </div>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
               <input value={search} onChange={e => setSearch(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                placeholder="Rechercher..." />
+                placeholder={t('inscription.list.search')} />
             </div>
           </div>
           <ul className="divide-y divide-slate-50 dark:divide-slate-800 max-h-[520px] overflow-y-auto">
@@ -217,7 +218,7 @@ export default function BadgeInscription() {
                   {p.statut === 'actif' && (
                     <button onClick={() => setRevoking(p.id)}
                       className="ml-1 text-slate-300 hover:text-red-500 transition-colors"
-                      title="Révoquer">
+                      title={t('inscription.revoke.title')}>
                       <span className="material-symbols-outlined text-base">cancel</span>
                     </button>
                   )}
@@ -236,19 +237,17 @@ export default function BadgeInscription() {
               <div className="bg-red-100 p-2 rounded-full">
                 <span className="material-symbols-outlined text-red-600">warning</span>
               </div>
-              <h3 className="font-bold text-slate-900 dark:text-white">Révoquer ce badge ?</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white">{t('inscription.revoke.title')}</h3>
             </div>
-            <p className="text-sm text-slate-600 mb-6">
-              Cette action est immédiate et sera propagée sur tous les terminaux agents en moins de 60 secondes.
-            </p>
+            <p className="text-sm text-slate-600 mb-6">{t('inscription.revoke.desc')}</p>
             <div className="flex gap-3">
               <button onClick={() => setRevoking(null)}
                 className="flex-1 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                Annuler
+                {t('common.btn.cancel')}
               </button>
               <button onClick={() => handleRevoke(revoking)}
                 className="flex-1 py-2.5 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors">
-                Révoquer maintenant
+                {t('inscription.revoke.btn')}
               </button>
             </div>
           </div>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { LOGS, PARTICIPANTS, POINTS_CONTROLE, getResultConfig, timeAgo, getCategoryColor } from '../../data/mockData'
+import { useTranslation } from 'react-i18next'
+import { LOGS, PARTICIPANTS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
 
 export default function SupervisionConsole() {
+  const { t, i18n } = useTranslation()
   const [liveEvents, setLiveEvents] = useState(LOGS.slice(0, 8))
   const [alertActive, setAlertActive] = useState(false)
   const [revokeTarget, setRevokeTarget] = useState('')
@@ -19,6 +21,13 @@ export default function SupervisionConsole() {
   const alertCount = liveEvents.filter(e => ['révoqué','inconnu'].includes(e.resultat)).length
   const authRate   = Math.round(liveEvents.filter(e => e.resultat === 'autorisé').length / Math.max(1, liveEvents.length) * 100)
 
+  const kpis = [
+    { key: 'live_scans',       value: liveEvents.length,  icon: 'qr_code_scanner', color: 'text-primary dark:text-blue-400',       bg: 'bg-primary/10 dark:bg-primary/20',       border: 'border-primary/20 dark:border-primary/30' },
+    { key: 'auth_rate',        value: `${authRate}%`,     icon: 'verified',        color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20',   border: 'border-emerald-200 dark:border-emerald-800' },
+    { key: 'security_alerts',  value: alertCount,         icon: 'warning',         color: alertCount > 0 ? 'text-red-500 stat-live' : 'text-slate-400', bg: alertCount > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-slate-50 dark:bg-slate-800', border: alertCount > 0 ? 'border-red-200 dark:border-red-800' : 'border-slate-200 dark:border-slate-700' },
+    { key: 'active_terminals', value: POINTS_CONTROLE.filter(p => p.statut === 'actif').length, icon: 'devices', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20', border: 'border-purple-200 dark:border-purple-800' },
+  ]
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-bg-dark">
 
@@ -29,17 +38,17 @@ export default function SupervisionConsole() {
             <span className="material-symbols-outlined text-lg filled">security</span>
           </div>
           <div>
-            <h2 className="font-bold text-base text-slate-900 dark:text-white leading-none">Console de Supervision</h2>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5 font-semibold">CM14 — War Room — Niveau 4</p>
+            <h2 className="font-bold text-base text-slate-900 dark:text-white leading-none">{t('supervision.title')}</h2>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5 font-semibold">{t('supervision.war_room')}</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-full">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">SYSTÈME ACTIF</span>
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{t('supervision.system_active')}</span>
           </div>
           <span className="text-sm font-mono text-slate-400 dark:text-slate-500 tabular-nums">
-            {now.toLocaleTimeString('fr-FR')}
+            {now.toLocaleTimeString(i18n.language)}
           </span>
         </div>
       </div>
@@ -50,13 +59,13 @@ export default function SupervisionConsole() {
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-red-500 text-xl animate-pulse">warning</span>
             <div>
-              <p className="text-sm font-bold text-red-800 dark:text-red-300">ALERTE GÉNÉRALE ACTIVE</p>
-              <p className="text-xs text-red-500 dark:text-red-400">Tous les terminaux agents ont été notifiés</p>
+              <p className="text-sm font-bold text-red-800 dark:text-red-300">{t('supervision.alert_banner_title')}</p>
+              <p className="text-xs text-red-500 dark:text-red-400">{t('supervision.alert_banner_sub')}</p>
             </div>
           </div>
           <button onClick={() => setAlertActive(false)}
             className="text-red-400 hover:text-red-600 dark:hover:text-red-200 text-xs font-semibold px-3 py-1 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">
-            Désactiver
+            {t('supervision.alert_disable')}
           </button>
         </div>
       )}
@@ -65,15 +74,10 @@ export default function SupervisionConsole() {
 
         {/* ── KPI row ── */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {[
-            { label: 'Scans en direct',      value: liveEvents.length,  icon: 'qr_code_scanner', color: 'text-primary dark:text-blue-400',      bg: 'bg-primary/10 dark:bg-primary/20',      border: 'border-primary/20 dark:border-primary/30' },
-            { label: 'Taux d\'autorisation', value: `${authRate}%`,     icon: 'verified',        color: 'text-emerald-600 dark:text-emerald-400',bg: 'bg-emerald-50 dark:bg-emerald-900/20',  border: 'border-emerald-200 dark:border-emerald-800' },
-            { label: 'Alertes sécurité',     value: alertCount,         icon: 'warning',         color: alertCount > 0 ? 'text-red-500 stat-live' : 'text-slate-400', bg: alertCount > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-slate-50 dark:bg-slate-800', border: alertCount > 0 ? 'border-red-200 dark:border-red-800' : 'border-slate-200 dark:border-slate-700' },
-            { label: 'Terminaux actifs',     value: POINTS_CONTROLE.filter(p=>p.statut==='actif').length, icon: 'devices', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20', border: 'border-purple-200 dark:border-purple-800' },
-          ].map(kpi => (
-            <div key={kpi.label} className={`bg-white dark:bg-slate-900 border ${kpi.border} rounded-2xl p-5 shadow-sm`}>
+          {kpis.map(kpi => (
+            <div key={kpi.key} className={`bg-white dark:bg-slate-900 border ${kpi.border} rounded-2xl p-5 shadow-sm`}>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider leading-tight">{kpi.label}</p>
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider leading-tight">{t(`supervision.kpi.${kpi.key}`)}</p>
                 <div className={`${kpi.bg} p-2 rounded-xl`}>
                   <span className={`material-symbols-outlined text-lg ${kpi.color}`}>{kpi.icon}</span>
                 </div>
@@ -90,9 +94,11 @@ export default function SupervisionConsole() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <h3 className="font-bold text-slate-800 dark:text-white">Flux d'événements en direct</h3>
+                <h3 className="font-bold text-slate-800 dark:text-white">{t('supervision.feed_title')}</h3>
               </div>
-              <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-full font-medium">{liveEvents.length} événements</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-full font-medium">
+                {t('supervision.events_count', { count: liveEvents.length })}
+              </span>
             </div>
             <ul className="divide-y divide-slate-50 dark:divide-slate-800 max-h-96 overflow-y-auto">
               {liveEvents.map(log => {
@@ -122,7 +128,7 @@ export default function SupervisionConsole() {
             {/* Points de contrôle */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="font-bold text-slate-800 dark:text-white text-sm">Points de contrôle</h3>
+                <h3 className="font-bold text-slate-800 dark:text-white text-sm">{t('supervision.checkpoints_title')}</h3>
               </div>
               <ul className="divide-y divide-slate-50 dark:divide-slate-800">
                 {POINTS_CONTROLE.map(pc => (
@@ -142,7 +148,7 @@ export default function SupervisionConsole() {
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
                         pc.statut === 'actif'  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                         pc.statut === 'alerte' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500'
-                      }`}>{pc.statut}</span>
+                      }`}>{t(`common.status.${pc.statut}`, { defaultValue: pc.statut })}</span>
                     </div>
                   </li>
                 ))}
@@ -151,34 +157,30 @@ export default function SupervisionConsole() {
 
             {/* Actions critiques */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-5 space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Actions critiques</h3>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('supervision.critical_actions')}</h3>
 
-              {/* Emergency alert */}
               <button onClick={() => setAlertActive(true)}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors group">
                 <span className="material-symbols-outlined text-lg animate-pulse group-hover:animate-none">cancel</span>
-                <span className="font-bold text-xs uppercase tracking-tight">ALERTE GÉNÉRALE D'URGENCE</span>
+                <span className="font-bold text-xs uppercase tracking-tight">{t('supervision.emergency_btn')}</span>
               </button>
 
-              {/* Revoke badge */}
               <div className="space-y-1.5">
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">Révocation rapide</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">{t('supervision.quick_revoke')}</p>
                 <div className="flex gap-2">
                   <input value={revokeTarget} onChange={e => setRevokeTarget(e.target.value)}
-                    placeholder="ID Badge (ex: P-006)"
+                    placeholder={t('supervision.revoke_placeholder')}
                     className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 font-mono"/>
-                  <button
-                    onClick={() => { if (revokeTarget) { setRevokeTarget('') } }}
+                  <button onClick={() => { if (revokeTarget) { setRevokeTarget('') } }}
                     className="px-3 py-2 bg-red-500 hover:bg-red-600 rounded-xl text-white text-xs font-bold transition-colors">
-                    RÉVOQUER
+                    {t('supervision.revoke_btn')}
                   </button>
                 </div>
               </div>
 
-              {/* Other actions */}
               {[
-                { icon: 'phonelink_erase', label: 'Décommissionner un terminal' },
-                { icon: 'download', label: 'Exporter les journaux de sécurité' },
+                { icon: 'phonelink_erase', label: t('supervision.decommission_btn') },
+                { icon: 'download',        label: t('supervision.export_logs_btn') },
               ].map(a => (
                 <button key={a.label}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition-colors">
@@ -191,7 +193,7 @@ export default function SupervisionConsole() {
             {/* Badges révoqués */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-red-100 dark:border-red-900/30 shadow-sm overflow-hidden">
               <div className="px-5 py-3.5 border-b border-red-100 dark:border-red-900/30">
-                <h3 className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Badges révoqués / suspendus</h3>
+                <h3 className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">{t('supervision.revoked_title')}</h3>
               </div>
               <ul className="divide-y divide-slate-50 dark:divide-slate-800">
                 {PARTICIPANTS.filter(p => p.statut !== 'actif').map(p => (

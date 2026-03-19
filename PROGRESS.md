@@ -49,7 +49,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | # | Tâche | User Story | État |
 |---|---|---|---|
 | 1.1 | Rendre l'interface admin responsive (sidebar drawer sur mobile) | — | ✅ |
-| 1.2 | Ajouter le multilingue : Français, Anglais, Espagnol | — | ⏳ |
+| 1.2 | Ajouter le multilingue : Français, Anglais, Espagnol | — | ✅ |
 | 1.3 | Compléter la saisie manuelle de badge (US-07) | US-07 | ⏳ |
 | 1.4 | Indicateur offline précis avec âge du cache | — | ⏳ |
 

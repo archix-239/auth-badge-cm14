@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { LOGS, PARTICIPANTS, POINTS_CONTROLE, getResultConfig, timeAgo, getCategoryColor } from '../../data/mockData'
 
 const KPI = ({ label, value, sub, color, icon }) => (
@@ -7,7 +8,7 @@ const KPI = ({ label, value, sub, color, icon }) => (
       <span className="material-symbols-outlined text-xl text-white">{icon}</span>
     </div>
     <div>
-      <p className="text-2xl font-bold text-slate-900 dark:text-white dark:text-white">{value}</p>
+      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
       <p className="text-sm text-slate-500">{label}</p>
       {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
     </div>
@@ -16,40 +17,43 @@ const KPI = ({ label, value, sub, color, icon }) => (
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const total     = LOGS.length
-  const autorises = LOGS.filter(l => l.resultat === 'autorisé').length
-  const alertes   = LOGS.filter(l => ['révoqué','inconnu'].includes(l.resultat)).length
-  const actifs    = PARTICIPANTS.filter(p => p.statut === 'actif').length
+  const { t } = useTranslation()
+
+  const total      = LOGS.length
+  const autorises  = LOGS.filter(l => l.resultat === 'autorisé').length
+  const alertes    = LOGS.filter(l => ['révoqué','inconnu'].includes(l.resultat)).length
+  const actifs     = PARTICIPANTS.filter(p => p.statut === 'actif').length
   const recentLogs = LOGS.slice(0, 8)
 
   return (
     <div className="p-4 md:p-8 space-y-6 bg-slate-50 dark:bg-bg-dark min-h-screen">
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white dark:text-white">Tableau de bord</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Supervision temps réel — CM14 Yaoundé</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin_dashboard.title')}</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('admin_dashboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span className="text-sm font-medium text-emerald-700">Système opérationnel</span>
+          <span className="text-sm font-medium text-emerald-700">{t('admin_dashboard.system_ok')}</span>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <KPI label="Scans aujourd'hui" value={total}   icon="qr_code_scanner" color="bg-primary"      sub="Toutes zones confondues" />
-        <KPI label="Accès autorisés"   value={autorises} icon="check_circle"  color="bg-emerald-500"  sub={`${Math.round(autorises/total*100)}% du total`} />
-        <KPI label="Alertes actives"   value={alertes} icon="warning"         color="bg-red-500"      sub="Révocations + inconnus" />
-        <KPI label="Badges actifs"     value={actifs}  icon="badge"           color="bg-blue-500"     sub={`sur ${PARTICIPANTS.length} accrédités`} />
+        <KPI label={t('admin_dashboard.kpi.scans')}      value={total}     icon="qr_code_scanner" color="bg-primary"      sub={t('admin_dashboard.kpi.scans_sub')} />
+        <KPI label={t('admin_dashboard.kpi.authorized')} value={autorises} icon="check_circle"    color="bg-emerald-500"  sub={t('admin_dashboard.kpi.authorized_sub', { value: Math.round(autorises/total*100) })} />
+        <KPI label={t('admin_dashboard.kpi.alerts')}     value={alertes}   icon="warning"         color="bg-red-500"      sub={t('admin_dashboard.kpi.alerts_sub')} />
+        <KPI label={t('admin_dashboard.kpi.badges')}     value={actifs}    icon="badge"           color="bg-blue-500"     sub={t('admin_dashboard.kpi.badges_sub', { total: PARTICIPANTS.length })} />
       </div>
 
       {/* Points de contrôle */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="font-bold text-slate-800 dark:text-white">Points de contrôle actifs</h3>
+          <h3 className="font-bold text-slate-800 dark:text-white">{t('admin_dashboard.checkpoints.title')}</h3>
           <button onClick={() => navigate('/admin/supervision')} className="text-sm text-primary font-medium hover:underline">
-            Console de supervision →
+            {t('admin_dashboard.checkpoints.link')}
           </button>
         </div>
         <div className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -68,12 +72,14 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-6 text-sm">
                 <div className="text-center">
                   <p className="font-bold text-slate-800 dark:text-white">{pc.scans}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">scans</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{t('admin_dashboard.checkpoints.scans')}</p>
                 </div>
                 <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
                   pc.statut === 'actif'  ? 'bg-emerald-100 text-emerald-700' :
                   pc.statut === 'alerte' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'
-                }`}>{pc.statut}</span>
+                }`}>
+                  {t(`common.status.${pc.statut}`, { defaultValue: pc.statut })}
+                </span>
               </div>
             </div>
           ))}
@@ -87,10 +93,10 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <h3 className="font-bold text-slate-800 dark:text-white">Flux en direct</h3>
+              <h3 className="font-bold text-slate-800 dark:text-white">{t('admin_dashboard.feed.title')}</h3>
             </div>
             <button onClick={() => navigate('/admin/passages')} className="text-sm text-primary font-medium hover:underline">
-              Historique complet →
+              {t('admin_dashboard.feed.link')}
             </button>
           </div>
           <ul className="divide-y divide-slate-50 dark:divide-slate-800 max-h-80 overflow-y-auto">
@@ -115,9 +121,9 @@ export default function AdminDashboard() {
         {/* Badge status breakdown */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 dark:text-white">Statut des accréditations</h3>
+            <h3 className="font-bold text-slate-800 dark:text-white">{t('admin_dashboard.accreditations.title')}</h3>
             <button onClick={() => navigate('/admin/inscription')} className="text-sm text-primary font-medium hover:underline">
-              Gérer les badges →
+              {t('admin_dashboard.accreditations.link')}
             </button>
           </div>
           <ul className="divide-y divide-slate-50 dark:divide-slate-800 max-h-80 overflow-y-auto">
@@ -133,8 +139,8 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${getCategoryColor(p.categorie)}`}>{p.categorie}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    p.statut === 'actif'    ? 'bg-emerald-100 text-emerald-700' :
-                    p.statut === 'révoqué'  ? 'bg-red-100 text-red-700' :
+                    p.statut === 'actif'   ? 'bg-emerald-100 text-emerald-700' :
+                    p.statut === 'révoqué' ? 'bg-red-100 text-red-700' :
                     'bg-amber-100 text-amber-700'
                   }`}>{p.statut}</span>
                 </div>

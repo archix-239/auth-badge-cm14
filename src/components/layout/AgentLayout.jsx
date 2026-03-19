@@ -1,8 +1,10 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 
 export default function AgentLayout() {
   const { user } = useAuth()
+  const { t } = useTranslation()
 
   return (
     <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto bg-slate-100 dark:bg-bg-dark pb-24">
@@ -11,16 +13,15 @@ export default function AgentLayout() {
         <div className="flex items-center gap-2.5">
           <span className="material-symbols-outlined text-xl filled">shield_person</span>
           <div>
-            <p className="text-sm font-bold leading-none">CM14 SOVEREIGN</p>
-            <p className="text-xs text-blue-200 mt-0.5">{user?.zone || 'Terminal agent'}</p>
+            <p className="text-sm font-bold leading-none">{t('agent_layout.header_title')}</p>
+            <p className="text-xs text-blue-200 mt-0.5">{user?.zone || t('agent_layout.header_sub')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-            <span className="text-xs text-blue-100">En ligne</span>
+            <span className="text-xs text-blue-100">{t('common.status.online')}</span>
           </div>
-          {/* WiFi icon like Image 1 */}
           <div className="w-8 h-8 flex items-center justify-center">
             <span className="material-symbols-outlined text-xl text-blue-200">wifi_lock</span>
           </div>
@@ -32,14 +33,14 @@ export default function AgentLayout() {
         <Outlet />
       </main>
 
-      {/* Bottom navigation — 4 tabs like Image 1 */}
+      {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-20 shadow-lg">
         <div className="flex items-center justify-around px-2 py-2">
           {[
-            { to: '/agent/dashboard', icon: 'dashboard',       label: 'Dashboard' },
-            { to: '/agent/scanner',   icon: 'qr_code_scanner', label: 'Scanner',  fab: true },
-            { to: '/agent/history',   icon: 'history',         label: 'Historique' },
-            { to: '/agent/profile',   icon: 'person',          label: 'Profil' },
+            { to: '/agent/dashboard', icon: 'dashboard',       label: t('admin_sidebar.nav.dashboard') },
+            { to: '/agent/scanner',   icon: 'qr_code_scanner', label: 'Scanner', fab: true },
+            { to: '/agent/history',   icon: 'history',         label: t('admin_sidebar.nav.history') },
+            { to: '/agent/profile',   icon: 'person',          label: t('agent_profile.role.agent').split(' ')[0] },
           ].map(item => (
             <NavLink key={item.to} to={item.to}
               className={({ isActive }) =>

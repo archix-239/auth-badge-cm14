@@ -1,0 +1,377 @@
+{
+  "app": {
+    "name": "AUTH-BADGE CM14",
+    "subtitle": "Administration OMC",
+    "footer": "AUTH-BADGE CM14 · OMC Yaoundé 2025 · v2.4.12"
+  },
+  "common": {
+    "btn": {
+      "cancel": "Annuler",
+      "confirm": "Confirmer",
+      "save": "Enregistrer",
+      "logout": "DÉCONNEXION",
+      "search": "Rechercher",
+      "export_csv": "Exporter en CSV",
+      "view_all": "Voir tout"
+    },
+    "label": {
+      "delegation": "Délégation",
+      "category": "Catégorie",
+      "zone": "Zone",
+      "timestamp": "Horodatage",
+      "status": "Statut",
+      "agent": "Agent",
+      "participant": "Participant"
+    },
+    "status": {
+      "online": "En ligne",
+      "offline": "Hors ligne",
+      "active": "actif",
+      "revoked": "révoqué",
+      "suspended": "suspendu",
+      "alert": "alerte",
+      "blocked": "BLOQUÉ"
+    },
+    "no_results": "Aucun résultat"
+  },
+  "login": {
+    "title": "Terminal Agent CM14",
+    "subtitle": "Accès Restreint — Niveau d'Accréditation 4",
+    "section": "Connexion Sécurisée",
+    "section_sub": "Entrez vos identifiants pour accéder au terminal CM14.",
+    "field": {
+      "id": "Identifiant Agent",
+      "id_placeholder": "Ex: AG-8824 ou ADMIN-001",
+      "password": "Mot de passe fort",
+      "otp": "Code OTP (6 chiffres)",
+      "otp_placeholder": "123456",
+      "otp_hint": "Code généré par votre application d'authentification. En mode démo : entrez 6 chiffres quelconques.",
+      "otp_divider": "Authentification 2FA"
+    },
+    "btn": {
+      "submit": "Accéder au terminal",
+      "loading": "Vérification en cours...",
+      "locked": "Compte bloqué"
+    },
+    "demo": {
+      "title": "Mode démonstration",
+      "desc": "Agent : {{agentId}} / {{agentPwd}}\nAdmin : {{adminId}} / {{adminPwd}}\nOTP : n'importe quels 6 chiffres (ex: 123456)"
+    },
+    "otp_lost": "Code OTP perdu ?",
+    "otp_recover": "Récupérer l'accès 2FA",
+    "footer": "AUTH-BADGE CM14 — OMC Yaoundé 2025"
+  },
+  "scanner": {
+    "idle": {
+      "hint": "Positionnez le badge dans le cadre",
+      "checkpoint": "Point de contrôle actif",
+      "active": "Actif",
+      "btn_start": "Démarrer le scan",
+      "btn_nfc": "Mode NFC",
+      "btn_manual": "Manuel",
+      "manual_placeholder": "ID badge (ex: P-001)",
+      "manual_verify": "Vérifier",
+      "scans_count": "{{count}} scans"
+    },
+    "scanning": {
+      "label": "Lecture en cours…"
+    },
+    "result": {
+      "label": "Résultat de vérification",
+      "btn_next": "Scanner le badge suivant",
+      "authorized": "ACCÈS AUTORISÉ",
+      "revoked": "BADGE RÉVOQUÉ",
+      "zone_denied": "ZONE NON AUTORISÉE",
+      "unknown": "BADGE INCONNU",
+      "sub_authorized": "Identité vérifiée — passage autorisé",
+      "sub_revoked": "Alerte superviseur déclenchée",
+      "sub_zone_denied": "Orienter vers zone autorisée",
+      "sub_unknown": "Alerter le superviseur immédiatement",
+      "zone_warning_title": "Zone non autorisée pour cette accréditation",
+      "zone_warning_redirect": "Orienter le participant vers : Entrée Générale Z1",
+      "alert_title": "Superviseur notifié automatiquement",
+      "alert_sub": "Alerte envoyée · Ne pas laisser passer",
+      "unknown_title": "Badge non reconnu",
+      "unknown_desc": "Ce badge n'est pas répertorié dans le système CM14.",
+      "unknown_alert": "Superviseur notifié — ne pas laisser passer"
+    },
+    "detail": {
+      "zone_scanned": "Zone scannée",
+      "badge_id": "ID Badge",
+      "scan_time": "Heure du scan",
+      "zones_allowed": "Zones autorisées"
+    },
+    "btn_cancel": "Annuler"
+  },
+  "agent_layout": {
+    "header_title": "CM14 SOVEREIGN",
+    "header_sub": "Terminal agent"
+  },
+  "agent_dashboard": {
+    "greeting": "Bonjour, {{name}} 👋",
+    "terminal_status": "Terminal actif · Cache synchronisé",
+    "unassigned": "Point de contrôle non assigné",
+    "stats": {
+      "scans": "Scans",
+      "authorized": "Autorisés",
+      "alerts": "Alertes"
+    },
+    "btn_scan": "Scanner un badge",
+    "btn_scan_sub": "Appuyez pour activer la caméra",
+    "status": {
+      "network_title": "Réseau",
+      "network_val": "En ligne",
+      "cache_title": "Cache",
+      "cache_val": "Sync il y a 2min",
+      "zones_title": "Zones actives",
+      "offline_title": "Mode hors ligne",
+      "offline_val": "4h disponibles"
+    },
+    "recent_title": "Scans récents",
+    "recent_empty": "Aucun scan pour cette session"
+  },
+  "agent_history": {
+    "search_placeholder": "Rechercher un participant...",
+    "filter": {
+      "today": "Aujourd'hui",
+      "week": "Cette semaine",
+      "month": "Ce mois",
+      "all": "Tous",
+      "authorized": "Autorisé",
+      "alerts": "Alertes"
+    },
+    "entries_one": "{{count}} entrée",
+    "entries_other": "{{count}} entrées",
+    "detail": {
+      "delegation": "Délégation",
+      "category": "Catégorie",
+      "checkpoint": "Point de contrôle",
+      "timestamp": "Horodatage",
+      "event_id": "ID événement"
+    }
+  },
+  "agent_profile": {
+    "role": {
+      "agent": "Agent Niveau 4",
+      "admin": "Administrateur",
+      "supervisor": "Superviseur"
+    },
+    "info": {
+      "badge_number": "Matricule",
+      "checkpoint": "Poste assigné",
+      "unassigned": "Non assigné"
+    },
+    "settings": {
+      "title": "Paramètres Application",
+      "language": "Langue",
+      "dark_mode": "Mode Sombre",
+      "biometrics": "Biométrie"
+    },
+    "system": {
+      "title": "Informations Système",
+      "subtitle": "Intégrité de la session sécurisée",
+      "cache_synced": "Cache Synchronisé",
+      "cache_ago": "il y a 2min",
+      "protocol": "Protocole",
+      "encryption": "Chiffrement",
+      "session": "Session"
+    },
+    "otp": {
+      "title": "Récupérer mon OTP",
+      "subtitle": "Réinitialiser l'accès 2FA"
+    }
+  },
+  "admin_sidebar": {
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "inscription": "Inscription & Badge",
+      "history": "Historique",
+      "users": "Utilisateurs",
+      "supervision": "Console Supervision"
+    },
+    "critical_zone": "Zone critique",
+    "btn_emergency": "Révocation d'urgence",
+    "theme": {
+      "dark": "Mode sombre",
+      "light": "Mode clair"
+    },
+    "btn_close": "Fermer le menu",
+    "btn_open": "Ouvrir le menu"
+  },
+  "admin_dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Supervision temps réel — CM14 Yaoundé",
+    "system_ok": "Système opérationnel",
+    "kpi": {
+      "scans": "Scans aujourd'hui",
+      "scans_sub": "Toutes zones confondues",
+      "authorized": "Accès autorisés",
+      "authorized_sub": "{{value}}% du total",
+      "alerts": "Alertes actives",
+      "alerts_sub": "Révocations + inconnus",
+      "badges": "Badges actifs",
+      "badges_sub": "sur {{total}} accrédités"
+    },
+    "checkpoints": {
+      "title": "Points de contrôle actifs",
+      "link": "Console de supervision →",
+      "scans": "scans"
+    },
+    "feed": {
+      "title": "Flux en direct",
+      "link": "Historique complet →"
+    },
+    "accreditations": {
+      "title": "Statut des accréditations",
+      "link": "Gérer les badges →"
+    }
+  },
+  "inscription": {
+    "title": "Inscription & Badges",
+    "subtitle": "Enregistrer un participant et générer son badge QR",
+    "form": {
+      "title": "Nouveau participant",
+      "firstname": "Prénom *",
+      "lastname": "Nom *",
+      "delegation": "Délégation / Organisation *",
+      "category": "Catégorie *",
+      "expiration": "Expiration",
+      "zones": "Zones d'accès autorisées *"
+    },
+    "btn": {
+      "generate": "Générer le badge QR",
+      "new": "Nouveau participant",
+      "print": "Imprimer",
+      "download": "Télécharger"
+    },
+    "badge": {
+      "success": "Badge généré et enregistré avec succès"
+    },
+    "list": {
+      "title": "Participants enregistrés",
+      "search": "Rechercher...",
+      "count": "{{filtered}} / {{total}}"
+    },
+    "revoke": {
+      "title": "Révoquer ce badge ?",
+      "desc": "Cette action est immédiate et sera propagée sur tous les terminaux agents en moins de 60 secondes.",
+      "btn": "Révoquer maintenant"
+    }
+  },
+  "passages": {
+    "title": "Historique des Passages",
+    "events_one": "{{count}} événement trouvé",
+    "events_other": "{{count}} événements trouvés",
+    "filter": {
+      "search": "Nom, délégation, zone...",
+      "all_results": "Tous",
+      "all_zones": "Toutes"
+    },
+    "table": {
+      "participant": "Participant",
+      "delegation": "Délégation",
+      "category": "Cat.",
+      "zone": "Zone",
+      "result": "Résultat",
+      "agent": "Agent",
+      "timestamp": "Horodatage",
+      "empty": "Aucun résultat pour ces critères"
+    }
+  },
+  "users": {
+    "title": "Gestion des Utilisateurs",
+    "system_admin": "Administration Système",
+    "page_subtitle": "Supervision des accès souverains et contrôle granulaire des privilèges agents sur le périmètre CM14.",
+    "search_placeholder": "Rechercher un matricule ou nom...",
+    "filters_label": "FILTRES :",
+    "showing": "Affichage de {{count}} sur {{total}} agents",
+    "not_found": "Aucun utilisateur trouvé",
+    "filters": {
+      "all_roles": "Tous les rôles",
+      "all_statuts": "Tous les statuts",
+      "all_zones": "Toutes les zones"
+    },
+    "table": {
+      "name": "Utilisateur",
+      "role": "Rôle",
+      "zone": "Point de Contrôle",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "btn": {
+      "add": "Ajouter un utilisateur",
+      "edit": "Modifier",
+      "block": "Bloquer",
+      "unblock": "Débloquer",
+      "delete": "Supprimer"
+    },
+    "kpi": {
+      "active": "Accès Actifs",
+      "alerts": "Alertes Sécurité",
+      "sync": "Dernière Sync",
+      "action_required": "ACTION REQUISE",
+      "no_alert": "Aucune alerte",
+      "protocol": "Protocole AES-256"
+    },
+    "modal": {
+      "add_title": "Ajouter un utilisateur",
+      "edit_title": "Modifier l'utilisateur",
+      "field_name": "Nom complet",
+      "field_id": "Identifiant de connexion",
+      "field_zone": "Zone / Point de contrôle",
+      "field_password": "Mot de passe",
+      "field_role": "Rôle",
+      "btn_create": "Créer l'utilisateur",
+      "btn_save": "Enregistrer"
+    },
+    "delete": {
+      "title": "Supprimer cet utilisateur ?",
+      "desc": "L'utilisateur {{name}} ({{id}}) sera supprimé définitivement du système.",
+      "btn": "Supprimer"
+    }
+  },
+  "supervision": {
+    "title": "Console de Supervision",
+    "subtitle": "War Room — CM14",
+    "war_room": "CM14 — War Room — Niveau 4",
+    "system_active": "SYSTÈME ACTIF",
+    "system_status": "Système actif",
+    "live_feed": "Événements en direct",
+    "alert_banner_title": "ALERTE GÉNÉRALE ACTIVE",
+    "alert_banner_sub": "Tous les terminaux agents ont été notifiés",
+    "alert_disable": "Désactiver",
+    "feed_title": "Flux d'événements en direct",
+    "events_count": "{{count}} événements",
+    "checkpoints_title": "Points de contrôle",
+    "critical_actions": "Actions critiques",
+    "emergency_btn": "ALERTE GÉNÉRALE D'URGENCE",
+    "quick_revoke": "Révocation rapide",
+    "revoke_placeholder": "ID Badge (ex: P-006)",
+    "revoke_btn": "RÉVOQUER",
+    "decommission_btn": "Décommissionner un terminal",
+    "export_logs_btn": "Exporter les journaux de sécurité",
+    "revoked_title": "Badges révoqués / suspendus",
+    "btn": {
+      "emergency": "ALERTE GÉNÉRALE",
+      "revoke": "Révoquer un badge",
+      "decommission": "Décommissionner terminal",
+      "export_logs": "Exporter les journaux"
+    },
+    "kpi": {
+      "live_scans": "Scans en direct",
+      "auth_rate": "Taux d'autorisation",
+      "security_alerts": "Alertes sécurité",
+      "active_terminals": "Terminaux actifs"
+    }
+  },
+  "otp_recovery": {
+    "title": "Récupération OTP",
+    "subtitle": "Réinitialisez votre accès 2FA en 4 étapes",
+    "steps": {
+      "identity": "Identité",
+      "email": "Email",
+      "code": "Code",
+      "success": "Succès"
+    }
+  }
+}

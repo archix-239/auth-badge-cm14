@@ -1,36 +1,39 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { PARTICIPANTS, getResultConfig, getCategoryColor } from '../../data/mockData'
 
 const MOCK_SCAN_POOL = [
   { participantId: 'P-001' },
   { participantId: 'P-002' },
-  { participantId: 'P-006' }, // révoqué
+  { participantId: 'P-006' },
   { participantId: 'P-008' },
-  { participantId: null      }, // inconnu
-  { participantId: 'P-004' }, // zone refusée
+  { participantId: null      },
+  { participantId: 'P-004' },
   { participantId: 'P-007' },
   { participantId: 'P-003' },
 ]
 let mockIdx = 0
 
-const RESULT_META = {
-  'autorisé':     { bg: 'bg-emerald-500', glow: 'shadow-emerald-500/40', ring: 'ring-emerald-400', accent: '#10b981', label: 'ACCÈS AUTORISÉ',     sublabel: 'Identité vérifiée — passage autorisé', icon: 'check_circle' },
-  'révoqué':      { bg: 'bg-red-500',     glow: 'shadow-red-500/40',     ring: 'ring-red-400',     accent: '#ef4444', label: 'BADGE RÉVOQUÉ',      sublabel: 'Alerte superviseur déclenchée',         icon: 'cancel' },
-  'zone-refusée': { bg: 'bg-orange-500',  glow: 'shadow-orange-500/40',  ring: 'ring-orange-400',  accent: '#f97316', label: 'ZONE NON AUTORISÉE', sublabel: 'Orienter vers zone autorisée',           icon: 'block' },
-  'inconnu':      { bg: 'bg-violet-600',  glow: 'shadow-violet-500/40',  ring: 'ring-violet-400',  accent: '#7c3aed', label: 'BADGE INCONNU',      sublabel: 'Alerter le superviseur immédiatement',  icon: 'help' },
-}
-
 export default function Scanner() {
   const { user } = useAuth()
-  const [phase, setPhase]   = useState('idle')
-  const [result, setResult] = useState(null)
-  const [scanLog, setScanLog] = useState([])
-  const [elapsed, setElapsed] = useState(0)
-  const [manualId, setManualId] = useState('')
+  const { t } = useTranslation()
+  const [phase, setPhase]         = useState('idle')
+  const [result, setResult]       = useState(null)
+  const [scanLog, setScanLog]     = useState([])
+  const [elapsed, setElapsed]     = useState(0)
+  const [manualId, setManualId]   = useState('')
   const [showManual, setShowManual] = useState(false)
   const timerRef = useRef(null)
   const currentZone = 'Entrée Nord — Salle Plénière'
+
+  // Métadonnées des résultats (labels traduits dynamiquement)
+  const RESULT_META = {
+    'autorisé':     { bg: 'bg-emerald-500', glow: 'shadow-emerald-500/40', ring: 'ring-emerald-400', label: t('scanner.result.authorized'),   sublabel: t('scanner.result.sub_authorized'),  icon: 'check_circle' },
+    'révoqué':      { bg: 'bg-red-500',     glow: 'shadow-red-500/40',     ring: 'ring-red-400',     label: t('scanner.result.revoked'),      sublabel: t('scanner.result.sub_revoked'),     icon: 'cancel' },
+    'zone-refusée': { bg: 'bg-orange-500',  glow: 'shadow-orange-500/40',  ring: 'ring-orange-400',  label: t('scanner.result.zone_denied'),  sublabel: t('scanner.result.sub_zone_denied'), icon: 'block' },
+    'inconnu':      { bg: 'bg-violet-600',  glow: 'shadow-violet-500/40',  ring: 'ring-violet-400',  label: t('scanner.result.unknown'),      sublabel: t('scanner.result.sub_unknown'),     icon: 'help' },
+  }
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
 
@@ -89,7 +92,7 @@ export default function Scanner() {
               ))}
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 <span className="material-symbols-outlined text-6xl text-white/10">qr_code_2</span>
-                <p className="text-white/30 text-xs text-center px-6">Positionnez le badge dans le cadre</p>
+                <p className="text-white/30 text-xs text-center px-6">{t('scanner.idle.hint')}</p>
               </div>
             </div>
             {scanLog.length > 0 && (
@@ -102,7 +105,7 @@ export default function Scanner() {
                     </div>
                   )
                 })}
-                <span className="text-xs text-white/30 self-center ml-1">{scanLog.length} scans</span>
+                <span className="text-xs text-white/30 self-center ml-1">{t('scanner.idle.scans_count', { count: scanLog.length })}</span>
               </div>
             )}
           </div>
@@ -115,12 +118,12 @@ export default function Scanner() {
                 <span className="material-symbols-outlined text-primary text-xl">place</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Point de contrôle actif</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">{t('scanner.idle.checkpoint')}</p>
                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{currentZone}</p>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Actif</span>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{t('scanner.idle.active')}</span>
               </div>
             </div>
 
@@ -128,14 +131,14 @@ export default function Scanner() {
             <button onClick={startScan}
               className="w-full bg-primary hover:bg-primary-dark active:scale-[0.98] text-white rounded-2xl py-5 flex items-center justify-center gap-3 text-lg font-bold shadow-xl shadow-primary/25 transition-all">
               <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
-              Démarrer le scan
+              {t('scanner.idle.btn_start')}
             </button>
 
             {/* Secondary buttons */}
             <div className="grid grid-cols-2 gap-3">
               <button className="flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl py-3 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                 <span className="material-symbols-outlined text-lg">nfc</span>
-                Mode NFC
+                {t('scanner.idle.btn_nfc')}
               </button>
               <button
                 onClick={() => setShowManual(!showManual)}
@@ -143,7 +146,7 @@ export default function Scanner() {
                   showManual ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}>
                 <span className="material-symbols-outlined text-lg">keyboard</span>
-                Manuel
+                {t('scanner.idle.btn_manual')}
               </button>
             </div>
 
@@ -153,12 +156,12 @@ export default function Scanner() {
                 <input
                   value={manualId}
                   onChange={e => setManualId(e.target.value)}
-                  placeholder="ID badge (ex: P-001)"
+                  placeholder={t('scanner.idle.manual_placeholder')}
                   className="flex-1 pl-4 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
                 />
                 <button type="submit"
                   className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors">
-                  Vérifier
+                  {t('scanner.idle.manual_verify')}
                 </button>
               </form>
             )}
@@ -175,13 +178,11 @@ export default function Scanner() {
             {['tl','tr','bl','br'].map(c => (
               <div key={c} className={`scanner-corner scanner-corner-${c}`}></div>
             ))}
-            {/* Scan line */}
             <div className="absolute inset-0 overflow-hidden rounded-sm">
               <div className="absolute left-0 right-0 h-0.5 scan-line-anim"
                 style={{ background: 'linear-gradient(to right, transparent, #10b981 30%, #10b981 70%, transparent)' }}>
               </div>
             </div>
-            {/* QR placeholder */}
             <div className="absolute inset-4 opacity-10">
               <svg viewBox="0 0 100 100" fill="white">
                 <rect x="10" y="10" width="30" height="30" rx="2" fill="none" stroke="white" strokeWidth="4"/>
@@ -204,9 +205,8 @@ export default function Scanner() {
           <div className="z-10 mt-8 flex flex-col items-center gap-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
-              <p className="text-white font-semibold text-lg">Lecture en cours…</p>
+              <p className="text-white font-semibold text-lg">{t('scanner.scanning.label')}</p>
             </div>
-            {/* Progress bar */}
             <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden mt-1">
               <div className="h-full bg-emerald-400 rounded-full transition-all duration-75"
                 style={{ width: `${Math.min(100, (elapsed / 1200) * 100)}%` }}></div>
@@ -216,7 +216,7 @@ export default function Scanner() {
 
           <button onClick={() => { clearInterval(timerRef.current); setPhase('idle') }}
             className="absolute bottom-8 z-10 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full px-6 py-2.5 text-sm font-medium transition-colors">
-            Annuler
+            {t('scanner.btn_cancel')}
           </button>
         </div>
       )}
@@ -227,30 +227,26 @@ export default function Scanner() {
 
           {/* Color status bar */}
           <div className={`${meta.bg} px-6 py-8 flex flex-col items-center gap-3 shadow-xl ${meta.glow} shadow-2xl`}>
-            {/* Icon with ring */}
             <div className={`w-20 h-20 rounded-full bg-white/20 flex items-center justify-center ring-4 ${meta.ring} ring-offset-2 ring-offset-transparent shadow-xl`}>
               <span className="material-symbols-outlined text-white filled" style={{ fontSize: 48 }}>{meta.icon}</span>
             </div>
-            {/* Status */}
             <div className="text-center">
-              <p className="text-white/70 text-xs font-semibold uppercase tracking-[0.2em] mb-1">Résultat de vérification</p>
+              <p className="text-white/70 text-xs font-semibold uppercase tracking-[0.2em] mb-1">{t('scanner.result.label')}</p>
               <h2 className="text-white text-2xl font-black tracking-tight leading-tight">{meta.label}</h2>
               <p className="text-white/70 text-sm mt-1">{meta.sublabel}</p>
             </div>
-            {/* Time */}
             <p className="text-white/50 text-xs font-mono">
               {new Date(result.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
 
-          {/* Participant info card */}
+          {/* Participant info */}
           <div className="flex-1 px-4 py-5 space-y-3">
             {result.participant ? (
               <>
                 {/* Identity card */}
                 <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5">
                   <div className="flex items-start gap-4">
-                    {/* Avatar */}
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-bold text-white shrink-0 shadow-lg ${meta.bg}`}>
                       {result.participant.prenom?.charAt(0)}{result.participant.nom?.charAt(0)}
                     </div>
@@ -277,10 +273,10 @@ export default function Scanner() {
                 {/* Detail grid */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Zone scannée', value: result.zone, icon: 'place' },
-                    { label: 'ID Badge', value: result.participant.id, icon: 'badge', mono: true },
-                    { label: 'Heure du scan', value: new Date(result.timestamp).toLocaleTimeString('fr-FR'), icon: 'schedule' },
-                    { label: 'Zones autorisées', value: result.participant.zones.join(' · '), icon: 'map' },
+                    { label: t('scanner.detail.zone_scanned'),  value: result.zone, icon: 'place' },
+                    { label: t('scanner.detail.badge_id'),      value: result.participant.id, icon: 'badge', mono: true },
+                    { label: t('scanner.detail.scan_time'),     value: new Date(result.timestamp).toLocaleTimeString('fr-FR'), icon: 'schedule' },
+                    { label: t('scanner.detail.zones_allowed'), value: result.participant.zones.join(' · '), icon: 'map' },
                   ].map(item => (
                     <div key={item.label} className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3.5 border border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-1.5 mb-1.5">
@@ -294,50 +290,50 @@ export default function Scanner() {
                   ))}
                 </div>
 
-                {/* Warning for zone-refusée */}
+                {/* Zone refusée */}
                 {result.resultat === 'zone-refusée' && (
                   <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 flex items-start gap-3">
                     <span className="material-symbols-outlined text-orange-500 text-xl shrink-0">directions</span>
                     <div>
-                      <p className="text-sm font-bold text-orange-800 dark:text-orange-300">Zone non autorisée pour cette accréditation</p>
-                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">Orienter le participant vers : <strong>Entrée Générale Z1</strong></p>
+                      <p className="text-sm font-bold text-orange-800 dark:text-orange-300">{t('scanner.result.zone_warning_title')}</p>
+                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">{t('scanner.result.zone_warning_redirect')}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Alert for révoqué / inconnu */}
+                {/* Révoqué / Inconnu */}
                 {['révoqué', 'inconnu'].includes(result.resultat) && (
                   <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
                     <span className="material-symbols-outlined text-red-500 text-xl animate-pulse shrink-0">notification_important</span>
                     <div>
-                      <p className="text-sm font-bold text-red-800 dark:text-red-300">Superviseur notifié automatiquement</p>
-                      <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">Alerte envoyée · Ne pas laisser passer</p>
+                      <p className="text-sm font-bold text-red-800 dark:text-red-300">{t('scanner.result.alert_title')}</p>
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{t('scanner.result.alert_sub')}</p>
                     </div>
                   </div>
                 )}
               </>
             ) : (
-              /* Unknown badge */
+              /* Badge inconnu */
               <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-6 text-center space-y-3">
                 <span className="material-symbols-outlined text-violet-500 text-5xl">help_outline</span>
                 <div>
-                  <p className="text-lg font-black text-slate-900 dark:text-white">Badge non reconnu</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Ce badge n'est pas répertorié dans le système CM14.</p>
+                  <p className="text-lg font-black text-slate-900 dark:text-white">{t('scanner.result.unknown_title')}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('scanner.result.unknown_desc')}</p>
                 </div>
                 <div className="bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-700 rounded-xl p-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-violet-600 dark:text-violet-400 text-lg animate-pulse">notification_important</span>
-                  <p className="text-sm font-semibold text-violet-800 dark:text-violet-300">Superviseur notifié — ne pas laisser passer</p>
+                  <p className="text-sm font-semibold text-violet-800 dark:text-violet-300">{t('scanner.result.unknown_alert')}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Action footer */}
+          {/* Footer */}
           <div className="px-4 pb-4 space-y-2">
             <button onClick={reset}
               className="w-full bg-primary hover:bg-primary-dark active:scale-[0.98] text-white rounded-2xl py-4 text-base font-bold flex items-center justify-center gap-2 shadow-xl shadow-primary/20 transition-all">
               <span className="material-symbols-outlined text-xl">qr_code_scanner</span>
-              Scanner le badge suivant
+              {t('scanner.result.btn_next')}
             </button>
           </div>
         </div>
