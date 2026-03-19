@@ -36,16 +36,16 @@ export default function AgentProfile() {
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-bg-dark">
 
       {/* Avatar + Identity hero */}
-      <div className="flex flex-col items-center pt-10 pb-6 px-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex flex-col items-center pt-6 pb-5 px-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
         <div className="relative mb-4">
-          <div className="w-28 h-28 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary border-4 border-white dark:border-slate-700 shadow-lg">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-3xl sm:text-4xl font-bold text-primary border-4 border-white dark:border-slate-700 shadow-lg">
             {initials}
           </div>
           <div className="absolute -bottom-2 -right-2 bg-primary rounded-full p-1.5 border-2 border-white dark:border-slate-900 shadow">
             <span className="material-symbols-outlined text-white text-sm filled">verified_user</span>
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{user?.name}</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white text-center">{user?.name}</h2>
         <span className="mt-2 px-4 py-1 bg-primary/10 dark:bg-primary/20 text-primary text-xs font-bold uppercase tracking-widest rounded-full">
           {roleLabel}
         </span>
@@ -140,8 +140,8 @@ export default function AgentProfile() {
               { label: t('agent_profile.system.encryption'), value: 'AES-256' },
               { label: t('agent_profile.system.session'),    value: '15 min' },
             ].map(item => (
-              <div key={item.label} className="px-3 py-3 text-center">
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">{item.label}</p>
+              <div key={item.label} className="px-2 py-3 text-center min-w-0">
+                <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold truncate">{item.label}</p>
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-0.5">{item.value}</p>
               </div>
             ))}

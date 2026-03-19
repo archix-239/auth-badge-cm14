@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 
 export default function AgentHistory() {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [search, setSearch]     = useState('')
   const [filter, setFilter]     = useState('today')
   const [resultF, setResultF]   = useState('all')
@@ -117,7 +117,7 @@ export default function AgentHistory() {
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{log.delegation} · {log.zone}</p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
-                    {new Date(log.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(log.timestamp).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
                 <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-lg">

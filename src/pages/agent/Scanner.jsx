@@ -198,7 +198,7 @@ export default function Scanner() {
         <div className="flex-1 relative bg-slate-950 flex flex-col items-center justify-center" style={{ minHeight: '100%' }}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(30,59,138,0.2),transparent_60%)]"></div>
 
-          <div className="relative w-64 h-64 z-10">
+          <div className="relative w-56 h-56 z-10">
             {['tl','tr','bl','br'].map(c => (
               <div key={c} className={`scanner-corner scanner-corner-${c}`}></div>
             ))}
@@ -250,13 +250,13 @@ export default function Scanner() {
         <div className="flex-1 flex flex-col bg-white dark:bg-slate-950" style={{ minHeight: '100%' }}>
 
           {/* Color status bar */}
-          <div className={`${meta.bg} px-6 py-8 flex flex-col items-center gap-3 shadow-xl ${meta.glow} shadow-2xl`}>
-            <div className={`w-20 h-20 rounded-full bg-white/20 flex items-center justify-center ring-4 ${meta.ring} ring-offset-2 ring-offset-transparent shadow-xl`}>
-              <span className="material-symbols-outlined text-white filled" style={{ fontSize: 48 }}>{meta.icon}</span>
+          <div className={`${meta.bg} px-6 py-5 flex flex-col items-center gap-3 shadow-xl ${meta.glow} shadow-2xl`}>
+            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 flex items-center justify-center ring-4 ${meta.ring} ring-offset-2 ring-offset-transparent shadow-xl`}>
+              <span className="material-symbols-outlined text-white filled" style={{ fontSize: 36 }}>{meta.icon}</span>
             </div>
             <div className="text-center">
               <p className="text-white/70 text-xs font-semibold uppercase tracking-[0.2em] mb-1">{t('scanner.result.label')}</p>
-              <h2 className="text-white text-2xl font-black tracking-tight leading-tight">{meta.label}</h2>
+              <h2 className="text-white text-xl sm:text-2xl font-black tracking-tight leading-tight">{meta.label}</h2>
               <p className="text-white/70 text-sm mt-1">{meta.sublabel}</p>
             </div>
             <p className="text-white/50 text-xs font-mono">

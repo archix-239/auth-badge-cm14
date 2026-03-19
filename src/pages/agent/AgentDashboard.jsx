@@ -87,7 +87,7 @@ export default function AgentDashboard() {
 
       {/* Main scan CTA */}
       <button onClick={() => navigate('/agent/scanner')}
-        className="w-full bg-primary hover:bg-primary-dark active:scale-[0.98] text-white rounded-2xl p-6 flex flex-col items-center gap-3 shadow-xl shadow-primary/25 transition-all">
+        className="w-full bg-primary hover:bg-primary-dark active:scale-[0.98] text-white rounded-2xl p-4 sm:p-6 flex flex-col items-center gap-3 shadow-xl shadow-primary/25 transition-all">
         <div className="bg-white/20 rounded-full p-4">
           <span className="material-symbols-outlined text-5xl">qr_code_scanner</span>
         </div>
@@ -127,13 +127,13 @@ export default function AgentDashboard() {
             valc: remainingMs < 3_600_000 ? 'text-red-500 dark:text-red-400' : 'text-amber-600 dark:text-amber-400',
           },
         ].map(s => (
-          <div key={s.title} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-3">
-            <div className={`${s.bg} p-2.5 rounded-xl`}>
-              <span className={`material-symbols-outlined ${s.ic} text-xl`}>{s.icon}</span>
+          <div key={s.title} className="bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-2.5 min-w-0">
+            <div className={`${s.bg} p-2 rounded-xl shrink-0`}>
+              <span className={`material-symbols-outlined ${s.ic} text-lg`}>{s.icon}</span>
             </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{s.title}</p>
-              <p className={`text-xs font-medium ${s.valc}`}>{s.val}</p>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">{s.title}</p>
+              <p className={`text-xs font-medium truncate ${s.valc}`}>{s.val}</p>
             </div>
           </div>
         ))}
