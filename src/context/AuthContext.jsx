@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import * as OTPAuth from 'otpauth'
 import { USERS } from '../data/mockData'
 
 const AuthContext = createContext(null)
@@ -57,9 +58,19 @@ export function AuthProvider({ children }) {
       return { success: false, error: `Identifiants incorrects. Tentative ${newAttempts}/5.` }
     }
 
-    // Mock OTP check (any 6 digits work in demo)
+    // Real TOTP validation (RFC 6238, SHA-1, 6 digits, 30s period)
     if (!otp || otp.length !== 6 || !/^\d+$/.test(otp)) {
       return { success: false, error: 'Code OTP invalide (6 chiffres requis).' }
+    }
+    const totp = new OTPAuth.TOTP({
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: OTPAuth.Secret.fromBase32(found.totpSecret),
+    })
+    const delta = totp.validate({ token: otp, window: 1 })
+    if (delta === null) {
+      return { success: false, error: 'Code OTP invalide ou expiré. Vérifiez l\'heure de votre appareil.' }
     }
 
     const session = { user: found, loginTime: Date.now() }

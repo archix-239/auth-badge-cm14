@@ -62,7 +62,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | # | Tâche | User Story | État |
 |---|---|---|---|
 | 2.1 | Vrai scan QR Code via caméra (`html5-qrcode`) | US-03 | ✅ |
-| 2.2 | Vrai TOTP 2FA (RFC 6238, librairie `otpauth`) | US-01 | ⏳ |
+| 2.2 | Vrai TOTP 2FA (RFC 6238, librairie `otpauth`) | US-01 | ✅ |
 | 2.3 | Vérification ECDSA P-256 réelle (Web Crypto API) | US-03/04 | ⏳ |
 | 2.4 | Alerte sonore + vibration au scan (Web Audio + Vibration API) | US-05 | ⏳ |
 | 2.5 | Mode offline 4h (Service Worker + IndexedDB + AES-256) | US-06 | ⏳ |
@@ -136,7 +136,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 | ID | Description | Phase | État |
 |---|---|---|---|
-| US-01 | Authentification 2FA agent | Phase 2 | ⏳ |
+| US-01 | Authentification 2FA agent | Phase 2 | ✅ |
 | US-02 | Scan NFC | Phase 4 | ❌ |
 | US-03 | Scan QR Code caméra | Phase 2 | ✅ |
 | US-04 | Résultat plein écran avec photo | Phase 3 | ❌ |

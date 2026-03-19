@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import * as OTPAuth from 'otpauth'
 import { useAuth } from '../context/AuthContext'
+import { USERS } from '../data/mockData'
 
 export default function Login() {
   const { login, locked } = useAuth()
@@ -13,6 +15,23 @@ export default function Login() {
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [demoOtp, setDemoOtp] = useState({ agent: '------', admin: '------', countdown: 30 })
+
+  useEffect(() => {
+    const agentUser = USERS.find(u => u.id === 'AG-8824')
+    const adminUser = USERS.find(u => u.id === 'ADMIN-001')
+    const compute = () => {
+      const makeTotp = (secret) => new OTPAuth.TOTP({ algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(secret) })
+      setDemoOtp({
+        agent: makeTotp(agentUser.totpSecret).generate(),
+        admin: makeTotp(adminUser.totpSecret).generate(),
+        countdown: 30 - (Math.floor(Date.now() / 1000) % 30),
+      })
+    }
+    compute()
+    const interval = setInterval(compute, 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -156,13 +175,29 @@ export default function Login() {
           </form>
 
           {/* Demo hint */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-            <p className="text-xs text-amber-700 font-medium mb-1">{t('login.demo.title')}</p>
-            <p className="text-xs text-amber-600">
-              Agent : <span className="font-mono font-bold">AG-8824</span> / <span className="font-mono font-bold">Agent@CM14!</span><br />
-              Admin : <span className="font-mono font-bold">ADMIN-001</span> / <span className="font-mono font-bold">Admin@CM14!</span><br />
-              OTP : <span className="font-mono font-bold">123456</span>
-            </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-amber-700 font-medium">{t('login.demo.title')}</p>
+              <span className="text-[10px] text-amber-500 font-mono bg-amber-100 px-1.5 py-0.5 rounded">
+                ⏱ {demoOtp.countdown}s
+              </span>
+            </div>
+            <div className="text-xs text-amber-600 space-y-1">
+              <div className="flex items-center justify-between">
+                <span>Agent : <span className="font-mono font-bold">AG-8824</span> / <span className="font-mono font-bold">Agent@CM14!</span></span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>OTP Agent :</span>
+                <span className="font-mono font-bold text-sm tracking-[0.3em] text-amber-800">{demoOtp.agent}</span>
+              </div>
+              <div className="border-t border-amber-200 pt-1 flex items-center justify-between">
+                <span>Admin : <span className="font-mono font-bold">ADMIN-001</span> / <span className="font-mono font-bold">Admin@CM14!</span></span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>OTP Admin :</span>
+                <span className="font-mono font-bold text-sm tracking-[0.3em] text-amber-800">{demoOtp.admin}</span>
+              </div>
+            </div>
           </div>
         </div>
 

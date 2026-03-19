@@ -45,7 +45,7 @@
       "password": "Mot de passe fort",
       "otp": "Code OTP (6 chiffres)",
       "otp_placeholder": "123456",
-      "otp_hint": "Code généré par votre application d'authentification. En mode démo : entrez 6 chiffres quelconques.",
+      "otp_hint": "Code généré par votre application d'authentification (RFC 6238 — valable 30 secondes).",
       "otp_divider": "Authentification 2FA"
     },
     "btn": {

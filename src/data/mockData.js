@@ -7,6 +7,7 @@ export const USERS = [
     name: 'Alima Nkemba',
     zone: 'Entrée Nord — Salle Plénière',
     avatar: null,
+    totpSecret: 'JBSWY3DPEHPK3PXP',
   },
   {
     id: 'AG-0031',
@@ -15,6 +16,7 @@ export const USERS = [
     name: 'Bruno Essomba',
     zone: 'Entrée Est — Accueil VIP',
     avatar: null,
+    totpSecret: 'KVKFKRCPNZQUYMLX',
   },
   {
     id: 'ADMIN-001',
@@ -23,6 +25,7 @@ export const USERS = [
     name: 'Jean Dupont',
     title: 'Admin Principal',
     avatar: null,
+    totpSecret: 'MFRA2YTNJFQWCYLB',
   },
   {
     id: 'SUPER-001',
@@ -31,6 +34,7 @@ export const USERS = [
     name: 'Marie Claire Owono',
     title: 'Superviseure Sécurité',
     avatar: null,
+    totpSecret: 'GEZDGNBVGY3TQOJQ',
   },
 ]
 

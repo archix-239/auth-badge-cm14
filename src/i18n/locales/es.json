@@ -45,7 +45,7 @@
       "password": "Contraseña segura",
       "otp": "Código OTP (6 dígitos)",
       "otp_placeholder": "123456",
-      "otp_hint": "Código generado por su app de autenticación. Modo demo: ingrese cualquier 6 dígitos.",
+      "otp_hint": "Código generado por su app de autenticación (RFC 6238 — válido 30 segundos).",
       "otp_divider": "Autenticación 2FA"
     },
     "btn": {
