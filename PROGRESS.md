@@ -38,7 +38,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | 0.2 | Choix architectural validé (web app unique + Capacitor) | ✅ |
 | 0.3 | Validation des user stories (US-01 à US-15) | ✅ |
 | 0.4 | Création du document de suivi (ce fichier) | ✅ |
-| 0.5 | Mise à jour du README selon la nouvelle architecture | ⏳ |
+| 0.5 | Mise à jour du README selon la nouvelle architecture | ✅ |
 
 ---
 
@@ -154,4 +154,4 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 ---
 
-*Dernière mise à jour : 2026-03-19 — Phase 0 complétée*
+*Dernière mise à jour : 2026-03-19 — Phase 0 complétée ✅ — Phase 1 en cours*
