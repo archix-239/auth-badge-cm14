@@ -102,7 +102,10 @@
       "scan_time": "Scan time",
       "zones_allowed": "Authorized zones"
     },
-    "btn_cancel": "Cancel"
+    "btn_cancel": "Cancel",
+    "camera_hint": "Point the camera at a QR Code",
+    "camera_denied": "Camera access denied — use manual entry",
+    "camera_unavailable": "Camera unavailable — use manual entry"
   },
   "agent_layout": {
     "header_title": "CM14 SOVEREIGN",

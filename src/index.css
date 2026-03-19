@@ -61,6 +61,27 @@
   animation: statBlink 1.5s ease-in-out infinite;
 }
 
+/* html5-qrcode camera view */
+#cm14-qr-reader {
+  background: black;
+  overflow: hidden;
+}
+/* Override inline width/height injected by the library */
+#cm14-qr-reader__scan_region {
+  width: 100% !important;
+}
+#cm14-qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+  object-fit: cover;
+}
+#cm14-qr-reader img,
+#cm14-qr-reader__header_message,
+#cm14-qr-reader__dashboard {
+  display: none !important;
+}
+
 /* Dark mode scrollbar */
 .dark ::-webkit-scrollbar { width: 5px; height: 5px; }
 .dark ::-webkit-scrollbar-track { background: transparent; }

@@ -102,7 +102,10 @@
       "scan_time": "Hora del escaneo",
       "zones_allowed": "Zonas autorizadas"
     },
-    "btn_cancel": "Cancelar"
+    "btn_cancel": "Cancelar",
+    "camera_hint": "Apunte la cámara hacia un código QR",
+    "camera_denied": "Acceso a la cámara denegado — use la entrada manual",
+    "camera_unavailable": "Cámara no disponible — use la entrada manual"
   },
   "agent_layout": {
     "header_title": "CM14 SOVEREIGN",

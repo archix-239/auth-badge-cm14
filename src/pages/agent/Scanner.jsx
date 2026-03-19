@@ -2,33 +2,23 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { PARTICIPANTS, getResultConfig, getCategoryColor } from '../../data/mockData'
-
-const MOCK_SCAN_POOL = [
-  { participantId: 'P-001' },
-  { participantId: 'P-002' },
-  { participantId: 'P-006' },
-  { participantId: 'P-008' },
-  { participantId: null      },
-  { participantId: 'P-004' },
-  { participantId: 'P-007' },
-  { participantId: 'P-003' },
-]
-let mockIdx = 0
+import { Html5Qrcode } from 'html5-qrcode'
 
 export default function Scanner() {
   const { user } = useAuth()
   const { t, i18n } = useTranslation()
-  const [phase, setPhase]         = useState('idle')
-  const [result, setResult]       = useState(null)
-  const [scanLog, setScanLog]     = useState([])
-  const [elapsed, setElapsed]     = useState(0)
-  const [manualId, setManualId]   = useState('')
+  const [phase, setPhase]           = useState('idle')
+  const [result, setResult]         = useState(null)
+  const [scanLog, setScanLog]       = useState([])
+  const [elapsed, setElapsed]       = useState(0)
+  const [manualId, setManualId]     = useState('')
   const [showManual, setShowManual] = useState(false)
+  const [cameraError, setCameraError] = useState(null) // null | 'denied' | 'unavailable'
   const timerRef   = useRef(null)
   const manualRef  = useRef(null)
+  const qrScannerRef = useRef(null)
   const currentZone = 'Entrée Nord — Salle Plénière'
 
-  // Métadonnées des résultats (labels traduits dynamiquement)
   const RESULT_META = {
     'autorisé':     { bg: 'bg-emerald-500', glow: 'shadow-emerald-500/40', ring: 'ring-emerald-400', label: t('scanner.result.authorized'),   sublabel: t('scanner.result.sub_authorized'),  icon: 'check_circle' },
     'révoqué':      { bg: 'bg-red-500',     glow: 'shadow-red-500/40',     ring: 'ring-red-400',     label: t('scanner.result.revoked'),      sublabel: t('scanner.result.sub_revoked'),     icon: 'cancel' },
@@ -36,8 +26,58 @@ export default function Scanner() {
     'inconnu':      { bg: 'bg-violet-600',  glow: 'shadow-violet-500/40',  ring: 'ring-violet-400',  label: t('scanner.result.unknown'),      sublabel: t('scanner.result.sub_unknown'),     icon: 'help' },
   }
 
+  // Cleanup timer on unmount
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
+
+  // Manual input autofocus
   useEffect(() => { if (showManual && manualRef.current) manualRef.current.focus() }, [showManual])
+
+  // Real camera QR scanner lifecycle
+  useEffect(() => {
+    if (phase !== 'camera') return
+
+    setCameraError(null)
+    const scanner = new Html5Qrcode('cm14-qr-reader')
+    qrScannerRef.current = scanner
+
+    scanner.start(
+      { facingMode: 'environment' },
+      {
+        fps: 10,
+        qrbox: (viewfinderWidth, viewfinderHeight) => {
+          const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.7)
+          return { width: size, height: size }
+        },
+      },
+      (decodedText) => {
+        // QR detected: stop scanner then process result
+        const s = qrScannerRef.current
+        qrScannerRef.current = null
+        if (s) s.stop().then(() => s.clear()).catch(() => {})
+
+        let participantId = null
+        try {
+          const payload = JSON.parse(decodedText)
+          participantId = payload.id ?? null
+        } catch {
+          participantId = decodedText.trim() || null
+        }
+        doScan(participantId, 400)
+      },
+      () => {} // no QR in frame — ignore continuous errors
+    ).catch((err) => {
+      qrScannerRef.current = null
+      const msg = String(err).toLowerCase()
+      setCameraError(msg.includes('permission') || msg.includes('denied') ? 'denied' : 'unavailable')
+      setPhase('idle')
+    })
+
+    return () => {
+      const s = qrScannerRef.current
+      qrScannerRef.current = null
+      if (s) s.stop().then(() => s.clear()).catch(() => {})
+    }
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const doScan = (participantId, delay = 1100) => {
     setPhase('scanning')
@@ -61,9 +101,14 @@ export default function Scanner() {
   }
 
   const startScan = () => {
-    const mock = MOCK_SCAN_POOL[mockIdx % MOCK_SCAN_POOL.length]
-    mockIdx++
-    doScan(mock.participantId)
+    setShowManual(false)
+    setCameraError(null)
+    setPhase('camera')
+  }
+
+  const stopCamera = () => {
+    // scanner cleanup handled by useEffect cleanup when phase changes
+    setPhase('idle')
   }
 
   const handleManual = (e) => {
@@ -85,8 +130,19 @@ export default function Scanner() {
       {/* ── IDLE ─────────────────────────────────────────── */}
       {phase === 'idle' && (
         <div className="flex-1 flex flex-col">
+
+          {/* Camera error banner */}
+          {cameraError && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700 px-4 py-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-lg shrink-0">warning</span>
+              <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
+                {cameraError === 'denied' ? t('scanner.camera_denied') : t('scanner.camera_unavailable')}
+              </p>
+            </div>
+          )}
+
           {/* Viewfinder */}
-          <div className="relative bg-slate-950 flex-1 flex flex-col items-center justify-center" style={{ minHeight: 300 }}>
+          <div className="relative bg-slate-950 flex-1 flex flex-col items-center justify-center" style={{ minHeight: 280 }}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(30,59,138,0.15),transparent_70%)]"></div>
             <div className="relative w-56 h-56 z-10">
               {['tl','tr','bl','br'].map(c => (
@@ -169,7 +225,6 @@ export default function Scanner() {
                     {t('scanner.idle.manual_verify')}
                   </button>
                 </div>
-                {/* Aperçu en direct */}
                 {manualId.trim() && (() => {
                   const preview = PARTICIPANTS.find(p => p.id === manualId.trim().toUpperCase())
                   return preview ? (
@@ -193,7 +248,30 @@ export default function Scanner() {
         </div>
       )}
 
-      {/* ── SCANNING ─────────────────────────────────────── */}
+      {/* ── CAMERA — real QR scan ─────────────────────────── */}
+      {phase === 'camera' && (
+        <div className="flex flex-col bg-black">
+          {/* Camera stream — width: 100%, height driven by video aspect ratio */}
+          <div
+            id="cm14-qr-reader"
+            className="w-full"
+          />
+
+          {/* Hint + cancel */}
+          <div className="shrink-0 bg-slate-950/90 backdrop-blur-sm px-4 py-4 flex flex-col items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+              <p className="text-white/70 text-sm font-medium">{t('scanner.camera_hint')}</p>
+            </div>
+            <button onClick={stopCamera}
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full px-6 py-2.5 text-sm font-medium transition-colors">
+              {t('scanner.btn_cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── SCANNING — brief processing animation ────────── */}
       {phase === 'scanning' && (
         <div className="flex-1 relative bg-slate-950 flex flex-col items-center justify-center" style={{ minHeight: '100%' }}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(30,59,138,0.2),transparent_60%)]"></div>
@@ -233,15 +311,10 @@ export default function Scanner() {
             </div>
             <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden mt-1">
               <div className="h-full bg-emerald-400 rounded-full transition-all duration-75"
-                style={{ width: `${Math.min(100, (elapsed / 1200) * 100)}%` }}></div>
+                style={{ width: `${Math.min(100, (elapsed / 500) * 100)}%` }}></div>
             </div>
             <p className="text-white/40 text-xs mt-1">{(elapsed / 1000).toFixed(1)}s</p>
           </div>
-
-          <button onClick={() => { clearInterval(timerRef.current); setPhase('idle') }}
-            className="absolute bottom-8 z-10 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full px-6 py-2.5 text-sm font-medium transition-colors">
-            {t('scanner.btn_cancel')}
-          </button>
         </div>
       )}
 
