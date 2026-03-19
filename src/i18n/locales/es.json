@@ -71,6 +71,7 @@
       "btn_manual": "Manual",
       "manual_placeholder": "ID credencial (ej: P-001)",
       "manual_verify": "Verificar",
+      "manual_not_found": "Identificador desconocido en el sistema",
       "scans_count": "{{count}} escaneos"
     },
     "scanning": {
@@ -121,11 +122,15 @@
     "status": {
       "network_title": "Red",
       "network_val": "En línea",
+      "network_offline": "Sin conexión",
       "cache_title": "Caché",
       "cache_val": "Sincronizado hace 2min",
+      "cache_just_synced": "Sincronizado al instante",
+      "cache_ago": "Sincronizado hace {{count}} min",
       "zones_title": "Zonas activas",
       "offline_title": "Modo sin conexión",
-      "offline_val": "4h disponibles"
+      "offline_val": "4h disponibles",
+      "offline_remaining": "{{h}}h {{m}}min disponibles"
     },
     "recent_title": "Escaneos recientes",
     "recent_empty": "Sin escaneos para esta sesión"

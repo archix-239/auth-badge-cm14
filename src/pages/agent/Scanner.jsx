@@ -17,14 +17,15 @@ let mockIdx = 0
 
 export default function Scanner() {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [phase, setPhase]         = useState('idle')
   const [result, setResult]       = useState(null)
   const [scanLog, setScanLog]     = useState([])
   const [elapsed, setElapsed]     = useState(0)
   const [manualId, setManualId]   = useState('')
   const [showManual, setShowManual] = useState(false)
-  const timerRef = useRef(null)
+  const timerRef   = useRef(null)
+  const manualRef  = useRef(null)
   const currentZone = 'Entrée Nord — Salle Plénière'
 
   // Métadonnées des résultats (labels traduits dynamiquement)
@@ -36,6 +37,7 @@ export default function Scanner() {
   }
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
+  useEffect(() => { if (showManual && manualRef.current) manualRef.current.focus() }, [showManual])
 
   const doScan = (participantId, delay = 1100) => {
     setPhase('scanning')
@@ -66,7 +68,8 @@ export default function Scanner() {
 
   const handleManual = (e) => {
     e.preventDefault()
-    const p = PARTICIPANTS.find(p => p.id === manualId.trim())
+    if (!manualId.trim()) return
+    const p = PARTICIPANTS.find(p => p.id === manualId.trim().toUpperCase())
     doScan(p?.id || null, 600)
     setManualId('')
     setShowManual(false)
@@ -152,17 +155,38 @@ export default function Scanner() {
 
             {/* Manual input */}
             {showManual && (
-              <form onSubmit={handleManual} className="flex gap-2">
-                <input
-                  value={manualId}
-                  onChange={e => setManualId(e.target.value)}
-                  placeholder={t('scanner.idle.manual_placeholder')}
-                  className="flex-1 pl-4 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
-                />
-                <button type="submit"
-                  className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors">
-                  {t('scanner.idle.manual_verify')}
-                </button>
+              <form onSubmit={handleManual} className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    ref={manualRef}
+                    value={manualId}
+                    onChange={e => setManualId(e.target.value.toUpperCase())}
+                    placeholder={t('scanner.idle.manual_placeholder')}
+                    className="flex-1 pl-4 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono tracking-widest"
+                  />
+                  <button type="submit"
+                    className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-colors">
+                    {t('scanner.idle.manual_verify')}
+                  </button>
+                </div>
+                {/* Aperçu en direct */}
+                {manualId.trim() && (() => {
+                  const preview = PARTICIPANTS.find(p => p.id === manualId.trim().toUpperCase())
+                  return preview ? (
+                    <div className="flex items-center gap-2.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-xl px-3 py-2">
+                      <span className="material-symbols-outlined text-emerald-500 text-lg shrink-0">check_circle</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{preview.prenom} {preview.nom}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{preview.delegation} · {preview.categorie}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2">
+                      <span className="material-symbols-outlined text-slate-400 text-lg shrink-0">help_outline</span>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{t('scanner.idle.manual_not_found')}</p>
+                    </div>
+                  )
+                })()}
               </form>
             )}
           </div>
@@ -236,7 +260,7 @@ export default function Scanner() {
               <p className="text-white/70 text-sm mt-1">{meta.sublabel}</p>
             </div>
             <p className="text-white/50 text-xs font-mono">
-              {new Date(result.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {new Date(result.timestamp).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
 
@@ -275,7 +299,7 @@ export default function Scanner() {
                   {[
                     { label: t('scanner.detail.zone_scanned'),  value: result.zone, icon: 'place' },
                     { label: t('scanner.detail.badge_id'),      value: result.participant.id, icon: 'badge', mono: true },
-                    { label: t('scanner.detail.scan_time'),     value: new Date(result.timestamp).toLocaleTimeString('fr-FR'), icon: 'schedule' },
+                    { label: t('scanner.detail.scan_time'),     value: new Date(result.timestamp).toLocaleTimeString(i18n.language), icon: 'schedule' },
                     { label: t('scanner.detail.zones_allowed'), value: result.participant.zones.join(' · '), icon: 'map' },
                   ].map(item => (
                     <div key={item.label} className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3.5 border border-slate-100 dark:border-slate-800">

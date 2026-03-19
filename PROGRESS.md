@@ -50,8 +50,8 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 |---|---|---|---|
 | 1.1 | Rendre l'interface admin responsive (sidebar drawer sur mobile) | — | ✅ |
 | 1.2 | Ajouter le multilingue : Français, Anglais, Espagnol | — | ✅ |
-| 1.3 | Compléter la saisie manuelle de badge (US-07) | US-07 | ⏳ |
-| 1.4 | Indicateur offline précis avec âge du cache | — | ⏳ |
+| 1.3 | Compléter la saisie manuelle de badge (US-07) | US-07 | ✅ |
+| 1.4 | Indicateur offline précis avec âge du cache | — | ✅ |
 
 ---
 
@@ -142,7 +142,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | US-04 | Résultat plein écran avec photo | Phase 3 | ❌ |
 | US-05 | Alerte visuelle + sonore + vibration | Phase 2 | ⏳ |
 | US-06 | Mode offline 4h | Phase 2 | ⏳ |
-| US-07 | Saisie manuelle badge | Phase 1 | ⏳ |
+| US-07 | Saisie manuelle badge | Phase 1 | ✅ |
 | US-08 | Notification push superviseur | Phase 3 | ❌ |
 | US-09 | Stats temps réel point de contrôle | Phase 3 | ❌ |
 | US-10 | Créer/gérer profils participants | Phase 3 | ⏳ |

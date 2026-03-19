@@ -1,12 +1,54 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { LOGS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
 
+const MAX_OFFLINE_MS = 4 * 60 * 60 * 1000 // 4h autonomie
+
 export default function AgentDashboard() {
   const { user } = useAuth()
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+
+  const [isOnline,  setIsOnline]  = useState(navigator.onLine)
+  const [lastSync,  setLastSync]  = useState(() => {
+    const stored = localStorage.getItem('cm14_last_sync')
+    return stored ? new Date(stored) : new Date()
+  })
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    // Enregistre la dernière synchro simulée au montage
+    const syncTime = new Date()
+    setLastSync(syncTime)
+    localStorage.setItem('cm14_last_sync', syncTime.toISOString())
+
+    const handleOnline  = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online',  handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // Mise à jour de l'horloge toutes les 30 secondes
+    const tick = setInterval(() => setNow(new Date()), 30_000)
+
+    return () => {
+      window.removeEventListener('online',  handleOnline)
+      window.removeEventListener('offline', handleOffline)
+      clearInterval(tick)
+    }
+  }, [])
+
+  // Labels dynamiques cache + offline
+  const syncDiffMin = Math.floor((now - lastSync) / 60_000)
+  const cacheLabel  = syncDiffMin < 1
+    ? t('agent_dashboard.status.cache_just_synced')
+    : t('agent_dashboard.status.cache_ago', { count: syncDiffMin })
+
+  const remainingMs = Math.max(0, MAX_OFFLINE_MS - (now - lastSync))
+  const offH = Math.floor(remainingMs / 3_600_000)
+  const offM = Math.floor((remainingMs % 3_600_000) / 60_000)
+  const offlineLabel = t('agent_dashboard.status.offline_remaining', { h: offH, m: String(offM).padStart(2, '0') })
 
   const myLogs     = LOGS.filter(l => l.agentId === user?.id).slice(0, 5)
   const myPC       = POINTS_CONTROLE.find(pc => pc.agentId === user?.id)
@@ -58,10 +100,32 @@ export default function AgentDashboard() {
       {/* Status grid */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { icon: 'wifi',         bg: 'bg-emerald-100 dark:bg-emerald-900/30', ic: 'text-emerald-600 dark:text-emerald-400', title: t('agent_dashboard.status.network_title'), val: t('agent_dashboard.status.network_val'), valc: 'text-emerald-600 dark:text-emerald-400' },
-          { icon: 'sync',         bg: 'bg-blue-100 dark:bg-blue-900/30',      ic: 'text-blue-600 dark:text-blue-400',      title: t('agent_dashboard.status.cache_title'),   val: t('agent_dashboard.status.cache_val'),    valc: 'text-blue-600 dark:text-blue-400' },
-          { icon: 'map',          bg: 'bg-purple-100 dark:bg-purple-900/30',  ic: 'text-purple-600 dark:text-purple-400',  title: t('agent_dashboard.status.zones_title'),  val: 'Z1 · Z2 · Z3',                           valc: 'text-purple-600 dark:text-purple-400' },
-          { icon: 'offline_bolt', bg: 'bg-amber-100 dark:bg-amber-900/30',    ic: 'text-amber-600 dark:text-amber-400',    title: t('agent_dashboard.status.offline_title'), val: t('agent_dashboard.status.offline_val'),  valc: 'text-amber-600 dark:text-amber-400' },
+          {
+            icon: isOnline ? 'wifi' : 'wifi_off',
+            bg:   isOnline ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30',
+            ic:   isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400',
+            title: t('agent_dashboard.status.network_title'),
+            val:  isOnline ? t('agent_dashboard.status.network_val') : t('agent_dashboard.status.network_offline'),
+            valc: isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400',
+          },
+          {
+            icon: 'sync', bg: 'bg-blue-100 dark:bg-blue-900/30', ic: 'text-blue-600 dark:text-blue-400',
+            title: t('agent_dashboard.status.cache_title'),
+            val:  cacheLabel,
+            valc: 'text-blue-600 dark:text-blue-400',
+          },
+          {
+            icon: 'map', bg: 'bg-purple-100 dark:bg-purple-900/30', ic: 'text-purple-600 dark:text-purple-400',
+            title: t('agent_dashboard.status.zones_title'),
+            val:  'Z1 · Z2 · Z3',
+            valc: 'text-purple-600 dark:text-purple-400',
+          },
+          {
+            icon: 'offline_bolt', bg: 'bg-amber-100 dark:bg-amber-900/30', ic: 'text-amber-600 dark:text-amber-400',
+            title: t('agent_dashboard.status.offline_title'),
+            val:  offlineLabel,
+            valc: remainingMs < 3_600_000 ? 'text-red-500 dark:text-red-400' : 'text-amber-600 dark:text-amber-400',
+          },
         ].map(s => (
           <div key={s.title} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-3">
             <div className={`${s.bg} p-2.5 rounded-xl`}>

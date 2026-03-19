@@ -71,6 +71,7 @@
       "btn_manual": "Manuel",
       "manual_placeholder": "ID badge (ex: P-001)",
       "manual_verify": "Vérifier",
+      "manual_not_found": "Identifiant inconnu dans le système",
       "scans_count": "{{count}} scans"
     },
     "scanning": {
@@ -121,11 +122,15 @@
     "status": {
       "network_title": "Réseau",
       "network_val": "En ligne",
+      "network_offline": "Hors ligne",
       "cache_title": "Cache",
       "cache_val": "Sync il y a 2min",
+      "cache_just_synced": "Synchronisé à l'instant",
+      "cache_ago": "Sync il y a {{count}} min",
       "zones_title": "Zones actives",
       "offline_title": "Mode hors ligne",
-      "offline_val": "4h disponibles"
+      "offline_val": "4h disponibles",
+      "offline_remaining": "{{h}}h {{m}}min restantes"
     },
     "recent_title": "Scans récents",
     "recent_empty": "Aucun scan pour cette session"
