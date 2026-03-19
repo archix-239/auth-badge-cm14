@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { LOGS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
+import { getBadgeStoreSize } from '../../utils/badgeStore'
 
 const MAX_OFFLINE_MS = 4 * 60 * 60 * 1000 // 4h autonomie
 
@@ -11,15 +12,17 @@ export default function AgentDashboard() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
 
-  const [isOnline,  setIsOnline]  = useState(navigator.onLine)
-  const [lastSync,  setLastSync]  = useState(() => {
+  const [isOnline,   setIsOnline]   = useState(navigator.onLine)
+  const [lastSync,   setLastSync]   = useState(() => {
     const stored = localStorage.getItem('cm14_last_sync')
     return stored ? new Date(stored) : new Date()
   })
-  const [now, setNow] = useState(new Date())
+  const [now,        setNow]        = useState(new Date())
+  const [storeSize,  setStoreSize]  = useState(0)
 
   useEffect(() => {
-    // Enregistre la dernière synchro simulée au montage
+    getBadgeStoreSize().then(setStoreSize)
+
     const syncTime = new Date()
     setLastSync(syncTime)
     localStorage.setItem('cm14_last_sync', syncTime.toISOString())
@@ -111,7 +114,7 @@ export default function AgentDashboard() {
           {
             icon: 'sync', bg: 'bg-blue-100 dark:bg-blue-900/30', ic: 'text-blue-600 dark:text-blue-400',
             title: t('agent_dashboard.status.cache_title'),
-            val:  cacheLabel,
+            val:  storeSize > 0 ? `${cacheLabel} · ${storeSize} badges` : cacheLabel,
             valc: 'text-blue-600 dark:text-blue-400',
           },
           {

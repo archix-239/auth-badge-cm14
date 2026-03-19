@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { PARTICIPANTS, getResultConfig, getCategoryColor } from '../../data/mockData'
+import { PARTICIPANTS, getCategoryColor } from '../../data/mockData'
 import { Html5Qrcode } from 'html5-qrcode'
 import { verifyBadge } from '../../utils/badgeCrypto'
 import { playScanFeedback } from '../../utils/scanFeedback'
+import { lookupBadge } from '../../utils/badgeStore'
 
 export default function Scanner() {
   const { user } = useAuth()
@@ -87,9 +88,10 @@ export default function Scanner() {
     setElapsed(0)
     timerRef.current = setInterval(() => setElapsed(e => e + 50), 50)
 
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(timerRef.current)
-      const participant = participantId ? PARTICIPANTS.find(p => p.id === participantId) : null
+      // Look up from encrypted IndexedDB store (offline-capable)
+      const participant = participantId ? await lookupBadge(participantId) : null
       let resultat = 'inconnu'
       if (participant) {
         if (participant.statut === 'révoqué' || participant.statut === 'suspendu') resultat = 'révoqué'
