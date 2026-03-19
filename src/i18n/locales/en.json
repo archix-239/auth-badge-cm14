@@ -187,7 +187,8 @@
       "inscription": "Registration & Badge",
       "history": "History",
       "users": "Users",
-      "supervision": "Supervision Console"
+      "supervision": "Supervision Console",
+      "zones": "Access Zones"
     },
     "critical_zone": "Critical zone",
     "btn_emergency": "Emergency revocation",
@@ -362,6 +363,50 @@
       "auth_rate": "Authorization rate",
       "security_alerts": "Security alerts",
       "active_terminals": "Active terminals"
+    }
+  },
+  "zones": {
+    "title": "Access Zones",
+    "system_label": "System configuration",
+    "subtitle": "Define access zones and clearance levels for the CM14 perimeter.",
+    "add_btn": "New zone",
+    "search_placeholder": "Search a zone...",
+    "not_found": "No zone found",
+    "level_1": "Public access",
+    "level_2": "Standard",
+    "level_3": "Delegates",
+    "level_4": "Restricted",
+    "level_5": "Ultra-restricted",
+    "kpi": {
+      "total": "Defined zones",
+      "participants": "Assigned participants",
+      "active": "Active zones"
+    },
+    "card": {
+      "participants": "participants",
+      "level": "Lvl.",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "btn": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "modal": {
+      "add_title": "Create a zone",
+      "edit_title": "Edit zone",
+      "field_id": "Identifier (e.g.: Z6)",
+      "field_name": "Zone name",
+      "field_desc": "Description",
+      "field_level": "Access level",
+      "field_status": "Zone active",
+      "btn_create": "Create zone",
+      "btn_save": "Save"
+    },
+    "delete": {
+      "title": "Delete this zone?",
+      "desc": "Zone {{id}} — {{name}} will be permanently deleted. Associated badges will need to be reconfigured.",
+      "btn": "Delete"
     }
   },
   "otp_recovery": {

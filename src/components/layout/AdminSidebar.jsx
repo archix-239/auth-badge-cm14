@@ -26,6 +26,7 @@ export default function AdminSidebar({ open, onClose }) {
     { to: '/admin/dashboard',    icon: 'dashboard',       label: t('admin_sidebar.nav.dashboard') },
     { to: '/admin/inscription',  icon: 'how_to_reg',      label: t('admin_sidebar.nav.inscription') },
     { to: '/admin/passages',     icon: 'history',         label: t('admin_sidebar.nav.history') },
+    { to: '/admin/zones',        icon: 'layers',          label: t('admin_sidebar.nav.zones') },
     { to: '/admin/utilisateurs', icon: 'manage_accounts', label: t('admin_sidebar.nav.users') },
     { to: '/admin/supervision',  icon: 'monitor_heart',   label: t('admin_sidebar.nav.supervision') },
   ]

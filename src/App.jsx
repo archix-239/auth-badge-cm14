@@ -14,6 +14,7 @@ import BadgeInscription from './pages/admin/BadgeInscription'
 import PassageHistory from './pages/admin/PassageHistory'
 import SupervisionConsole from './pages/admin/SupervisionConsole'
 import UserManagement from './pages/admin/UserManagement'
+import ZoneManagement from './pages/admin/ZoneManagement'
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth()
@@ -65,7 +66,8 @@ export default function App() {
         <Route path="dashboard"   element={<AdminDashboard />} />
         <Route path="inscription" element={<BadgeInscription />} />
         <Route path="passages"    element={<PassageHistory />} />
-        <Route path="supervision" element={<SupervisionConsole />} />
+        <Route path="supervision"  element={<SupervisionConsole />} />
+        <Route path="zones"        element={<ZoneManagement />} />
         <Route path="utilisateurs" element={<UserManagement />} />
       </Route>
 

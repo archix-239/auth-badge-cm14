@@ -187,7 +187,8 @@
       "inscription": "Inscripción y Credencial",
       "history": "Historial",
       "users": "Usuarios",
-      "supervision": "Consola de Supervisión"
+      "supervision": "Consola de Supervisión",
+      "zones": "Zonas de Acceso"
     },
     "critical_zone": "Zona crítica",
     "btn_emergency": "Revocación de emergencia",
@@ -362,6 +363,50 @@
       "auth_rate": "Tasa de autorización",
       "security_alerts": "Alertas de seguridad",
       "active_terminals": "Terminales activos"
+    }
+  },
+  "zones": {
+    "title": "Zonas de Acceso",
+    "system_label": "Configuración del sistema",
+    "subtitle": "Defina las zonas de acceso y los niveles de habilitación del perímetro CM14.",
+    "add_btn": "Nueva zona",
+    "search_placeholder": "Buscar una zona...",
+    "not_found": "Ninguna zona encontrada",
+    "level_1": "Acceso público",
+    "level_2": "Estándar",
+    "level_3": "Delegados",
+    "level_4": "Restringido",
+    "level_5": "Ultra-restringido",
+    "kpi": {
+      "total": "Zonas definidas",
+      "participants": "Participantes asignados",
+      "active": "Zonas activas"
+    },
+    "card": {
+      "participants": "participantes",
+      "level": "Niv.",
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "btn": {
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "modal": {
+      "add_title": "Crear una zona",
+      "edit_title": "Editar zona",
+      "field_id": "Identificador (ej: Z6)",
+      "field_name": "Nombre de zona",
+      "field_desc": "Descripción",
+      "field_level": "Nivel de acceso",
+      "field_status": "Zona activa",
+      "btn_create": "Crear zona",
+      "btn_save": "Guardar"
+    },
+    "delete": {
+      "title": "¿Eliminar esta zona?",
+      "desc": "La zona {{id}} — {{name}} será eliminada permanentemente. Las credenciales asociadas deberán reconfigurarse.",
+      "btn": "Eliminar"
     }
   },
   "otp_recovery": {

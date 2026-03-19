@@ -187,7 +187,8 @@
       "inscription": "Inscription & Badge",
       "history": "Historique",
       "users": "Utilisateurs",
-      "supervision": "Console Supervision"
+      "supervision": "Console Supervision",
+      "zones": "Zones d'accès"
     },
     "critical_zone": "Zone critique",
     "btn_emergency": "Révocation d'urgence",
@@ -362,6 +363,50 @@
       "auth_rate": "Taux d'autorisation",
       "security_alerts": "Alertes sécurité",
       "active_terminals": "Terminaux actifs"
+    }
+  },
+  "zones": {
+    "title": "Zones d'accès",
+    "system_label": "Configuration système",
+    "subtitle": "Définissez les zones d'accès et les niveaux d'habilitation du périmètre CM14.",
+    "add_btn": "Nouvelle zone",
+    "search_placeholder": "Rechercher une zone...",
+    "not_found": "Aucune zone trouvée",
+    "level_1": "Accès public",
+    "level_2": "Standard",
+    "level_3": "Délégués",
+    "level_4": "Restreint",
+    "level_5": "Ultra-restreint",
+    "kpi": {
+      "total": "Zones définies",
+      "participants": "Participants assignés",
+      "active": "Zones actives"
+    },
+    "card": {
+      "participants": "participants",
+      "level": "Niv.",
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "btn": {
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "modal": {
+      "add_title": "Créer une zone",
+      "edit_title": "Modifier la zone",
+      "field_id": "Identifiant (ex: Z6)",
+      "field_name": "Nom de la zone",
+      "field_desc": "Description",
+      "field_level": "Niveau d'accès",
+      "field_status": "Zone active",
+      "btn_create": "Créer la zone",
+      "btn_save": "Enregistrer"
+    },
+    "delete": {
+      "title": "Supprimer cette zone ?",
+      "desc": "La zone {{id}} — {{name}} sera supprimée définitivement. Les badges associés devront être reconfigurés.",
+      "btn": "Supprimer"
     }
   },
   "otp_recovery": {
