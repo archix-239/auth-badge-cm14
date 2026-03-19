@@ -63,7 +63,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 |---|---|---|---|
 | 2.1 | Vrai scan QR Code via caméra (`html5-qrcode`) | US-03 | ✅ |
 | 2.2 | Vrai TOTP 2FA (RFC 6238, librairie `otpauth`) | US-01 | ✅ |
-| 2.3 | Vérification ECDSA P-256 réelle (Web Crypto API) | US-03/04 | ⏳ |
+| 2.3 | Vérification ECDSA P-256 réelle (Web Crypto API) | US-03/04 | ✅ |
 | 2.4 | Alerte sonore + vibration au scan (Web Audio + Vibration API) | US-05 | ⏳ |
 | 2.5 | Mode offline 4h (Service Worker + IndexedDB + AES-256) | US-06 | ⏳ |
 | 2.6 | Scan NFC via plugin Capacitor (Android + iOS) | US-02 | ❌ Dépend de 4.1 |

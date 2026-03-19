@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { PARTICIPANTS, getResultConfig, getCategoryColor } from '../../data/mockData'
 import { Html5Qrcode } from 'html5-qrcode'
+import { verifyBadge } from '../../utils/badgeCrypto'
 
 export default function Scanner() {
   const { user } = useAuth()
@@ -49,7 +50,7 @@ export default function Scanner() {
           return { width: size, height: size }
         },
       },
-      (decodedText) => {
+      async (decodedText) => {
         // QR detected: stop scanner then process result
         const s = qrScannerRef.current
         qrScannerRef.current = null
@@ -58,7 +59,8 @@ export default function Scanner() {
         let participantId = null
         try {
           const payload = JSON.parse(decodedText)
-          participantId = payload.id ?? null
+          const { valid } = await verifyBadge(payload)
+          participantId = valid ? (payload.id ?? null) : null
         } catch {
           participantId = decodedText.trim() || null
         }

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
 import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
+import { signBadge } from '../../utils/badgeCrypto'
 
 const emptyForm = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: ['Z1'], dateExpiration: '' }
 
@@ -10,9 +11,23 @@ export default function BadgeInscription() {
   const [form, setForm]                 = useState(emptyForm)
   const [participants, setParticipants] = useState(PARTICIPANTS)
   const [generated, setGenerated]       = useState(null)
+  const [qrValue, setQrValue]           = useState('')
   const [search, setSearch]             = useState('')
   const [step, setStep]                 = useState('form')
   const [revoking, setRevoking]         = useState(null)
+
+  // Sign badge payload whenever a new badge is generated
+  useEffect(() => {
+    if (!generated) return
+    const payload = {
+      id: generated.id, nom: generated.nom, prenom: generated.prenom,
+      delegation: generated.delegation, categorie: generated.categorie,
+      zones: generated.zones, exp: generated.dateExpiration,
+    }
+    signBadge(payload).then(sig => {
+      setQrValue(JSON.stringify({ ...payload, sig }))
+    })
+  }, [generated])
 
   const handleChange = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -41,12 +56,6 @@ export default function BadgeInscription() {
     setRevoking(null)
   }
 
-  const qrPayload = (p) => JSON.stringify({
-    id: p.id, nom: p.nom, prenom: p.prenom,
-    delegation: p.delegation, categorie: p.categorie,
-    zones: p.zones, exp: p.dateExpiration,
-    sig: 'ECDSA-P256-MOCK'
-  })
 
   const filtered = participants.filter(p =>
     !search || `${p.prenom} ${p.nom} ${p.delegation}`.toLowerCase().includes(search.toLowerCase())
@@ -153,7 +162,7 @@ export default function BadgeInscription() {
                   <span className="text-xs font-bold uppercase tracking-widest">OMC CM14 — Yaoundé 2025</span>
                 </div>
                 <div className="bg-white dark:bg-slate-900 rounded-xl p-4 inline-block mb-4">
-                  <QRCodeSVG value={qrPayload(generated)} size={160} level="H" />
+                  <QRCodeSVG value={qrValue || '{}'} size={160} level="H" />
                 </div>
                 <h3 className="text-xl font-bold">{generated.prenom} {generated.nom}</h3>
                 <p className="text-slate-300 text-sm mt-1">{generated.delegation}</p>
