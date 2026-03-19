@@ -3,14 +3,14 @@ import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 
 const navItems = [
-  { to: '/admin/dashboard',    icon: 'dashboard',     label: 'Tableau de bord' },
-  { to: '/admin/inscription',  icon: 'how_to_reg',    label: 'Inscription & Badge' },
-  { to: '/admin/passages',     icon: 'history',       label: 'Historique' },
+  { to: '/admin/dashboard',    icon: 'dashboard',       label: 'Tableau de bord' },
+  { to: '/admin/inscription',  icon: 'how_to_reg',      label: 'Inscription & Badge' },
+  { to: '/admin/passages',     icon: 'history',         label: 'Historique' },
   { to: '/admin/utilisateurs', icon: 'manage_accounts', label: 'Utilisateurs' },
-  { to: '/admin/supervision',  icon: 'monitor_heart', label: 'Console Supervision' },
+  { to: '/admin/supervision',  icon: 'monitor_heart',   label: 'Console Supervision' },
 ]
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ open, onClose }) {
   const { user, logout } = useAuth()
   const { dark, toggle } = useTheme()
   const navigate = useNavigate()
@@ -18,22 +18,41 @@ export default function AdminSidebar() {
   const handleLogout = () => { logout(); navigate('/login') }
 
   return (
-    <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen sticky top-0 shrink-0">
-      {/* Brand */}
-      <div className="p-5 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
-        <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-sm shadow-primary/30">
-          <span className="material-symbols-outlined text-xl filled">shield_person</span>
+    <aside className={`
+      fixed inset-y-0 left-0 z-40 w-64
+      transform transition-transform duration-300 ease-in-out
+      ${open ? 'translate-x-0' : '-translate-x-full'}
+      lg:static lg:translate-x-0 lg:z-auto
+      bg-white dark:bg-slate-900
+      border-r border-slate-200 dark:border-slate-800
+      flex flex-col h-screen shrink-0
+    `}>
+
+      {/* Brand + bouton fermeture (visible uniquement sur mobile) */}
+      <div className="p-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-sm shadow-primary/30">
+            <span className="material-symbols-outlined text-xl filled">shield_person</span>
+          </div>
+          <div>
+            <h1 className="text-slate-900 dark:text-white text-sm font-bold leading-none">AUTH-BADGE CM14</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Administration OMC</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-slate-900 dark:text-white text-sm font-bold leading-none">AUTH-BADGE CM14</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Administration OMC</p>
-        </div>
+        <button
+          onClick={onClose}
+          className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label="Fermer le menu"
+        >
+          <span className="material-symbols-outlined text-xl">close</span>
+        </button>
       </div>
 
-      {/* Nav */}
+      {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map(item => (
           <NavLink key={item.to} to={item.to}
+            onClick={onClose}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm font-medium ${
                 isActive
@@ -51,7 +70,7 @@ export default function AdminSidebar() {
           </NavLink>
         ))}
 
-        {/* Danger zone */}
+        {/* Zone critique */}
         <div className="pt-4 pb-1 px-1">
           <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Zone critique</p>
         </div>
@@ -61,7 +80,7 @@ export default function AdminSidebar() {
         </button>
       </nav>
 
-      {/* Theme toggle */}
+      {/* Toggle dark mode */}
       <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
         <button onClick={toggle}
           className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -70,16 +89,16 @@ export default function AdminSidebar() {
             {dark ? 'Mode clair' : 'Mode sombre'}
           </div>
           <div className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors ${dark ? 'bg-primary' : 'bg-slate-200'}`}>
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${dark ? 'translate-x-5' : 'translate-x-1'}`}/>
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${dark ? 'translate-x-5' : 'translate-x-1'}`} />
           </div>
         </button>
       </div>
 
-      {/* User footer */}
+      {/* Utilisateur connecté */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 px-2 py-1.5">
           <div className="size-9 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary text-sm font-bold shrink-0">
-            {user?.name?.split(' ').map(n=>n[0]).join('').slice(0,2)}
+            {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.name}</p>
