@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { LOGS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
 import { getBadgeStoreSize } from '../../utils/badgeStore'
+import { api } from '../../utils/api'
+import { mapScanLog } from '../../utils/dataMappers'
+
+const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const MAX_OFFLINE_MS = 4 * 60 * 60 * 1000 // 4h autonomie
 
@@ -19,9 +23,17 @@ export default function AgentDashboard() {
   })
   const [now,        setNow]        = useState(new Date())
   const [storeSize,  setStoreSize]  = useState(0)
+  const [recentLogs, setRecentLogs] = useState([])
 
   useEffect(() => {
     getBadgeStoreSize().then(setStoreSize)
+    if (!IS_MOCK) {
+      api.get('/api/scans?limit=5')
+        .then(rows => setRecentLogs(rows.map(mapScanLog)))
+        .catch(() => setRecentLogs(LOGS.filter(l => l.agentId === user?.id).slice(0, 5)))
+    } else {
+      setRecentLogs(LOGS.filter(l => l.agentId === user?.id).slice(0, 5))
+    }
 
     const syncTime = new Date()
     setLastSync(syncTime)
@@ -53,7 +65,7 @@ export default function AgentDashboard() {
   const offM = Math.floor((remainingMs % 3_600_000) / 60_000)
   const offlineLabel = t('agent_dashboard.status.offline_remaining', { h: offH, m: String(offM).padStart(2, '0') })
 
-  const myLogs     = LOGS.filter(l => l.agentId === user?.id).slice(0, 5)
+  const myLogs     = recentLogs
   const myPC       = POINTS_CONTROLE.find(pc => pc.agentId === user?.id)
   const locale     = i18n.language === 'en' ? 'en-GB' : i18n.language === 'es' ? 'es-ES' : 'fr-FR'
   const today      = new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })

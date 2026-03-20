@@ -3,10 +3,12 @@ import * as OTPAuth from 'otpauth'
 import { USERS, PARTICIPANTS } from '../data/mockData'
 import { syncBadgeStore } from '../utils/badgeStore'
 import { api, setAccessToken, clearTokens } from '../utils/api'
+import { mapParticipant } from '../utils/dataMappers'
 
 const AuthContext = createContext(null)
 
-const IS_MOCK = !import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL === ''
+const IS_MOCK          = !import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL === ''
+const SESSION_TIMEOUT  = (parseInt(import.meta.env.VITE_SESSION_TIMEOUT_MIN) || 30) * 60 * 1000
 
 export function AuthProvider({ children }) {
   const [user,         setUser]         = useState(null)
@@ -36,7 +38,7 @@ export function AuthProvider({ children }) {
 
   const startInactivityTimer = useCallback(() => {
     if (sessionTimer) clearTimeout(sessionTimer)
-    const timer = setTimeout(() => logout(), 15 * 60 * 1000)
+    const timer = setTimeout(() => logout(), SESSION_TIMEOUT)
     setSessionTimer(timer)
   }, [sessionTimer])
 
@@ -62,7 +64,10 @@ export function AuthProvider({ children }) {
         setUser(data.user)
         setOtpAttempts(0)
         startInactivityTimer()
-        syncBadgeStore(PARTICIPANTS).catch(() => {})
+        // Sync les participants depuis l'API (pas depuis mockData)
+        api.get('/api/participants')
+          .then(rows => syncBadgeStore(rows.map(mapParticipant)))
+          .catch(() => syncBadgeStore(PARTICIPANTS))
         return { success: true, user: data.user }
       } catch (err) {
         if (err.offline) {

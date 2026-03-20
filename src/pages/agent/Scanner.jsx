@@ -6,6 +6,10 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { verifyBadge } from '../../utils/badgeCrypto'
 import { playScanFeedback } from '../../utils/scanFeedback'
 import { lookupBadge } from '../../utils/badgeStore'
+import { api } from '../../utils/api'
+import { mapParticipant } from '../../utils/dataMappers'
+
+const IS_MOCK = !import.meta.env.VITE_API_URL
 
 export default function Scanner() {
   const { user } = useAuth()
@@ -14,8 +18,9 @@ export default function Scanner() {
   const [result, setResult]         = useState(null)
   const [scanLog, setScanLog]       = useState([])
   const [elapsed, setElapsed]       = useState(0)
-  const [manualId, setManualId]     = useState('')
-  const [showManual, setShowManual] = useState(false)
+  const [manualId, setManualId]         = useState('')
+  const [showManual, setShowManual]     = useState(false)
+  const [manualPreview, setManualPreview] = useState(null) // participant trouvé pour la preview
   const [cameraError, setCameraError] = useState(null) // null | 'denied' | 'unavailable'
   const timerRef   = useRef(null)
   const manualRef  = useRef(null)
@@ -34,6 +39,26 @@ export default function Scanner() {
 
   // Manual input autofocus
   useEffect(() => { if (showManual && manualRef.current) manualRef.current.focus() }, [showManual])
+
+  // Preview async du participant saisi manuellement
+  useEffect(() => {
+    const id = manualId.trim().toUpperCase()
+    if (!id) { setManualPreview(null); return }
+    let cancelled = false
+    lookupBadge(id)
+      .then(p => {
+        if (cancelled) return
+        if (p) { setManualPreview(p); return }
+        if (!IS_MOCK) {
+          api.get(`/api/participants/${id}`)
+            .then(raw => { if (!cancelled) setManualPreview(mapParticipant(raw)) })
+            .catch(() => { if (!cancelled) setManualPreview(null) })
+        } else {
+          setManualPreview(null)
+        }
+      })
+    return () => { cancelled = true }
+  }, [manualId])
 
   // Real camera QR scanner lifecycle
   useEffect(() => {
@@ -90,8 +115,14 @@ export default function Scanner() {
 
     setTimeout(async () => {
       clearInterval(timerRef.current)
-      // Look up from encrypted IndexedDB store (offline-capable)
-      const participant = participantId ? await lookupBadge(participantId) : null
+      // 1. IndexedDB (offline-capable)
+      let participant = participantId ? await lookupBadge(participantId) : null
+      // 2. Fallback API si pas dans le cache (participant créé après la dernière sync)
+      if (!participant && participantId && !IS_MOCK) {
+        participant = await api.get(`/api/participants/${participantId}`)
+          .then(mapParticipant)
+          .catch(() => null)
+      }
       let resultat = 'inconnu'
       if (participant) {
         if (participant.statut === 'révoqué' || participant.statut === 'suspendu') resultat = 'révoqué'
@@ -100,6 +131,18 @@ export default function Scanner() {
       }
       const scanResult = { id: `S-${Date.now()}`, participant, resultat, zone: currentZone, timestamp: new Date(), agentId: user?.id }
       playScanFeedback(resultat)
+      // Persiste le scan dans le backend (best-effort, ne bloque pas l'UI)
+      if (!IS_MOCK) {
+        api.post('/api/scans', {
+          participant_id:    participant?.id    ?? null,
+          nom:               participant?.nom   ?? 'Inconnu',
+          delegation:        participant?.delegation ?? null,
+          categorie:         participant?.categorie  ?? null,
+          zone:              currentZone,
+          point_controle_id: null,
+          resultat,
+        }).catch(() => {})
+      }
       setResult(scanResult)
       setScanLog(prev => [scanResult, ...prev].slice(0, 20))
       setPhase('result')
@@ -120,8 +163,7 @@ export default function Scanner() {
   const handleManual = (e) => {
     e.preventDefault()
     if (!manualId.trim()) return
-    const p = PARTICIPANTS.find(p => p.id === manualId.trim().toUpperCase())
-    doScan(p?.id || null, 600)
+    doScan(manualId.trim().toUpperCase(), 600)
     setManualId('')
     setShowManual(false)
   }
@@ -231,14 +273,13 @@ export default function Scanner() {
                     {t('scanner.idle.manual_verify')}
                   </button>
                 </div>
-                {manualId.trim() && (() => {
-                  const preview = PARTICIPANTS.find(p => p.id === manualId.trim().toUpperCase())
-                  return preview ? (
+                {manualId.trim() && (
+                  manualPreview ? (
                     <div className="flex items-center gap-2.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-xl px-3 py-2">
                       <span className="material-symbols-outlined text-emerald-500 text-lg shrink-0">check_circle</span>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{preview.prenom} {preview.nom}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{preview.delegation} · {preview.categorie}</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{manualPreview.prenom} {manualPreview.nom}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{manualPreview.delegation} · {manualPreview.categorie}</p>
                       </div>
                     </div>
                   ) : (
@@ -247,7 +288,7 @@ export default function Scanner() {
                       <p className="text-xs text-slate-500 dark:text-slate-400">{t('scanner.idle.manual_not_found')}</p>
                     </div>
                   )
-                })()}
+                )}
               </form>
             )}
           </div>

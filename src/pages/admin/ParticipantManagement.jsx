@@ -1,15 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
+import { api } from '../../utils/api'
+import { mapParticipant } from '../../utils/dataMappers'
+
+const IS_MOCK = !import.meta.env.VITE_API_URL
 
 export default function ParticipantManagement() {
   const { t } = useTranslation()
-  const [participants, setParticipants] = useState(PARTICIPANTS)
+  const [participants, setParticipants] = useState([])
+  const [loading, setLoading]           = useState(true)
   const [search, setSearch]             = useState('')
   const [filterCat, setFilterCat]       = useState('')
   const [filterStatut, setFilterStatut] = useState('')
   const [selectedId, setSelectedId]     = useState(null)
-  const [modal, setModal]               = useState(null) // 'revoke' | 'delete'
+  const [modal, setModal]               = useState(null)
+
+  useEffect(() => {
+    if (IS_MOCK) {
+      setParticipants(PARTICIPANTS)
+      setLoading(false)
+      return
+    }
+    api.get('/api/participants')
+      .then(rows => setParticipants(rows.map(mapParticipant)))
+      .catch(() => setParticipants(PARTICIPANTS))
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = participants.filter(p => {
     const q = search.toLowerCase()
@@ -22,12 +39,18 @@ export default function ParticipantManagement() {
 
   const selected = selectedId ? participants.find(p => p.id === selectedId) ?? null : null
 
-  const handleRevoke = () => {
+  const handleRevoke = async () => {
+    if (!IS_MOCK) {
+      await api.patch(`/api/participants/${selectedId}`, { statut: 'révoqué' }).catch(() => {})
+    }
     setParticipants(prev => prev.map(p => p.id === selectedId ? { ...p, statut: 'révoqué' } : p))
     setModal('detail')
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    if (!IS_MOCK) {
+      await api.delete(`/api/participants/${selectedId}`).catch(() => {})
+    }
     setParticipants(prev => prev.filter(p => p.id !== selectedId))
     setSelectedId(null)
     setModal(null)
@@ -94,7 +117,11 @@ export default function ParticipantManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                {filtered.length === 0 ? (
+                {loading ? (
+                  <tr><td colSpan={6} className="text-center py-12">
+                    <span className="material-symbols-outlined text-3xl text-primary animate-spin">progress_activity</span>
+                  </td></tr>
+                ) : filtered.length === 0 ? (
                   <tr><td colSpan={6} className="text-center py-12 text-slate-400">{t('common.no_results')}</td></tr>
                 ) : filtered.map(p => (
                   <tr key={p.id}

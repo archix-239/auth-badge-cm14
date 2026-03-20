@@ -123,6 +123,22 @@ router.patch('/:id', requireAuth, requireRole('admin', 'supervisor'), async (req
   }
 })
 
+// ─── DELETE /api/participants/:id ─────────────────────────────────────────────
+router.delete('/:id', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
+  try {
+    const result = await query(
+      `DELETE FROM participants WHERE id = $1 RETURNING id`,
+      [req.params.id]
+    )
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Participant introuvable.' })
+    await publish('badge:deleted', { id: req.params.id })
+    res.json({ success: true, id: req.params.id })
+  } catch (err) {
+    console.error('[participants/delete]', err)
+    res.status(500).json({ error: 'Erreur serveur.' })
+  }
+})
+
 // ─── POST /api/participants/:id/photo ─────────────────────────────────────────
 router.post('/:id/photo', requireAuth, requireRole('admin', 'supervisor'),
   upload.single('photo'), async (req, res) => {

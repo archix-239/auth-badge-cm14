@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
 import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
 import { signBadge } from '../../utils/badgeCrypto'
+import { api } from '../../utils/api'
+import { mapParticipant } from '../../utils/dataMappers'
+
+const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const emptyForm = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: ['Z1'], dateExpiration: '' }
 
@@ -38,14 +42,35 @@ export default function BadgeInscription() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const newP = {
-      id: `P-${String(participants.length + 1).padStart(3, '0')}`,
-      ...form,
-      statut: 'actif',
-      dateExpiration: form.dateExpiration || '2025-03-28',
+    const id = `P-${String(participants.length + 1).padStart(3, '0')}`
+    const expiration = form.dateExpiration || '2025-03-28'
+
+    if (!IS_MOCK) {
+      try {
+        const created = await api.post('/api/participants', {
+          id,
+          nom:             form.nom,
+          prenom:          form.prenom,
+          delegation:      form.delegation,
+          categorie:       form.categorie,
+          zones:           form.zones,
+          statut:          'actif',
+          date_expiration: expiration,
+        })
+        const newP = mapParticipant(created)
+        setParticipants(prev => [newP, ...prev])
+        setGenerated(newP)
+        setStep('badge')
+        return
+      } catch (err) {
+        console.error('[inscription]', err)
+      }
     }
+
+    // Mode mock
+    const newP = { id, ...form, statut: 'actif', dateExpiration: expiration }
     setParticipants(prev => [newP, ...prev])
     setGenerated(newP)
     setStep('badge')
