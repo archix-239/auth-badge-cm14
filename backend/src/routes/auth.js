@@ -59,7 +59,21 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Code OTP invalide ou expiré.' })
     }
 
-    const publicUser = { id: user.id, role: user.role, name: user.name, zone: user.zone, title: user.title }
+    // Pour les agents : récupérer le checkpoint assigné (inclut zone_id)
+    let checkpoint = null
+    if (user.role === 'agent') {
+      const cpResult = await query(
+        `SELECT pc.id, pc.nom, pc.zone_id, z.nom AS zone_nom
+         FROM points_controle pc
+         LEFT JOIN zones z ON z.id = pc.zone_id
+         WHERE pc.agent_id = $1
+         LIMIT 1`,
+        [user.id]
+      )
+      checkpoint = cpResult.rows[0] ?? null
+    }
+
+    const publicUser = { id: user.id, role: user.role, name: user.name, zone: user.zone, title: user.title, checkpoint }
     const accessToken  = signAccessToken(publicUser)
     const refreshToken = await createRefreshToken(user.id)
 

@@ -197,7 +197,8 @@
       "history": "History",
       "users": "Users",
       "supervision": "Supervision Console",
-      "zones": "Access Zones"
+      "zones": "Access Zones",
+      "doors": "Doors & Entrances"
     },
     "critical_zone": "Critical zone",
     "btn_emergency": "Emergency revocation",
@@ -435,6 +436,7 @@
       "expiration": "Expiration"
     },
     "detail": {
+      "title": "Participant information",
       "hint": "Select a participant",
       "id": "Badge ID",
       "firstname": "First name",
@@ -469,5 +471,33 @@
       "code": "Code",
       "success": "Success"
     }
+  },
+  "doors": {
+    "title": "Door Management",
+    "subtitle": "Define the doors and entrances of the CM14 perimeter.",
+    "add_btn": "New door",
+    "col": {
+      "id": "ID",
+      "name": "Name",
+      "zone": "Zone",
+      "agent": "Assigned agent",
+      "status": "Status",
+      "scans": "Scans",
+      "actions": "Actions"
+    },
+    "modal": {
+      "add_title": "Create a door",
+      "edit_title": "Edit door",
+      "field_id": "Identifier (e.g. PC-05)",
+      "field_name": "Door name",
+      "field_zone": "Controlled zone",
+      "zone_none": "— No zone —"
+    },
+    "delete": {
+      "title": "Delete this door?",
+      "desc": "Door {{id}} — {{name}} will be permanently deleted.",
+      "btn": "Delete"
+    },
+    "not_found": "No doors defined"
   }
 }

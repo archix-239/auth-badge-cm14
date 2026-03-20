@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { POINTS_CONTROLE } from '../../data/mockData'
+import { api } from '../../utils/api'
+
+const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const MOCK_USERS = [
   { id: 'CM14-8842', name: 'Jean Dupont',        role: 'admin',      zone: 'QG Central — Niveau 4',         statut: 'EN LIGNE',   password: 'Admin@CM14!',  loginId: 'ADMIN-001' },
@@ -37,6 +41,7 @@ const ZONE_OPTS = ['all', 'Entrée Nord', 'Entrée Est', 'Accueil VIP', 'Salle P
 export default function UserManagement() {
   const { t, i18n } = useTranslation()
   const [users, setUsers]        = useState(MOCK_USERS)
+  const [doors, setDoors]        = useState([])
   const [search, setSearch]      = useState('')
   const [roleFilter, setRoleF]   = useState('all')
   const [statutFilter, setStatF] = useState('all')
@@ -47,6 +52,16 @@ export default function UserManagement() {
   const [form, setForm]          = useState(EMPTY_FORM)
   const [showPwd, setShowPwd]    = useState(false)
   const PER_PAGE = 8
+
+  useEffect(() => {
+    if (IS_MOCK) {
+      setDoors(POINTS_CONTROLE)
+      return
+    }
+    api.get('/api/terminals')
+      .then(rows => setDoors(rows))
+      .catch(() => setDoors(POINTS_CONTROLE))
+  }, [])
 
   const statutLabel = {
     'EN LIGNE':   t('common.status.online'),
@@ -284,7 +299,6 @@ export default function UserManagement() {
               {[
                 { label: t('users.modal.field_name'),     key: 'name',    type: 'text', placeholder: 'Ex: Alima Nkemba', icon: 'person' },
                 { label: t('users.modal.field_id'),       key: 'loginId', type: 'text', placeholder: 'Ex: AG-8824',      icon: 'badge'  },
-                { label: t('users.modal.field_zone'),     key: 'zone',    type: 'text', placeholder: 'Ex: Entrée Nord',  icon: 'place'  },
               ].map(f => (
                 <div key={f.key} className="space-y-1">
                   <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{f.label}</label>
@@ -296,6 +310,18 @@ export default function UserManagement() {
                   </div>
                 </div>
               ))}
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t('users.modal.field_zone')}</label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">door_front</span>
+                  <select value={form.zone} onChange={e => setForm(p => ({ ...p, zone: e.target.value }))}
+                    className="w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none">
+                    <option value="">-- Sélectionner une porte --</option>
+                    {doors.map(d => <option key={d.id} value={d.nom}>{d.nom}</option>)}
+                  </select>
+                </div>
+              </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t('users.modal.field_password')}</label>

@@ -150,6 +150,43 @@ Agent scanne → POST /api/scans → Redis publish("scan:new")
                                                     révocation)
 ```
 
+### Modèle : Zone → Porte → Agent
+
+Chaque **zone** représente un espace physique du site. Une zone est associée à une ou plusieurs **portes** (points de contrôle). Chaque **porte** peut avoir un **agent** assigné.
+
+```
+Zone (accès physique)
+ └── Porte / Point de contrôle (device de scan)
+       └── Agent (opérateur du terminal)
+```
+
+Quand un agent scanne un badge, le système détermine automatiquement la **zone contrôlée** à partir de la porte assignée à l'agent — pas besoin que l'agent saisisse la zone manuellement.
+
+**Exemple concret :**
+
+| Porte | Nom | Zone contrôlée | Agent assigné |
+|---|---|---|---|
+| PC-01 | Entrée Nord | Z1 — Accès général | AG-8824 (Alima Nkemba) |
+| PC-04 | Salle Plénière | Z2 — Salles de conférence | AG-8824 (Alima Nkemba) |
+| PC-VIP | Accueil VIP | Z5 — Zone VIP/Presse | AG-0031 (Bruno Essomba) |
+
+**Règle de vérification au scan :**
+
+```
+badge.zones.includes(porte.zone_id)
+   → true  : ACCÈS AUTORISÉ
+   → false : ZONE REFUSÉE
+```
+
+> Un observateur (`OBS`, zones = `[Z1]`) présenté à la porte `PC-04` (zone `Z2`) sera refusé. Le même badge présenté à `PC-01` (zone `Z1`) sera accepté.
+
+**Ajouter une zone à une porte :**
+1. Aller dans **Admin → Portes & Entrées**
+2. Créer ou modifier une porte
+3. Sélectionner la zone dans le menu déroulant "Zone contrôlée"
+
+---
+
 ### Un code, trois plateformes
 
 ```
@@ -201,10 +238,13 @@ authbadge-cm14/
     ├── context/
     │   ├── AuthContext.jsx             # Auth : API réelle ou mock selon VITE_API_URL
     │   └── ThemeContext.jsx            # Mode sombre / clair
+    ├── hooks/
+    │   └── useSocket.js                # Hook Socket.io authentifié (temps réel admin)
     ├── utils/
     │   ├── api.js                      # Client fetch (Bearer token, auto-refresh, offline)
     │   ├── badgeCrypto.js              # ECDSA P-256 : signature et vérification QR
     │   ├── badgeStore.js               # IndexedDB + AES-256-GCM (cache offline)
+    │   ├── dataMappers.js              # Normalise les réponses backend → format frontend
     │   └── scanFeedback.js             # Web Audio + Vibration API
     ├── data/
     │   └── mockData.js                 # Données simulées (utilisées en mode mock)
@@ -216,10 +256,13 @@ authbadge-cm14/
         │   ├── AgentHistory.jsx        # Historique de la session
         │   └── AgentProfile.jsx        # Profil et déconnexion
         └── admin/
-            ├── AdminDashboard.jsx      # KPIs + flux en direct
+            ├── AdminDashboard.jsx      # KPIs + flux en direct (Socket.io + API réelle)
             ├── BadgeInscription.jsx    # Inscription participant + QR signé ECDSA
             ├── PassageHistory.jsx      # Historique + export CSV
             ├── UserManagement.jsx      # Gestion des comptes agents
+            ├── ParticipantManagement.jsx # CRUD participants
+            ├── DoorManagement.jsx      # Gestion des portes et zones associées
+            ├── ZoneManagement.jsx      # Gestion des zones d'accès
             └── SupervisionConsole.jsx  # War Room : alertes, révocations, terminaux
 ```
 
@@ -251,7 +294,7 @@ authbadge-cm14/
 | PostgreSQL + pg | Base de données principale | 15.x |
 | Redis + ioredis | Sessions, Pub/Sub, heartbeat | 7.x |
 | jsonwebtoken | Access token (60 min) + refresh (7 j) | 9.x |
-| argon2 | Hachage des mots de passe | — |
+| bcryptjs | Hachage des mots de passe | — |
 | otpauth | Validation TOTP côté serveur | 9.x |
 | multer | Upload photos participants | 1.x |
 
@@ -261,7 +304,7 @@ authbadge-cm14/
 
 ### Sécurité
 - Authentification 2FA : identifiant + mot de passe + TOTP (RFC 6238, SHA-1, 30 s)
-- Déconnexion automatique après 15 minutes d'inactivité
+- Déconnexion automatique après inactivité (configurable via `VITE_SESSION_TIMEOUT_MIN`, défaut 30 min)
 - Blocage du compte après 5 tentatives échouées
 - JWT access token (60 min) avec rotation du refresh token (7 jours)
 - Révocation de session à distance (décommissionnement terminal)

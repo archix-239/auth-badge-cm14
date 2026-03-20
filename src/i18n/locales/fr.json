@@ -197,7 +197,8 @@
       "history": "Historique",
       "users": "Utilisateurs",
       "supervision": "Console Supervision",
-      "zones": "Zones d'accès"
+      "zones": "Zones d'accès",
+      "doors": "Portes & Entrées"
     },
     "critical_zone": "Zone critique",
     "btn_emergency": "Révocation d'urgence",
@@ -435,6 +436,7 @@
       "expiration": "Expiration"
     },
     "detail": {
+      "title": "Informations du participant",
       "hint": "Sélectionnez un participant",
       "id": "ID Badge",
       "firstname": "Prénom",
@@ -469,5 +471,33 @@
       "code": "Code",
       "success": "Succès"
     }
+  },
+  "doors": {
+    "title": "Gestion des Portes",
+    "subtitle": "Définissez les portes et entrées du périmètre CM14.",
+    "add_btn": "Nouvelle porte",
+    "col": {
+      "id": "ID",
+      "name": "Nom",
+      "zone": "Zone",
+      "agent": "Agent assigné",
+      "status": "Statut",
+      "scans": "Scans",
+      "actions": "Actions"
+    },
+    "modal": {
+      "add_title": "Créer une porte",
+      "edit_title": "Modifier la porte",
+      "field_id": "Identifiant (ex: PC-05)",
+      "field_name": "Nom de la porte",
+      "field_zone": "Zone contrôlée",
+      "zone_none": "— Aucune zone —"
+    },
+    "delete": {
+      "title": "Supprimer cette porte ?",
+      "desc": "La porte {{id}} — {{name}} sera supprimée définitivement.",
+      "btn": "Supprimer"
+    },
+    "not_found": "Aucune porte définie"
   }
 }

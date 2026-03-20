@@ -25,7 +25,10 @@ export default function Scanner() {
   const timerRef   = useRef(null)
   const manualRef  = useRef(null)
   const qrScannerRef = useRef(null)
-  const currentZone = 'Entrée Nord — Salle Plénière'
+  // Zone courante = zone du checkpoint assigné à l'agent (via login)
+  const checkpoint   = user?.checkpoint ?? null
+  const currentZoneId = checkpoint?.zone_id ?? null
+  const currentZone   = checkpoint?.nom ?? user?.zone ?? 'Zone inconnue'
 
   const RESULT_META = {
     'autorisé':     { bg: 'bg-emerald-500', glow: 'shadow-emerald-500/40', ring: 'ring-emerald-400', label: t('scanner.result.authorized'),   sublabel: t('scanner.result.sub_authorized'),  icon: 'check_circle' },
@@ -125,9 +128,13 @@ export default function Scanner() {
       }
       let resultat = 'inconnu'
       if (participant) {
-        if (participant.statut === 'révoqué' || participant.statut === 'suspendu') resultat = 'révoqué'
-        else if (!participant.zones.includes('Z2')) resultat = 'zone-refusée'
-        else resultat = 'autorisé'
+        if (participant.statut === 'révoqué' || participant.statut === 'suspendu') {
+          resultat = 'révoqué'
+        } else if (currentZoneId && !participant.zones.includes(currentZoneId)) {
+          resultat = 'zone-refusée'
+        } else {
+          resultat = 'autorisé'
+        }
       }
       const scanResult = { id: `S-${Date.now()}`, participant, resultat, zone: currentZone, timestamp: new Date(), agentId: user?.id }
       playScanFeedback(resultat)

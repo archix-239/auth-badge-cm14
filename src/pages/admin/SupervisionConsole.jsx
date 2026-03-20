@@ -1,31 +1,82 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LOGS, PARTICIPANTS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
+import { api } from '../../utils/api'
+import { mapScanLog } from '../../utils/dataMappers'
+import { useSocket } from '../../hooks/useSocket'
+
+const IS_MOCK = !import.meta.env.VITE_API_URL
 
 export default function SupervisionConsole() {
   const { t, i18n } = useTranslation()
-  const [liveEvents, setLiveEvents] = useState(LOGS.slice(0, 8))
-  const [alertActive, setAlertActive] = useState(false)
-  const [revokeTarget, setRevokeTarget] = useState('')
-  const [now, setNow] = useState(new Date())
+  const [liveEvents,    setLiveEvents]    = useState([])
+  const [terminals,     setTerminals]     = useState([])
+  const [revokedList,   setRevokedList]   = useState([])
+  const [alertActive,   setAlertActive]   = useState(false)
+  const [revokeTarget,  setRevokeTarget]  = useState('')
+  const [now,           setNow]           = useState(new Date())
 
+  // ── Horloge ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 1000)
-    const feed = setInterval(() => {
-      const random = LOGS[Math.floor(Math.random() * LOGS.length)]
-      setLiveEvents(prev => [{ ...random, id: `L-LIVE-${Date.now()}`, timestamp: new Date() }, ...prev].slice(0, 25))
-    }, 7000)
-    return () => { clearInterval(tick); clearInterval(feed) }
+    return () => clearInterval(tick)
   }, [])
 
-  const alertCount = liveEvents.filter(e => ['révoqué','inconnu'].includes(e.resultat)).length
-  const authRate   = Math.round(liveEvents.filter(e => e.resultat === 'autorisé').length / Math.max(1, liveEvents.length) * 100)
+  // ── Chargement initial ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (IS_MOCK) {
+      setLiveEvents(LOGS.slice(0, 25))
+      setTerminals(POINTS_CONTROLE)
+      setRevokedList(PARTICIPANTS.filter(p => p.statut !== 'actif'))
+      return
+    }
+    api.get('/api/scans?limit=50')
+      .then(rows => setLiveEvents(rows.map(mapScanLog)))
+      .catch(() => setLiveEvents(LOGS.slice(0, 25)))
+
+    api.get('/api/terminals')
+      .then(rows => setTerminals(rows))
+      .catch(() => setTerminals(POINTS_CONTROLE))
+
+    api.get('/api/participants?statut=révoqué,suspendu')
+      .then(rows => setRevokedList(rows))
+      .catch(() => setRevokedList(PARTICIPANTS.filter(p => p.statut !== 'actif')))
+  }, [])
+
+  // ── Socket.io — événements temps réel ─────────────────────────────────────
+  const { connected } = useSocket({
+    'scan:new': (data) => {
+      setLiveEvents(prev => [mapScanLog(data), ...prev].slice(0, 50))
+    },
+    'badge:revoked': (data) => {
+      setRevokedList(prev => {
+        const exists = prev.find(p => p.id === data.id)
+        return exists ? prev : [{ id: data.id, nom: data.nom, prenom: data.prenom, statut: 'révoqué', delegation: '—' }, ...prev]
+      })
+    },
+    'alert:broadcast': () => {
+      setAlertActive(true)
+    },
+  })
+
+  // ── Révocation rapide ──────────────────────────────────────────────────────
+  const handleQuickRevoke = async () => {
+    if (!revokeTarget.trim()) return
+    if (!IS_MOCK) {
+      await api.patch(`/api/participants/${revokeTarget.trim()}`, { statut: 'révoqué' }).catch(() => {})
+    }
+    setRevokeTarget('')
+  }
+
+  const alertCount     = liveEvents.filter(e => ['révoqué','inconnu'].includes(e.resultat)).length
+  const authRate       = Math.round(liveEvents.filter(e => e.resultat === 'autorisé').length / Math.max(1, liveEvents.length) * 100)
+  const activeTerms    = terminals.filter(p => p.statut === 'actif').length
 
   const kpis = [
-    { key: 'live_scans',       value: liveEvents.length,  icon: 'qr_code_scanner', color: 'text-primary dark:text-blue-400',       bg: 'bg-primary/10 dark:bg-primary/20',       border: 'border-primary/20 dark:border-primary/30' },
-    { key: 'auth_rate',        value: `${authRate}%`,     icon: 'verified',        color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20',   border: 'border-emerald-200 dark:border-emerald-800' },
-    { key: 'security_alerts',  value: alertCount,         icon: 'warning',         color: alertCount > 0 ? 'text-red-500 stat-live' : 'text-slate-400', bg: alertCount > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-slate-50 dark:bg-slate-800', border: alertCount > 0 ? 'border-red-200 dark:border-red-800' : 'border-slate-200 dark:border-slate-700' },
-    { key: 'active_terminals', value: POINTS_CONTROLE.filter(p => p.statut === 'actif').length, icon: 'devices', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20', border: 'border-purple-200 dark:border-purple-800' },
+    { key: 'live_scans',       value: liveEvents.length, icon: 'qr_code_scanner', color: 'text-primary dark:text-blue-400',       bg: 'bg-primary/10 dark:bg-primary/20',       border: 'border-primary/20 dark:border-primary/30' },
+    { key: 'auth_rate',        value: `${authRate}%`,    icon: 'verified',        color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20',   border: 'border-emerald-200 dark:border-emerald-800' },
+    { key: 'security_alerts',  value: alertCount,        icon: 'warning',         color: alertCount > 0 ? 'text-red-500' : 'text-slate-400', bg: alertCount > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-slate-50 dark:bg-slate-800', border: alertCount > 0 ? 'border-red-200 dark:border-red-800' : 'border-slate-200 dark:border-slate-700' },
+    { key: 'active_terminals', value: activeTerms,       icon: 'devices',         color: 'text-purple-600 dark:text-purple-400',  bg: 'bg-purple-50 dark:bg-purple-900/20',     border: 'border-purple-200 dark:border-purple-800' },
   ]
 
   return (
@@ -43,9 +94,15 @@ export default function SupervisionConsole() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-full">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{t('supervision.system_active')}</span>
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${
+            connected || IS_MOCK
+              ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${connected || IS_MOCK ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
+            <span className={`text-xs font-semibold ${connected || IS_MOCK ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
+              {connected || IS_MOCK ? t('supervision.system_active') : 'Reconnexion...'}
+            </span>
           </div>
           <span className="text-sm font-mono text-slate-400 dark:text-slate-500 tabular-nums">
             {now.toLocaleTimeString(i18n.language)}
@@ -131,7 +188,7 @@ export default function SupervisionConsole() {
                 <h3 className="font-bold text-slate-800 dark:text-white text-sm">{t('supervision.checkpoints_title')}</h3>
               </div>
               <ul className="divide-y divide-slate-50 dark:divide-slate-800">
-                {POINTS_CONTROLE.map(pc => (
+                {terminals.map(pc => (
                   <li key={pc.id} className="flex items-center justify-between px-5 py-3">
                     <div className="flex items-center gap-2.5">
                       <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
@@ -171,7 +228,7 @@ export default function SupervisionConsole() {
                   <input value={revokeTarget} onChange={e => setRevokeTarget(e.target.value)}
                     placeholder={t('supervision.revoke_placeholder')}
                     className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 font-mono"/>
-                  <button onClick={() => { if (revokeTarget) { setRevokeTarget('') } }}
+                  <button onClick={handleQuickRevoke}
                     className="px-3 py-2 bg-red-500 hover:bg-red-600 rounded-xl text-white text-xs font-bold transition-colors">
                     {t('supervision.revoke_btn')}
                   </button>
@@ -196,7 +253,7 @@ export default function SupervisionConsole() {
                 <h3 className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">{t('supervision.revoked_title')}</h3>
               </div>
               <ul className="divide-y divide-slate-50 dark:divide-slate-800">
-                {PARTICIPANTS.filter(p => p.statut !== 'actif').map(p => (
+                {revokedList.map(p => (
                   <li key={p.id} className="flex items-center gap-2 px-5 py-3">
                     <span className="material-symbols-outlined text-red-400 text-base shrink-0">block</span>
                     <div className="flex-1 min-w-0">

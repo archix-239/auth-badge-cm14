@@ -197,7 +197,8 @@
       "history": "Historial",
       "users": "Usuarios",
       "supervision": "Consola de Supervisión",
-      "zones": "Zonas de Acceso"
+      "zones": "Zonas de Acceso",
+      "doors": "Puertas y Entradas"
     },
     "critical_zone": "Zona crítica",
     "btn_emergency": "Revocación de emergencia",
@@ -435,6 +436,7 @@
       "expiration": "Vencimiento"
     },
     "detail": {
+      "title": "Información del participante",
       "hint": "Seleccione un participante",
       "id": "ID Badge",
       "firstname": "Nombre",
@@ -469,5 +471,33 @@
       "code": "Código",
       "success": "Éxito"
     }
+  },
+  "doors": {
+    "title": "Gestión de Puertas",
+    "subtitle": "Defina las puertas y entradas del perímetro CM14.",
+    "add_btn": "Nueva puerta",
+    "col": {
+      "id": "ID",
+      "name": "Nombre",
+      "zone": "Zona",
+      "agent": "Agente asignado",
+      "status": "Estado",
+      "scans": "Escaneos",
+      "actions": "Acciones"
+    },
+    "modal": {
+      "add_title": "Crear una puerta",
+      "edit_title": "Editar puerta",
+      "field_id": "Identificador (ej: PC-05)",
+      "field_name": "Nombre de la puerta",
+      "field_zone": "Zona controlada",
+      "zone_none": "— Sin zona —"
+    },
+    "delete": {
+      "title": "¿Eliminar esta puerta?",
+      "desc": "La puerta {{id}} — {{name}} será eliminada permanentemente.",
+      "btn": "Eliminar"
+    },
+    "not_found": "No hay puertas definidas"
   }
 }

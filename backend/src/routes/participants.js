@@ -75,11 +75,20 @@ router.get('/:id', requireAuth, async (req, res) => {
 
 // ─── POST /api/participants ───────────────────────────────────────────────────
 router.post('/', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
-  const { id, nom, prenom, delegation, categorie, zones, statut, date_expiration } = req.body
-  if (!id || !nom || !prenom || !delegation || !categorie || !zones || !date_expiration) {
+  let { id, nom, prenom, delegation, categorie, zones, statut, date_expiration } = req.body
+  if (!nom || !prenom || !delegation || !categorie || !zones || !date_expiration) {
     return res.status(400).json({ error: 'Champs obligatoires manquants.' })
   }
   try {
+    // Auto-generate ID if not provided
+    if (!id) {
+      const maxRes = await query(
+        `SELECT MAX(CAST(REGEXP_REPLACE(id, '^P-', '') AS INTEGER)) AS max_num
+         FROM participants WHERE id ~ '^P-[0-9]+$'`
+      )
+      const maxNum = maxRes.rows[0].max_num ?? 0
+      id = `P-${String(maxNum + 1).padStart(3, '0')}`
+    }
     const result = await query(
       `INSERT INTO participants (id, nom, prenom, delegation, categorie, zones, statut, date_expiration)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,

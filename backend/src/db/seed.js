@@ -25,11 +25,11 @@ const USERS_PLAIN = [
 
 // ─── Points de contrôle ───────────────────────────────────────────────────────
 const POINTS_CONTROLE = [
-  { id: 'PC-01',  nom: 'Entrée Nord',    agent_id: 'AG-8824',  statut: 'actif',   scans: 47 },
-  { id: 'PC-02',  nom: 'Entrée Est',     agent_id: 'AG-0031',  statut: 'actif',   scans: 31 },
-  { id: 'PC-03',  nom: 'Entrée Sud',     agent_id: null,       statut: 'alerte',  scans: 12 },
-  { id: 'PC-04',  nom: 'Salle Plénière', agent_id: 'AG-8824',  statut: 'actif',   scans: 28 },
-  { id: 'PC-VIP', nom: 'Accueil VIP',    agent_id: 'AG-0031',  statut: 'actif',   scans: 9  },
+  { id: 'PC-01',  nom: 'Entrée Nord',    agent_id: 'AG-8824',  statut: 'actif',   scans: 47, zone_id: 'Z1' },
+  { id: 'PC-02',  nom: 'Entrée Est',     agent_id: 'AG-0031',  statut: 'actif',   scans: 31, zone_id: 'Z1' },
+  { id: 'PC-03',  nom: 'Entrée Sud',     agent_id: null,       statut: 'alerte',  scans: 12, zone_id: 'Z1' },
+  { id: 'PC-04',  nom: 'Salle Plénière', agent_id: 'AG-8824',  statut: 'actif',   scans: 28, zone_id: 'Z2' },
+  { id: 'PC-VIP', nom: 'Accueil VIP',    agent_id: 'AG-0031',  statut: 'actif',   scans: 9,  zone_id: 'Z5' },
 ]
 
 // ─── Participants ─────────────────────────────────────────────────────────────
@@ -77,10 +77,10 @@ try {
   // Points de contrôle
   for (const pc of POINTS_CONTROLE) {
     await client.query(
-      `INSERT INTO points_controle (id, nom, agent_id, statut, scans)
-       VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (id) DO NOTHING`,
-      [pc.id, pc.nom, pc.agent_id, pc.statut, pc.scans]
+      `INSERT INTO points_controle (id, nom, agent_id, statut, scans, zone_id)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (id) DO UPDATE SET zone_id = EXCLUDED.zone_id`,
+      [pc.id, pc.nom, pc.agent_id, pc.statut, pc.scans, pc.zone_id ?? null]
     )
   }
   console.log('[seed] Points de contrôle insérés.')

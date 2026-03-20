@@ -82,6 +82,9 @@ CREATE TABLE IF NOT EXISTS alerts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- ─── Migration : zone_id sur points_controle ──────────────────────────────────
+ALTER TABLE points_controle ADD COLUMN IF NOT EXISTS zone_id VARCHAR(10) REFERENCES zones(id) ON DELETE SET NULL;
+
 -- ─── Index pour les performances ──────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_scan_logs_timestamp       ON scan_logs (timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_scan_logs_agent_id        ON scan_logs (agent_id);

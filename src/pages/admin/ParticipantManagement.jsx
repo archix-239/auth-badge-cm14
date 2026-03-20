@@ -158,30 +158,43 @@ export default function ParticipantManagement() {
 
       {/* ── Modale détail ── */}
       {modal === 'detail' && selected && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 sm:p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md flex flex-col max-h-[92dvh] sm:max-h-[88vh]">
+        <div
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end sm:items-center justify-center z-50 sm:p-4"
+          onClick={e => { if (e.target === e.currentTarget) { setSelectedId(null); setModal(null) } }}
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full sm:max-w-md flex flex-col max-h-[92dvh] sm:max-h-[88vh]">
+
+            {/* Drag handle — mobile only */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden shrink-0">
+              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+            </div>
 
             {/* En-tête fixe */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-t-2xl p-4 sm:p-6 text-white shrink-0">
-              <div className="flex items-start justify-between mb-3 sm:mb-4">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/20 flex items-center justify-center text-lg sm:text-xl font-bold">
-                  {selected.prenom[0]}{selected.nom[0]}
-                </div>
+            <div className="px-6 pt-4 sm:pt-6 pb-4 shrink-0">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('participants.detail.title')}</h3>
                 <button onClick={() => { setSelectedId(null); setModal(null) }}
-                  className="text-white/60 hover:text-white transition-colors p-1">
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-              <h3 className="font-bold text-lg sm:text-xl leading-tight">{selected.prenom} {selected.nom}</h3>
-              <p className="text-slate-300 text-sm mt-1">{selected.delegation}</p>
-              <div className="flex items-center gap-2 mt-2 sm:mt-3">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded ${getCategoryColor(selected.categorie)}`}>{selected.categorie}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatutColor(selected.statut)}`}>{selected.statut}</span>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-lg font-bold text-primary shrink-0">
+                  {selected.prenom[0]}{selected.nom[0]}
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white">{selected.prenom} {selected.nom}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{selected.delegation}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${getCategoryColor(selected.categorie)}`}>{selected.categorie}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatutColor(selected.statut)}`}>{selected.statut}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Informations scrollables */}
-            <div className="px-4 sm:px-6 py-2 sm:py-4 overflow-y-auto flex-1">
+            <div className="px-4 sm:px-6 py-2 overflow-y-auto flex-1 border-t border-slate-100 dark:border-slate-800">
               {[
                 { label: t('participants.detail.id'),         value: selected.id,            mono: true },
                 { label: t('participants.detail.firstname'),  value: selected.prenom },
@@ -215,7 +228,7 @@ export default function ParticipantManagement() {
             </div>
 
             {/* Actions fixées en bas */}
-            <div className="px-4 sm:px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
+            <div className="px-4 sm:px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
               {selected.statut === 'actif' && (
                 <button onClick={() => setModal('revoke')}
                   className="flex-1 flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg py-3 sm:py-2.5 text-sm font-semibold hover:bg-amber-100 transition-colors">

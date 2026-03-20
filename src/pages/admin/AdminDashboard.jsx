@@ -1,6 +1,12 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LOGS, PARTICIPANTS, POINTS_CONTROLE, getResultConfig, timeAgo, getCategoryColor } from '../../data/mockData'
+import { api } from '../../utils/api'
+import { mapParticipant, mapScanLog } from '../../utils/dataMappers'
+import { useSocket } from '../../hooks/useSocket'
+
+const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const KPI = ({ label, value, sub, color, icon }) => (
   <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4">
@@ -18,12 +24,45 @@ const KPI = ({ label, value, sub, color, icon }) => (
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const [logs,         setLogs]         = useState([])
+  const [participants, setParticipants] = useState([])
+  const [terminals,    setTerminals]    = useState([])
 
-  const total      = LOGS.length
-  const autorises  = LOGS.filter(l => l.resultat === 'autorisé').length
-  const alertes    = LOGS.filter(l => ['révoqué','inconnu'].includes(l.resultat)).length
-  const actifs     = PARTICIPANTS.filter(p => p.statut === 'actif').length
-  const recentLogs = LOGS.slice(0, 8)
+  useEffect(() => {
+    if (IS_MOCK) {
+      setLogs(LOGS)
+      setParticipants(PARTICIPANTS)
+      setTerminals(POINTS_CONTROLE)
+      return
+    }
+    api.get('/api/scans?limit=100')
+      .then(rows => setLogs(rows.map(mapScanLog)))
+      .catch(() => setLogs(LOGS))
+
+    api.get('/api/participants')
+      .then(rows => setParticipants(rows.map(mapParticipant)))
+      .catch(() => setParticipants(PARTICIPANTS))
+
+    api.get('/api/terminals')
+      .then(rows => setTerminals(rows))
+      .catch(() => setTerminals(POINTS_CONTROLE))
+  }, [])
+
+  // Nouveaux scans en temps réel
+  useSocket({
+    'scan:new': (data) => {
+      setLogs(prev => [mapScanLog(data), ...prev].slice(0, 100))
+    },
+    'badge:revoked': (data) => {
+      setParticipants(prev => prev.map(p => p.id === data.id ? { ...p, statut: 'révoqué' } : p))
+    },
+  })
+
+  const total      = logs.length
+  const autorises  = logs.filter(l => l.resultat === 'autorisé').length
+  const alertes    = logs.filter(l => ['révoqué','inconnu'].includes(l.resultat)).length
+  const actifs     = participants.filter(p => p.statut === 'actif').length
+  const recentLogs = logs.slice(0, 8)
 
   return (
     <div className="p-4 md:p-8 space-y-6 bg-slate-50 dark:bg-bg-dark min-h-screen">
@@ -45,7 +84,7 @@ export default function AdminDashboard() {
         <KPI label={t('admin_dashboard.kpi.scans')}      value={total}     icon="qr_code_scanner" color="bg-primary"      sub={t('admin_dashboard.kpi.scans_sub')} />
         <KPI label={t('admin_dashboard.kpi.authorized')} value={autorises} icon="check_circle"    color="bg-emerald-500"  sub={t('admin_dashboard.kpi.authorized_sub', { value: Math.round(autorises/total*100) })} />
         <KPI label={t('admin_dashboard.kpi.alerts')}     value={alertes}   icon="warning"         color="bg-red-500"      sub={t('admin_dashboard.kpi.alerts_sub')} />
-        <KPI label={t('admin_dashboard.kpi.badges')}     value={actifs}    icon="badge"           color="bg-blue-500"     sub={t('admin_dashboard.kpi.badges_sub', { total: PARTICIPANTS.length })} />
+        <KPI label={t('admin_dashboard.kpi.badges')}     value={actifs}    icon="badge"           color="bg-blue-500"     sub={t('admin_dashboard.kpi.badges_sub', { total: participants.length })} />
       </div>
 
       {/* Points de contrôle */}
@@ -57,7 +96,7 @@ export default function AdminDashboard() {
           </button>
         </div>
         <div className="divide-y divide-slate-50 dark:divide-slate-800">
-          {POINTS_CONTROLE.map(pc => (
+          {terminals.map(pc => (
             <div key={pc.id} className="flex items-center justify-between px-6 py-3.5">
               <div className="flex items-center gap-3">
                 <div className={`w-2.5 h-2.5 rounded-full ${
@@ -127,7 +166,7 @@ export default function AdminDashboard() {
             </button>
           </div>
           <ul className="divide-y divide-slate-50 dark:divide-slate-800 max-h-80 overflow-y-auto">
-            {PARTICIPANTS.map(p => (
+            {participants.slice(0, 15).map(p => (
               <li key={p.id} className="flex items-center gap-3 px-6 py-3">
                 <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
                   {p.prenom.charAt(0)}{p.nom.charAt(0)}

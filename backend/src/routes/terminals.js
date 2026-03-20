@@ -10,9 +10,11 @@ const router = Router()
 router.get('/', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const result = await query(
-      `SELECT pc.id, pc.nom, pc.agent_id, u.name AS agent_name, pc.statut, pc.scans, pc.last_seen
+      `SELECT pc.id, pc.nom, pc.agent_id, u.name AS agent_name, pc.statut, pc.scans, pc.last_seen,
+              pc.zone_id, z.nom AS zone_nom
        FROM points_controle pc
        LEFT JOIN users u ON u.id = pc.agent_id
+       LEFT JOIN zones z ON z.id = pc.zone_id
        ORDER BY pc.id`
     )
 
@@ -84,16 +86,52 @@ router.post('/:id/decommission', requireAuth, requireRole('admin', 'supervisor')
   }
 })
 
+// ─── POST /api/terminals ──────────────────────────────────────────────────────
+router.post('/', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
+  const { id, nom, zone_id } = req.body
+  if (!id || !nom) {
+    return res.status(400).json({ error: 'Les champs id et nom sont obligatoires.' })
+  }
+  try {
+    const result = await query(
+      `INSERT INTO points_controle (id, nom, zone_id) VALUES ($1, $2, $3) RETURNING *`,
+      [id, nom, zone_id ?? null]
+    )
+    res.status(201).json(result.rows[0])
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'ID déjà existant.' })
+    console.error('[terminals/create]', err)
+    res.status(500).json({ error: 'Erreur serveur.' })
+  }
+})
+
+// ─── DELETE /api/terminals/:id ────────────────────────────────────────────────
+router.delete('/:id', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
+  try {
+    const result = await query(
+      `DELETE FROM points_controle WHERE id = $1 RETURNING id`,
+      [req.params.id]
+    )
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Terminal introuvable.' })
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[terminals/delete]', err)
+    res.status(500).json({ error: 'Erreur serveur.' })
+  }
+})
+
 // ─── PATCH /api/terminals/:id ─────────────────────────────────────────────────
 router.patch('/:id', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
-  const { statut, agent_id } = req.body
+  const { statut, agent_id, zone_id, nom } = req.body
   try {
     const result = await query(
       `UPDATE points_controle SET
          statut   = COALESCE($1, statut),
-         agent_id = COALESCE($2, agent_id)
-       WHERE id = $3 RETURNING *`,
-      [statut || null, agent_id || null, req.params.id]
+         agent_id = COALESCE($2, agent_id),
+         zone_id  = COALESCE($3, zone_id),
+         nom      = COALESCE($4, nom)
+       WHERE id = $5 RETURNING *`,
+      [statut || null, agent_id || null, zone_id || null, nom || null, req.params.id]
     )
     if (result.rowCount === 0) return res.status(404).json({ error: 'Terminal introuvable.' })
     res.json(result.rows[0])

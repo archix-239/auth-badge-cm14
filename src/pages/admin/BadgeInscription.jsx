@@ -50,7 +50,6 @@ export default function BadgeInscription() {
     if (!IS_MOCK) {
       try {
         const created = await api.post('/api/participants', {
-          id,
           nom:             form.nom,
           prenom:          form.prenom,
           delegation:      form.delegation,
@@ -186,8 +185,15 @@ export default function BadgeInscription() {
                   <span className="material-symbols-outlined text-sm">shield_person</span>
                   <span className="text-xs font-bold uppercase tracking-widest">OMC CM14 — Yaoundé 2025</span>
                 </div>
-                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 inline-block mb-4">
-                  <QRCodeSVG value={qrValue || '{}'} size={160} level="H" />
+                <div className="bg-white rounded-2xl p-5 inline-block mb-4 shadow-lg">
+                  <QRCodeSVG
+                    value={qrValue || '{}'}
+                    size={220}
+                    level="H"
+                    includeMargin={false}
+                    fgColor="#0f172a"
+                    bgColor="#ffffff"
+                  />
                 </div>
                 <h3 className="text-xl font-bold">{generated.prenom} {generated.nom}</h3>
                 <p className="text-slate-300 text-sm mt-1">{generated.delegation}</p>
