@@ -193,6 +193,7 @@
     "nav": {
       "dashboard": "Tableau de bord",
       "inscription": "Inscription & Badge",
+      "participants": "Participants",
       "history": "Historique",
       "users": "Utilisateurs",
       "supervision": "Console Supervision",
@@ -415,6 +416,48 @@
       "title": "Supprimer cette zone ?",
       "desc": "La zone {{id}} — {{name}} sera supprimée définitivement. Les badges associés devront être reconfigurés.",
       "btn": "Supprimer"
+    }
+  },
+  "participants": {
+    "title": "Gestion des Participants",
+    "subtitle": "Consultez, révoquez ou supprimez les badges inscrits.",
+    "list": {
+      "title": "Participants inscrits",
+      "count": "{{n}} / {{total}}",
+      "search": "Nom, prénom, délégation, ID…"
+    },
+    "filter": {
+      "all_cat": "Toutes les catégories",
+      "all_status": "Tous les statuts"
+    },
+    "col": {
+      "name": "Nom",
+      "expiration": "Expiration"
+    },
+    "detail": {
+      "hint": "Sélectionnez un participant",
+      "id": "ID Badge",
+      "firstname": "Prénom",
+      "lastname": "Nom",
+      "delegation": "Délégation",
+      "category": "Catégorie",
+      "status": "Statut",
+      "expiration": "Expiration",
+      "zones": "Zones autorisées"
+    },
+    "action": {
+      "revoke": "Révoquer le badge",
+      "delete": "Supprimer le participant"
+    },
+    "modal": {
+      "revoke": {
+        "title": "Révoquer ce badge ?",
+        "desc": "Le badge de {{name}} sera révoqué immédiatement. L'accès lui sera refusé à tous les points de contrôle."
+      },
+      "delete": {
+        "title": "Supprimer ce participant ?",
+        "desc": "{{name}} sera définitivement supprimé du système. Cette action est irréversible."
+      }
     }
   },
   "otp_recovery": {

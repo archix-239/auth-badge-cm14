@@ -193,6 +193,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "inscription": "Registration & Badge",
+      "participants": "Participants",
       "history": "History",
       "users": "Users",
       "supervision": "Supervision Console",
@@ -415,6 +416,48 @@
       "title": "Delete this zone?",
       "desc": "Zone {{id}} — {{name}} will be permanently deleted. Associated badges will need to be reconfigured.",
       "btn": "Delete"
+    }
+  },
+  "participants": {
+    "title": "Participant Management",
+    "subtitle": "View, revoke or delete registered badges.",
+    "list": {
+      "title": "Registered participants",
+      "count": "{{n}} / {{total}}",
+      "search": "Name, delegation, ID…"
+    },
+    "filter": {
+      "all_cat": "All categories",
+      "all_status": "All statuses"
+    },
+    "col": {
+      "name": "Name",
+      "expiration": "Expiration"
+    },
+    "detail": {
+      "hint": "Select a participant",
+      "id": "Badge ID",
+      "firstname": "First name",
+      "lastname": "Last name",
+      "delegation": "Delegation",
+      "category": "Category",
+      "status": "Status",
+      "expiration": "Expiration",
+      "zones": "Authorized zones"
+    },
+    "action": {
+      "revoke": "Revoke badge",
+      "delete": "Delete participant"
+    },
+    "modal": {
+      "revoke": {
+        "title": "Revoke this badge?",
+        "desc": "{{name}}'s badge will be revoked immediately. Access will be denied at all checkpoints."
+      },
+      "delete": {
+        "title": "Delete this participant?",
+        "desc": "{{name}} will be permanently removed from the system. This action is irreversible."
+      }
     }
   },
   "otp_recovery": {

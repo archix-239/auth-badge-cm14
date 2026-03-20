@@ -15,6 +15,7 @@ import PassageHistory from './pages/admin/PassageHistory'
 import SupervisionConsole from './pages/admin/SupervisionConsole'
 import UserManagement from './pages/admin/UserManagement'
 import ZoneManagement from './pages/admin/ZoneManagement'
+import ParticipantManagement from './pages/admin/ParticipantManagement'
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth()
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="supervision"  element={<SupervisionConsole />} />
         <Route path="zones"        element={<ZoneManagement />} />
         <Route path="utilisateurs" element={<UserManagement />} />
+        <Route path="participants" element={<ParticipantManagement />} />
       </Route>
 
       <Route path="/" element={

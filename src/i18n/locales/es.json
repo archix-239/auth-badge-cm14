@@ -193,6 +193,7 @@
     "nav": {
       "dashboard": "Tablero",
       "inscription": "Inscripción y Credencial",
+      "participants": "Participantes",
       "history": "Historial",
       "users": "Usuarios",
       "supervision": "Consola de Supervisión",
@@ -415,6 +416,48 @@
       "title": "¿Eliminar esta zona?",
       "desc": "La zona {{id}} — {{name}} será eliminada permanentemente. Las credenciales asociadas deberán reconfigurarse.",
       "btn": "Eliminar"
+    }
+  },
+  "participants": {
+    "title": "Gestión de Participantes",
+    "subtitle": "Consulte, revoque o elimine los badges registrados.",
+    "list": {
+      "title": "Participantes registrados",
+      "count": "{{n}} / {{total}}",
+      "search": "Nombre, delegación, ID…"
+    },
+    "filter": {
+      "all_cat": "Todas las categorías",
+      "all_status": "Todos los estados"
+    },
+    "col": {
+      "name": "Nombre",
+      "expiration": "Vencimiento"
+    },
+    "detail": {
+      "hint": "Seleccione un participante",
+      "id": "ID Badge",
+      "firstname": "Nombre",
+      "lastname": "Apellido",
+      "delegation": "Delegación",
+      "category": "Categoría",
+      "status": "Estado",
+      "expiration": "Vencimiento",
+      "zones": "Zonas autorizadas"
+    },
+    "action": {
+      "revoke": "Revocar badge",
+      "delete": "Eliminar participante"
+    },
+    "modal": {
+      "revoke": {
+        "title": "¿Revocar este badge?",
+        "desc": "El badge de {{name}} será revocado inmediatamente. Se le denegará el acceso en todos los puntos de control."
+      },
+      "delete": {
+        "title": "¿Eliminar este participante?",
+        "desc": "{{name}} será eliminado permanentemente del sistema. Esta acción es irreversible."
+      }
     }
   },
   "otp_recovery": {
