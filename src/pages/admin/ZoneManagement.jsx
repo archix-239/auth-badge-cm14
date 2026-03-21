@@ -206,8 +206,9 @@ export default function ZoneManagement() {
                     </div>
                   </div>
 
-                  {/* Status toggle */}
+                  {/* Status toggle — état UI local, non persisté en base */}
                   <button onClick={() => handleToggle(z.id)}
+                    title={t('zones.card.toggle_note', 'État local — non sauvegardé')}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors shrink-0 ${
                       isActive
                         ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50'

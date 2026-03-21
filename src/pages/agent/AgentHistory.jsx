@@ -41,6 +41,16 @@ export default function AgentHistory() {
 
   const allLogs  = logs
   const filtered = allLogs.filter(log => {
+    const ts  = new Date(log.timestamp)
+    const now = new Date()
+    let matchTime = true
+    if (filter === 'today') {
+      matchTime = ts.toDateString() === now.toDateString()
+    } else if (filter === 'week') {
+      matchTime = ts >= new Date(now - 7 * 24 * 60 * 60 * 1000)
+    } else if (filter === 'month') {
+      matchTime = ts >= new Date(now - 30 * 24 * 60 * 60 * 1000)
+    }
     const matchSearch = !search ||
       log.nom.toLowerCase().includes(search.toLowerCase()) ||
       log.delegation.toLowerCase().includes(search.toLowerCase())
@@ -48,7 +58,7 @@ export default function AgentHistory() {
       resultF === 'all'        ? true :
       resultF === 'authorized' ? log.resultat === 'autorisé' :
       ['révoqué','inconnu','zone-refusée'].includes(log.resultat)
-    return matchSearch && matchResult
+    return matchTime && matchSearch && matchResult
   })
 
   const entryLabel = filtered.length === 1

@@ -360,6 +360,8 @@
     "revoke_placeholder": "ID Credencial (ej: P-006)",
     "revoke_btn": "REVOCAR",
     "decommission_btn": "Descomisionar un terminal",
+    "decommission_note": "Vaya a Gestión de puertas para descomisionar un terminal.",
+    "emergency_message": "ALERTA DE EMERGENCIA — Seguridad máxima activada",
     "export_logs_btn": "Exportar registros de seguridad",
     "revoked_title": "Credenciales revocadas / suspendidas",
     "btn": {

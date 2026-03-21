@@ -187,7 +187,7 @@ export default function Scanner() {
         for (const record of message.records) {
           if (record.recordType === 'text') {
             const text = new TextDecoder().decode(record.data)
-            processQr(text)
+            doScan(text, 400)
             break
           }
         }

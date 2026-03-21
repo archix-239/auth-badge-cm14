@@ -360,6 +360,8 @@
     "revoke_placeholder": "ID Badge (ex: P-006)",
     "revoke_btn": "RÉVOQUER",
     "decommission_btn": "Décommissionner un terminal",
+    "decommission_note": "Rendez-vous dans Gestion des portes pour décommissionner un terminal.",
+    "emergency_message": "ALERTE D'URGENCE — Sécurité maximale activée",
     "export_logs_btn": "Exporter les journaux de sécurité",
     "revoked_title": "Badges révoqués / suspendus",
     "btn": {

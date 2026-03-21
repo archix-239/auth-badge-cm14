@@ -102,11 +102,11 @@ export default function DoorManagement() {
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-12">
+                <tr><td colSpan={7} className="text-center py-12">
                   <span className="material-symbols-outlined text-3xl text-primary animate-spin">progress_activity</span>
                 </td></tr>
               ) : doors.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-slate-400 text-sm">{t('doors.not_found')}</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-slate-400 text-sm">{t('doors.not_found')}</td></tr>
               ) : doors.map(d => (
                 <tr key={d.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
                   <td className="px-6 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">{d.id}</td>

@@ -79,6 +79,14 @@ export default function SupervisionConsole() {
     URL.revokeObjectURL(url)
   }
 
+  // ── Alerte d'urgence (broadcast à tous les terminaux) ─────────────────────
+  const handleEmergencyAlert = async () => {
+    setAlertActive(true) // affichage local immédiat
+    if (!IS_MOCK) {
+      await api.post('/api/alerts', { message: t('supervision.emergency_message', 'ALERTE D\'URGENCE — Sécurité maximale activée'), level: 'critical' }).catch(() => {})
+    }
+  }
+
   // ── Révocation rapide ──────────────────────────────────────────────────────
   const handleQuickRevoke = async () => {
     if (!revokeTarget.trim()) return
@@ -236,7 +244,7 @@ export default function SupervisionConsole() {
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-5 space-y-3">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('supervision.critical_actions')}</h3>
 
-              <button onClick={() => setAlertActive(true)}
+              <button onClick={handleEmergencyAlert}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors group">
                 <span className="material-symbols-outlined text-lg animate-pulse group-hover:animate-none">cancel</span>
                 <span className="font-bold text-xs uppercase tracking-tight">{t('supervision.emergency_btn')}</span>

@@ -360,6 +360,8 @@
     "revoke_placeholder": "Badge ID (e.g.: P-006)",
     "revoke_btn": "REVOKE",
     "decommission_btn": "Decommission a terminal",
+    "decommission_note": "Go to Door Management to decommission a terminal.",
+    "emergency_message": "EMERGENCY ALERT — Maximum security activated",
     "export_logs_btn": "Export security logs",
     "revoked_title": "Revoked / suspended badges",
     "btn": {

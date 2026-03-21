@@ -21,6 +21,14 @@ export default function BadgeInscription() {
   const [revoking, setRevoking]         = useState(null)
   const qrContainerRef                  = useRef(null)
 
+  // Charge les vrais participants depuis l'API au mount
+  useEffect(() => {
+    if (IS_MOCK) return
+    api.get('/api/participants')
+      .then(rows => setParticipants(rows.map(mapParticipant)))
+      .catch(() => {}) // garde les données mock en fallback
+  }, [])
+
   // Sign badge payload whenever a new badge is generated
   useEffect(() => {
     if (!generated) return
@@ -46,7 +54,7 @@ export default function BadgeInscription() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const id = `P-${String(participants.length + 1).padStart(3, '0')}`
-    const expiration = form.dateExpiration || '2025-03-28'
+    const expiration = form.dateExpiration || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
     if (!IS_MOCK) {
       try {
