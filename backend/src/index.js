@@ -21,6 +21,13 @@ import { setupSocket }   from './socket/index.js'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT      = parseInt(process.env.PORT || '3001')
 const FRONTEND  = process.env.FRONTEND_URL || 'http://localhost:5173'
+// Origines autorisées : web dev + app Capacitor Android
+const ALLOWED_ORIGINS = [
+  FRONTEND,
+  'capacitor://localhost',
+  'https://localhost',
+  'http://localhost',
+]
 
 // ─── Dossier uploads ─────────────────────────────────────────────────────────
 const uploadDir = join(__dirname, '..', process.env.UPLOAD_DIR || 'uploads')
@@ -34,7 +41,11 @@ app.use(helmet({
 }))
 
 app.use(cors({
-  origin: FRONTEND,
+  origin: (origin, cb) => {
+    // Autorise les requêtes sans origin (ex: app native, Postman)
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true)
+    cb(new Error(`CORS bloqué : ${origin}`))
+  },
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -66,7 +77,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOSt
 // ─── Socket.io ────────────────────────────────────────────────────────────────
 const httpServer = createServer(app)
 const io = new SocketIO(httpServer, {
-  cors: { origin: FRONTEND, methods: ['GET', 'POST'], credentials: true },
+  cors: { origin: ALLOWED_ORIGINS, methods: ['GET', 'POST'], credentials: true },
 })
 setupSocket(io)
 

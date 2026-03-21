@@ -1,0 +1,13 @@
+{
+  "appId": "cm.omc.authbadge14",
+  "appName": "AUTH-BADGE CM14",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
