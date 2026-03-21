@@ -18,6 +18,8 @@ const MOCK_USERS = [
 
 const EMPTY_FORM = { name: '', loginId: '', password: '', role: 'agent', zone: '', statut: 'HORS LIGNE' }
 
+const MOCK_USERS_FALLBACK = MOCK_USERS
+
 const ROLE_BADGE = {
   admin:      'bg-primary text-white',
   supervisor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
@@ -36,11 +38,11 @@ const STATUT_DOT = {
   'BLOQUÉ':     'bg-red-500',
 }
 
-const ZONE_OPTS = ['all', 'Entrée Nord', 'Entrée Est', 'Accueil VIP', 'Salle Plénière', 'QG Central']
 
 export default function UserManagement() {
   const { t, i18n } = useTranslation()
-  const [users, setUsers]        = useState(MOCK_USERS)
+  const [users, setUsers]        = useState(MOCK_USERS_FALLBACK)
+  const [loading, setLoading]    = useState(true)
   const [doors, setDoors]        = useState([])
   const [search, setSearch]      = useState('')
   const [roleFilter, setRoleF]   = useState('all')
@@ -51,16 +53,29 @@ export default function UserManagement() {
   const [editing, setEditing]    = useState(null)
   const [form, setForm]          = useState(EMPTY_FORM)
   const [showPwd, setShowPwd]    = useState(false)
+  const [saving, setSaving]      = useState(false)
+  const [apiError, setApiError]  = useState(null)
   const PER_PAGE = 8
 
   useEffect(() => {
     if (IS_MOCK) {
       setDoors(POINTS_CONTROLE)
+      setLoading(false)
       return
     }
-    api.get('/api/terminals')
-      .then(rows => setDoors(rows))
-      .catch(() => setDoors(POINTS_CONTROLE))
+    Promise.all([
+      api.get('/api/users'),
+      api.get('/api/terminals'),
+    ])
+      .then(([usersRows, doorsRows]) => {
+        setUsers(usersRows)
+        setDoors(doorsRows)
+      })
+      .catch(() => {
+        setUsers(MOCK_USERS_FALLBACK)
+        setDoors(POINTS_CONTROLE)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const statutLabel = {
@@ -83,10 +98,10 @@ export default function UserManagement() {
     { value: 'BLOQUÉ',     label: t('common.status.blocked') },
   ]
 
-  const zoneOpts = ZONE_OPTS.map(z => ({
-    value: z,
-    label: z === 'all' ? t('users.filters.all_zones') : z,
-  }))
+  const zoneOpts = [
+    { value: 'all', label: t('users.filters.all_zones') },
+    ...doors.map(d => ({ value: d.nom, label: d.nom })),
+  ]
 
   const filtered = users.filter(u => {
     const q = search.toLowerCase()
@@ -103,28 +118,62 @@ export default function UserManagement() {
   const openAdd    = () => { setForm(EMPTY_FORM); setEditing(null); setModal('add') }
   const openEdit   = (u) => { setForm({ name: u.name, loginId: u.loginId, password: u.password, role: u.role, zone: u.zone, statut: u.statut }); setEditing(u); setModal('edit') }
   const openDel    = (u) => { setEditing(u); setModal('delete') }
-  const closeModal = () => { setModal(null); setEditing(null); setShowPwd(false) }
+  const closeModal = () => { setModal(null); setEditing(null); setShowPwd(false); setApiError(null) }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name || !form.loginId) return
-    if (modal === 'add') {
-      setUsers(prev => [{ ...form, id: `CM14-${Math.floor(Math.random() * 9000 + 1000)}` }, ...prev])
-    } else {
-      setUsers(prev => prev.map(u => u.id === editing.id ? { ...u, ...form } : u))
+    setSaving(true)
+    setApiError(null)
+    try {
+      if (modal === 'add') {
+        const payload = { loginId: form.loginId.toUpperCase(), name: form.name, password: form.password, role: form.role, zone: form.zone }
+        const created = IS_MOCK
+          ? { ...payload, id: form.loginId.toUpperCase(), statut: 'HORS LIGNE' }
+          : await api.post('/api/users', payload)
+        setUsers(prev => [created, ...prev])
+      } else {
+        const payload = { name: form.name, role: form.role, zone: form.zone }
+        const updated = IS_MOCK
+          ? { ...editing, ...payload }
+          : await api.patch(`/api/users/${editing.id}`, payload)
+        setUsers(prev => prev.map(u => u.id === editing.id ? { ...u, ...updated } : u))
+      }
+      closeModal()
+    } catch (err) {
+      setApiError(err.status === 409 ? 'Identifiant déjà utilisé.' : err.message)
+    } finally {
+      setSaving(false)
     }
-    closeModal()
   }
 
-  const handleDelete = () => {
-    setUsers(prev => prev.filter(u => u.id !== editing.id))
-    closeModal()
+  const handleDelete = async () => {
+    setApiError(null)
+    try {
+      if (!IS_MOCK) await api.delete(`/api/users/${editing.id}`)
+      setUsers(prev => prev.filter(u => u.id !== editing.id))
+      closeModal()
+    } catch (err) {
+      setApiError(err.status === 403 ? err.message : (err.message || 'Erreur lors de la suppression.'))
+    }
   }
 
-  const handleBlock = (userId) => {
-    setUsers(prev => prev.map(u => u.id === userId
-      ? { ...u, statut: u.statut === 'BLOQUÉ' ? 'HORS LIGNE' : 'BLOQUÉ' }
-      : u
-    ))
+  const handleBlock = async (userId) => {
+    try {
+      if (!IS_MOCK) {
+        const res = await api.patch(`/api/users/${userId}/lock`)
+        setUsers(prev => prev.map(u => u.id === userId
+          ? { ...u, statut: res.is_locked ? 'BLOQUÉ' : 'HORS LIGNE' }
+          : u
+        ))
+      } else {
+        setUsers(prev => prev.map(u => u.id === userId
+          ? { ...u, statut: u.statut === 'BLOQUÉ' ? 'HORS LIGNE' : 'BLOQUÉ' }
+          : u
+        ))
+      }
+    } catch {
+      // Ignore silently
+    }
   }
 
   const stats = {
@@ -180,7 +229,12 @@ export default function UserManagement() {
 
       {/* Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <span className="material-symbols-outlined text-4xl text-primary animate-spin">progress_activity</span>
+          </div>
+        ) : null}
+        <div className={`overflow-x-auto ${loading ? 'hidden' : ''}`}>
           <table className="w-full text-sm">
             <thead className="border-b border-slate-100 dark:border-slate-800">
               <tr>
@@ -347,13 +401,20 @@ export default function UserManagement() {
               </div>
             </div>
 
+            {apiError && (
+              <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-3 py-2">
+                {apiError}
+              </p>
+            )}
+
             <div className="flex gap-3 pt-2">
               <button onClick={closeModal}
                 className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 {t('common.btn.cancel')}
               </button>
-              <button onClick={handleSave}
-                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold transition-colors shadow-sm">
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-60 text-white text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2">
+                {saving && <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>}
                 {modal === 'add' ? t('users.modal.btn_create') : t('users.modal.btn_save')}
               </button>
             </div>
@@ -374,6 +435,11 @@ export default function UserManagement() {
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {t('users.delete.desc', { name: editing.name, id: editing.id })}
             </p>
+            {apiError && (
+              <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-3 py-2">
+                {apiError}
+              </p>
+            )}
             <div className="flex gap-3">
               <button onClick={closeModal}
                 className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">

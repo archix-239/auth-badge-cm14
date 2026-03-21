@@ -5,9 +5,10 @@ import { PARTICIPANTS, getCategoryColor } from '../../data/mockData'
 import { Html5Qrcode } from 'html5-qrcode'
 import { verifyBadge } from '../../utils/badgeCrypto'
 import { playScanFeedback } from '../../utils/scanFeedback'
-import { lookupBadge } from '../../utils/badgeStore'
+import { lookupBadge, updateBadgeStatus } from '../../utils/badgeStore'
 import { api } from '../../utils/api'
 import { mapParticipant } from '../../utils/dataMappers'
+import { useSocket } from '../../hooks/useSocket'
 
 const IS_MOCK = !import.meta.env.VITE_API_URL
 
@@ -25,6 +26,18 @@ export default function Scanner() {
   const timerRef   = useRef(null)
   const manualRef  = useRef(null)
   const qrScannerRef = useRef(null)
+  // Écoute les révocations en temps réel → met à jour le cache offline immédiatement
+  useSocket({
+    'badge:revoked': ({ id }) => {
+      updateBadgeStatus(id, 'révoqué')
+      // Si le résultat courant concerne ce badge, on force la mise à jour de l'UI
+      setResult(prev => prev?.participant?.id === id
+        ? { ...prev, resultat: 'révoqué', participant: { ...prev.participant, statut: 'révoqué' } }
+        : prev
+      )
+    },
+  })
+
   // Zone courante = zone du checkpoint assigné à l'agent (via login)
   const checkpoint   = user?.checkpoint ?? null
   const currentZoneId = checkpoint?.zone_id ?? null
@@ -162,6 +175,28 @@ export default function Scanner() {
     setPhase('camera')
   }
 
+  const handleNfc = async () => {
+    if (!('NDEFReader' in window)) {
+      alert(t('scanner.nfc.unavailable', 'NFC non disponible sur cet appareil.'))
+      return
+    }
+    try {
+      const reader = new window.NDEFReader()
+      await reader.scan()
+      reader.addEventListener('reading', ({ message }) => {
+        for (const record of message.records) {
+          if (record.recordType === 'text') {
+            const text = new TextDecoder().decode(record.data)
+            processQr(text)
+            break
+          }
+        }
+      }, { once: true })
+    } catch {
+      alert(t('scanner.nfc.error', 'Impossible de démarrer le scan NFC.'))
+    }
+  }
+
   const stopCamera = () => {
     // scanner cleanup handled by useEffect cleanup when phase changes
     setPhase('idle')
@@ -250,7 +285,7 @@ export default function Scanner() {
 
             {/* Secondary buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl py-3 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+              <button onClick={handleNfc} className="flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl py-3 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                 <span className="material-symbols-outlined text-lg">nfc</span>
                 {t('scanner.idle.btn_nfc')}
               </button>

@@ -8,6 +8,7 @@ export const USERS = [
     zone: 'Entrée Nord — Salle Plénière',
     avatar: null,
     totpSecret: 'JBSWY3DPEHPK3PXP',
+    checkpoint: { id: 'PC-01', nom: 'Entrée Nord', zone_id: 'Z1', zone_nom: 'Accès général' },
   },
   {
     id: 'AG-0031',
@@ -17,6 +18,7 @@ export const USERS = [
     zone: 'Entrée Est — Accueil VIP',
     avatar: null,
     totpSecret: 'KVKFKRCPNZQUYMLX',
+    checkpoint: { id: 'PC-02', nom: 'Entrée Est', zone_id: 'Z1', zone_nom: 'Accès général' },
   },
   {
     id: 'ADMIN-001',

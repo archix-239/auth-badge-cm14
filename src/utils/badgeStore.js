@@ -122,6 +122,36 @@ export async function lookupBadge(id) {
 }
 
 /**
+ * Met à jour le statut d'un badge dans le cache offline (ex: révocation temps réel).
+ * Si le badge n'est pas dans le cache, l'opération est ignorée silencieusement.
+ * @param {string} id   — identifiant du badge (ex: "P-006")
+ * @param {string} statut — nouveau statut ("révoqué" | "suspendu" | "actif")
+ */
+export async function updateBadgeStatus(id, statut) {
+  try {
+    const db = await openDB()
+    const existing = await new Promise((res) => {
+      const req = db.transaction(STORE, 'readonly').objectStore(STORE).get(id)
+      req.onsuccess = e => res(e.target.result ?? null)
+      req.onerror   = () => res(null)
+    })
+    if (!existing) { db.close(); return }
+
+    const data = await decryptRecord(existing.enc)
+    data.statut = statut
+    const enc = await encryptRecord(data)
+
+    const tx = db.transaction(STORE, 'readwrite')
+    tx.objectStore(STORE).put({ id, enc })
+    await new Promise((res, rej) => {
+      tx.oncomplete = res
+      tx.onerror    = e => rej(e.target.error)
+    })
+    db.close()
+  } catch { /* silently ignore — cache best-effort */ }
+}
+
+/**
  * Count records currently in the store (for diagnostics).
  * @returns {Promise<number>}
  */

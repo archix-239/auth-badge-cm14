@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ZONES, PARTICIPANTS } from '../../data/mockData'
+import { api } from '../../utils/api'
+
+const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const EMPTY_FORM = { id: '', nom: '', description: '', statut: 'actif', niveauAcces: 1 }
 
@@ -18,18 +21,36 @@ const getLvl = (n) => LEVEL_COLORS[Math.min(Math.max((n ?? 1) - 1, 0), 4)]
 export default function ZoneManagement() {
   const { t } = useTranslation()
 
-  const [zones, setZones] = useState(
-    ZONES.map((z, i) => ({ ...z, statut: 'actif', niveauAcces: i + 1 }))
-  )
-  const [search, setSearch]   = useState('')
-  const [modal, setModal]     = useState(null) // null | 'form' | 'delete'
-  const [editing, setEditing] = useState(null)
+  const [zones,    setZones]    = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [search,   setSearch]   = useState('')
+  const [modal,    setModal]    = useState(null) // null | 'form' | 'delete'
+  const [editing,  setEditing]  = useState(null)
   const [deleting, setDeleting] = useState(null)
-  const [form, setForm]       = useState(EMPTY_FORM)
+  const [form,     setForm]     = useState(EMPTY_FORM)
+  const [saving,   setSaving]   = useState(false)
+  const [apiError, setApiError] = useState(null)
 
-  // Active participants per zone
-  const pCount = (zid) =>
-    PARTICIPANTS.filter(p => p.statut === 'actif' && p.zones.includes(zid)).length
+  useEffect(() => {
+    if (IS_MOCK) {
+      setZones(ZONES.map((z, i) => ({ ...z, statut: 'actif', niveauAcces: z.niveauAcces ?? i + 1 })))
+      setLoading(false)
+      return
+    }
+    api.get('/api/zones')
+      .then(rows => setZones(rows.map(z => ({
+        ...z,
+        niveauAcces: z.niveau_acces ?? 1,
+        statut: 'actif',
+      }))))
+      .catch(() => setZones(ZONES.map((z, i) => ({ ...z, statut: 'actif', niveauAcces: i + 1 }))))
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Compteur participants par zone (mockData en mode mock, valeur backend sinon)
+  const pCount = (zid) => IS_MOCK
+    ? PARTICIPANTS.filter(p => p.statut === 'actif' && p.zones.includes(zid)).length
+    : (zones.find(z => z.id === zid)?.portes_count ?? 0)
 
   const filtered = zones.filter(z =>
     !search ||
@@ -53,25 +74,52 @@ export default function ZoneManagement() {
   const openDel    = (z) => { setDeleting(z); setModal('delete') }
   const closeModal = () => { setModal(null); setEditing(null); setDeleting(null) }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.id.trim() || !form.nom.trim()) return
-    if (editing) {
-      setZones(prev => prev.map(z => z.id === editing.id ? { ...z, ...form } : z))
-    } else {
-      setZones(prev => [...prev, { ...form }])
+    setSaving(true)
+    setApiError(null)
+    try {
+      if (editing) {
+        const updated = IS_MOCK ? { ...editing, ...form } : await api.patch(`/api/zones/${editing.id}`, {
+          nom: form.nom.trim(), description: form.description.trim() || null, niveau_acces: form.niveauAcces,
+        })
+        setZones(prev => prev.map(z => z.id === editing.id
+          ? { ...z, nom: form.nom, description: form.description, niveauAcces: form.niveauAcces }
+          : z
+        ))
+      } else {
+        const payload = { id: form.id.trim().toUpperCase(), nom: form.nom.trim(), description: form.description.trim() || null, niveau_acces: form.niveauAcces }
+        const created = IS_MOCK ? { ...payload, niveauAcces: payload.niveau_acces, statut: 'actif' } : await api.post('/api/zones', payload)
+        setZones(prev => [...prev, { ...created, niveauAcces: created.niveau_acces ?? form.niveauAcces, statut: 'actif' }])
+      }
+      closeModal()
+    } catch (err) {
+      setApiError(err.status === 409 ? 'Cet identifiant de zone existe déjà.' : err.message)
+    } finally {
+      setSaving(false)
     }
-    closeModal()
   }
 
-  const handleDelete = () => {
-    setZones(prev => prev.filter(z => z.id !== deleting.id))
-    closeModal()
+  const handleDelete = async () => {
+    setApiError(null)
+    try {
+      if (!IS_MOCK) await api.delete(`/api/zones/${deleting.id}`)
+      setZones(prev => prev.filter(z => z.id !== deleting.id))
+      closeModal()
+    } catch (err) {
+      setApiError(err.status === 409
+        ? 'Impossible de supprimer : des portes utilisent encore cette zone.'
+        : err.message)
+    }
   }
 
-  const handleToggle = (zid) => {
-    setZones(prev => prev.map(z =>
-      z.id === zid ? { ...z, statut: z.statut === 'actif' ? 'inactif' : 'actif' } : z
-    ))
+  const handleToggle = async (zid) => {
+    const zone = zones.find(z => z.id === zid)
+    if (!zone) return
+    const newStatut = zone.statut === 'actif' ? 'inactif' : 'actif'
+    setZones(prev => prev.map(z => z.id === zid ? { ...z, statut: newStatut } : z))
+    // Note: le backend ne gère pas encore le statut actif/inactif sur les zones —
+    // c'est un état UI local en attendant l'extension du schéma
   }
 
   return (
@@ -125,7 +173,11 @@ export default function ZoneManagement() {
       </div>
 
       {/* ── Cards grid ── */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <span className="material-symbols-outlined text-4xl text-primary animate-spin">progress_activity</span>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-slate-400 dark:text-slate-600 text-sm">
           {t('zones.not_found')}
         </div>
@@ -301,13 +353,20 @@ export default function ZoneManagement() {
               </div>
             </div>
 
+            {apiError && (
+              <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-3 py-2">
+                {apiError}
+              </p>
+            )}
+
             <div className="flex gap-3 pt-2">
               <button onClick={closeModal}
                 className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 {t('common.btn.cancel')}
               </button>
-              <button onClick={handleSave}
-                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold transition-colors shadow-sm">
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-60 text-white text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2">
+                {saving && <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>}
                 {editing ? t('zones.modal.btn_save') : t('zones.modal.btn_create')}
               </button>
             </div>
@@ -328,6 +387,11 @@ export default function ZoneManagement() {
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {t('zones.delete.desc', { id: deleting.id, name: deleting.nom })}
             </p>
+            {apiError && (
+              <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-3 py-2">
+                {apiError}
+              </p>
+            )}
             <div className="flex gap-3">
               <button onClick={closeModal}
                 className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">

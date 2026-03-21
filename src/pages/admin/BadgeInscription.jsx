@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
 import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
@@ -19,6 +19,7 @@ export default function BadgeInscription() {
   const [search, setSearch]             = useState('')
   const [step, setStep]                 = useState('form')
   const [revoking, setRevoking]         = useState(null)
+  const qrContainerRef                  = useRef(null)
 
   // Sign badge payload whenever a new badge is generated
   useEffect(() => {
@@ -80,6 +81,20 @@ export default function BadgeInscription() {
     setRevoking(null)
   }
 
+  const handlePrint = () => window.print()
+
+  const handleDownload = () => {
+    const svgEl = qrContainerRef.current?.querySelector('svg')
+    if (!svgEl) return
+    const serialized = new XMLSerializer().serializeToString(svgEl)
+    const blob = new Blob([serialized], { type: 'image/svg+xml' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `badge_${generated?.id ?? 'cm14'}.svg`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const filtered = participants.filter(p =>
     !search || `${p.prenom} ${p.nom} ${p.delegation}`.toLowerCase().includes(search.toLowerCase())
@@ -185,7 +200,7 @@ export default function BadgeInscription() {
                   <span className="material-symbols-outlined text-sm">shield_person</span>
                   <span className="text-xs font-bold uppercase tracking-widest">OMC CM14 — Yaoundé 2025</span>
                 </div>
-                <div className="bg-white rounded-2xl p-5 inline-block mb-4 shadow-lg">
+                <div ref={qrContainerRef} className="bg-white rounded-2xl p-5 inline-block mb-4 shadow-lg">
                   <QRCodeSVG
                     value={qrValue || '{}'}
                     size={220}
@@ -209,11 +224,11 @@ export default function BadgeInscription() {
                 <p className="text-xs text-slate-400 mt-3">Exp: {generated.dateExpiration}</p>
               </div>
               <div className="p-4 flex gap-3">
-                <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-primary-dark transition-colors">
+                <button onClick={handlePrint} className="flex-1 flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-primary-dark transition-colors">
                   <span className="material-symbols-outlined text-lg">print</span>
                   {t('inscription.btn.print')}
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-200 transition-colors">
+                <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-200 transition-colors">
                   <span className="material-symbols-outlined text-lg">download</span>
                   {t('inscription.btn.download')}
                 </button>

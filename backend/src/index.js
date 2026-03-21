@@ -14,6 +14,8 @@ import participantsRouter from './routes/participants.js'
 import scansRouter       from './routes/scans.js'
 import terminalsRouter   from './routes/terminals.js'
 import alertsRouter      from './routes/alerts.js'
+import zonesRouter       from './routes/zones.js'
+import usersRouter       from './routes/users.js'
 import { setupSocket }   from './socket/index.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -52,6 +54,8 @@ app.use('/api/participants', participantsRouter)
 app.use('/api/scans',        scansRouter)
 app.use('/api/terminals',    terminalsRouter)
 app.use('/api/alerts',       alertsRouter)
+app.use('/api/zones',        zonesRouter)
+app.use('/api/users',        usersRouter)
 
 // Fichiers uploadés (photos participants)
 app.use('/uploads', express.static(uploadDir))

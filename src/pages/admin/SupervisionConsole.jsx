@@ -59,6 +59,26 @@ export default function SupervisionConsole() {
     },
   })
 
+  // ── Export logs CSV ────────────────────────────────────────────────────────
+  const handleExportLogs = () => {
+    const headers = ['Horodatage','Participant','Délégation','Catégorie','Zone','Point de contrôle','Résultat']
+    const rows    = liveEvents.map(e => [
+      new Date(e.timestamp ?? e.ts).toISOString(),
+      `${e.prenom ?? ''} ${e.nom ?? ''}`.trim(),
+      e.delegation ?? '',
+      e.categorie  ?? '',
+      e.zone       ?? '',
+      e.point_controle_id ?? e.pointControle ?? '',
+      e.resultat   ?? '',
+    ])
+    const csv  = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url; a.download = `supervision_logs_${Date.now()}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // ── Révocation rapide ──────────────────────────────────────────────────────
   const handleQuickRevoke = async () => {
     if (!revokeTarget.trim()) return
@@ -235,16 +255,18 @@ export default function SupervisionConsole() {
                 </div>
               </div>
 
-              {[
-                { icon: 'phonelink_erase', label: t('supervision.decommission_btn') },
-                { icon: 'download',        label: t('supervision.export_logs_btn') },
-              ].map(a => (
-                <button key={a.label}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-lg">{a.icon}</span>
-                  <span className="text-xs font-semibold">{a.label}</span>
-                </button>
-              ))}
+              <button
+                onClick={() => alert(t('supervision.decommission_note', 'Rendez-vous dans Gestion des portes pour décommissionner un terminal.'))}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-lg">phonelink_erase</span>
+                <span className="text-xs font-semibold">{t('supervision.decommission_btn')}</span>
+              </button>
+              <button
+                onClick={handleExportLogs}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-lg">download</span>
+                <span className="text-xs font-semibold">{t('supervision.export_logs_btn')}</span>
+              </button>
             </div>
 
             {/* Badges révoqués */}

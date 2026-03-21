@@ -81,11 +81,16 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | 3.3 | Authentification JWT (60 min access + 7j refresh + rotation) | US-01 | ✅ |
 | 3.4 | Photo du titulaire dans le résultat de scan | US-04 | ✅ |
 | 3.5 | Propagation révocation badge en < 60 secondes (WebSocket + Redis Pub/Sub) | US-11 | ✅ |
-| 3.6 | Notifications push temps réel superviseurs (Socket.io) | US-08 | ✅ |
+| 3.6 | Notifications push temps réel superviseurs + admins (Socket.io) | US-08 | ✅ |
 | 3.7 | Alerte de masse depuis la console | US-14 | ✅ |
 | 3.8 | Décommissionnement d'urgence d'un terminal | US-15 | ✅ |
 | 3.9 | Supervision des terminaux (en ligne / hors ligne via heartbeat Redis) | US-09 | ✅ |
 | 3.10 | Export JSON + CSV des journaux d'accès | US-13 | ✅ |
+| 3.11 | Modèle Zone → Porte → Agent (zone_id sur points_controle, CRUD /api/zones) | US-12 | ✅ |
+| 3.12 | Gestion des utilisateurs (CRUD /api/users, verrouillage compte) | US-10 | ✅ |
+| 3.13 | Invalidation cache IndexedDB sur révocation (updateBadgeStatus) | US-11 | ✅ |
+| 3.14 | Scanner écoute badge:revoked en temps réel (useSocket) | US-11 | ✅ |
+| 3.15 | Stats journalières agent (scans du jour vs total checkpoint) | US-09 | ✅ |
 
 ---
 
@@ -139,19 +144,19 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | US-01 | Authentification 2FA agent | Phase 2 | ✅ |
 | US-02 | Scan NFC | Phase 4 | ❌ |
 | US-03 | Scan QR Code caméra | Phase 2 | ✅ |
-| US-04 | Résultat plein écran avec photo | Phase 3 | ❌ |
+| US-04 | Résultat plein écran avec photo | Phase 3 | ✅ |
 | US-05 | Alerte visuelle + sonore + vibration | Phase 2 | ✅ |
 | US-06 | Mode offline 4h | Phase 2 | ✅ |
 | US-07 | Saisie manuelle badge | Phase 1 | ✅ |
 | US-08 | Notification push superviseur | Phase 3 | ✅ |
 | US-09 | Stats temps réel point de contrôle | Phase 3 | ✅ |
-| US-10 | Créer/gérer profils participants | Phase 3 | ⏳ |
+| US-10 | Créer/gérer profils participants | Phase 3 | ✅ |
 | US-11 | Révocation badge < 60 secondes | Phase 3 | ✅ |
-| US-12 | Configurer zones et catégories | Phase 3 | ⏳ |
+| US-12 | Configurer zones et catégories | Phase 3 | ✅ |
 | US-13 | Export JSON / CSV journaux | Phase 3 | ✅ |
 | US-14 | Alerte de masse | Phase 3 | ✅ |
 | US-15 | Décommissionnement terminal | Phase 3 | ✅ |
 
 ---
 
-*Dernière mise à jour : 2026-03-19 — Phase 1 ✅ — Phase 2 (2.1–2.5) ✅ — Phase 3 (3.1–3.10) ✅ — Phase 4 suivante*
+*Dernière mise à jour : 2026-03-20 — Phase 1 ✅ — Phase 2 (2.1–2.5) ✅ — Phase 3 (3.1–3.15) ✅ — Phase 4 suivante*

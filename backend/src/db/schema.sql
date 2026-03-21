@@ -20,10 +20,12 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- ─── Zones ────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS zones (
-  id          VARCHAR(10)  PRIMARY KEY,
-  nom         VARCHAR(100) NOT NULL,
-  description TEXT
+  id           VARCHAR(10)  PRIMARY KEY,
+  nom          VARCHAR(100) NOT NULL,
+  description  TEXT,
+  niveau_acces INTEGER      NOT NULL DEFAULT 1 CHECK (niveau_acces BETWEEN 1 AND 5)
 );
+ALTER TABLE zones ADD COLUMN IF NOT EXISTS niveau_acces INTEGER NOT NULL DEFAULT 1 CHECK (niveau_acces BETWEEN 1 AND 5);
 
 -- ─── Points de contrôle ───────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS points_controle (

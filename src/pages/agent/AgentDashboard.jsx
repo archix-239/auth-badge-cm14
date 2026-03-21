@@ -22,17 +22,28 @@ export default function AgentDashboard() {
     return stored ? new Date(stored) : new Date()
   })
   const [now,        setNow]        = useState(new Date())
-  const [storeSize,  setStoreSize]  = useState(0)
-  const [recentLogs, setRecentLogs] = useState([])
+  const [storeSize,   setStoreSize]   = useState(0)
+  const [recentLogs,  setRecentLogs]  = useState([])
+  const [sessionCount, setSessionCount] = useState(null) // null = non chargé
 
   useEffect(() => {
     getBadgeStoreSize().then(setStoreSize)
     if (!IS_MOCK) {
-      api.get('/api/scans?limit=5')
-        .then(rows => setRecentLogs(rows.map(mapScanLog)))
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+      Promise.all([
+        api.get('/api/scans?limit=5'),
+        api.get(`/api/scans?limit=500&from=${todayStart.toISOString()}`),
+      ])
+        .then(([recent, todayLogs]) => {
+          setRecentLogs(recent.map(mapScanLog))
+          setSessionCount(todayLogs.length)
+        })
         .catch(() => setRecentLogs(LOGS.filter(l => l.agentId === user?.id).slice(0, 5)))
     } else {
-      setRecentLogs(LOGS.filter(l => l.agentId === user?.id).slice(0, 5))
+      const myMockLogs = LOGS.filter(l => l.agentId === user?.id)
+      setRecentLogs(myMockLogs.slice(0, 5))
+      setSessionCount(myMockLogs.length)
     }
 
     const syncTime = new Date()
@@ -66,11 +77,15 @@ export default function AgentDashboard() {
   const offlineLabel = t('agent_dashboard.status.offline_remaining', { h: offH, m: String(offM).padStart(2, '0') })
 
   const myLogs     = recentLogs
-  const myPC       = POINTS_CONTROLE.find(pc => pc.agentId === user?.id)
+  // En mode mock, fallback sur POINTS_CONTROLE ; en mode API, utilise user.checkpoint
+  const myPC       = IS_MOCK
+    ? POINTS_CONTROLE.find(pc => pc.agentId === user?.id)
+    : (user?.checkpoint ?? null)
   const locale     = i18n.language === 'en' ? 'en-GB' : i18n.language === 'es' ? 'es-ES' : 'fr-FR'
   const today      = new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
   const autorises  = myLogs.filter(l => l.resultat === 'autorisé').length
   const alertes    = myLogs.filter(l => ['révoqué','inconnu'].includes(l.resultat)).length
+  const totalScans = sessionCount ?? (myPC?.scans ?? myLogs.length)
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 dark:bg-bg-dark p-4 space-y-4">
@@ -89,7 +104,7 @@ export default function AgentDashboard() {
       {/* Quick stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: t('agent_dashboard.stats.scans'),      value: myPC?.scans ?? myLogs.length, color: "text-slate-900 dark:text-white" },
+          { label: t('agent_dashboard.stats.scans'),      value: totalScans, color: "text-slate-900 dark:text-white" },
           { label: t('agent_dashboard.stats.authorized'), value: autorises, color: "text-emerald-600 dark:text-emerald-400" },
           { label: t('agent_dashboard.stats.alerts'),     value: alertes,   color: alertes > 0 ? "text-red-500" : "text-slate-400 dark:text-slate-500" },
         ].map(s => (

@@ -8,11 +8,11 @@ import pool from './postgres.js'
 
 // ─── Zones ────────────────────────────────────────────────────────────────────
 const ZONES = [
-  { id: 'Z1', nom: 'Accès général',        description: 'Halls, couloirs, espaces communs' },
-  { id: 'Z2', nom: 'Salles de conférence', description: 'Salles plénières et réunions' },
-  { id: 'Z3', nom: 'Zone délégués',        description: 'Réservé aux délégués officiels' },
-  { id: 'Z4', nom: 'Zone restreinte',      description: 'Accès très limité' },
-  { id: 'Z5', nom: 'Zone VIP/Presse',      description: 'Presse accréditée et VIP' },
+  { id: 'Z1', nom: 'Accès général',        description: 'Halls, couloirs, espaces communs',  niveau_acces: 1 },
+  { id: 'Z2', nom: 'Salles de conférence', description: 'Salles plénières et réunions',       niveau_acces: 2 },
+  { id: 'Z3', nom: 'Zone délégués',        description: 'Réservé aux délégués officiels',     niveau_acces: 3 },
+  { id: 'Z4', nom: 'Zone restreinte',      description: 'Accès très limité',                  niveau_acces: 4 },
+  { id: 'Z5', nom: 'Zone VIP/Presse',      description: 'Presse accréditée et VIP',           niveau_acces: 5 },
 ]
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -56,8 +56,10 @@ try {
   // Zones
   for (const z of ZONES) {
     await client.query(
-      `INSERT INTO zones (id, nom, description) VALUES ($1,$2,$3) ON CONFLICT (id) DO NOTHING`,
-      [z.id, z.nom, z.description]
+      `INSERT INTO zones (id, nom, description, niveau_acces)
+       VALUES ($1,$2,$3,$4)
+       ON CONFLICT (id) DO UPDATE SET niveau_acces = EXCLUDED.niveau_acces`,
+      [z.id, z.nom, z.description, z.niveau_acces]
     )
   }
   console.log('[seed] Zones insérées.')
