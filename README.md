@@ -39,8 +39,8 @@ Ouvrir ensuite [http://localhost:5173](http://localhost:5173).
 
 ### Prérequis
 
-- Node.js 20+
-- PostgreSQL 15+
+- Node.js 22+
+- PostgreSQL 17+
 - Redis 7+
 
 ### Étape 1 — Configurer et démarrer le backend
@@ -289,7 +289,7 @@ authbadge-cm14/
 
 | Outil | Rôle | Version |
 |---|---|---|
-| Node.js + Express | Serveur HTTP | 20.x / 4.x |
+| Node.js + Express | Serveur HTTP | 22.x / 4.x |
 | Socket.io | WebSocket temps réel | 4.x |
 | PostgreSQL + pg | Base de données principale | 15.x |
 | Redis + ioredis | Sessions, Pub/Sub, heartbeat | 7.x |
@@ -330,13 +330,19 @@ authbadge-cm14/
 ## Build de production
 
 ```bash
-# Frontend
-npm run build
+# Frontend (web)
+npm run build:prod
 # → Génère dist/ — déployer sur Nginx
+
+# Frontend + APK Android (via CI/CD)
+git tag v1.x.x
+git push origin v1.x.x
+# → GitHub Actions génère l'APK/AAB signé → GitHub Releases
 
 # Backend
 cd backend
 NODE_ENV=production node src/index.js
+# → Avec PM2 en production : pm2 start src/index.js --name authbadge-backend
 ```
 
 Configuration Nginx minimale :
@@ -378,16 +384,26 @@ server {
 
 Le détail complet est disponible dans [PROGRESS.md](PROGRESS.md).
 
+## Documentation
+
+| Document | Contenu |
+|---|---|
+| [Guide agent](docs/guide-agent.md) | Prise en main, scan, résultats, mode offline |
+| [Guide administrateur](docs/guide-admin.md) | Gestion badges, agents, zones, incidents |
+| [Procédure de déploiement](docs/deploiement.md) | Installation serveur, Nginx, CI/CD, jour J |
+| [Documentation API](docs/api.md) | Endpoints REST + événements WebSocket |
+| [Plan de continuité (PCA)](docs/pca.md) | Procédures de reprise en cas d'incident |
+
 | Phase | Description | État |
 |---|---|---|
 | 0 | Fondations et documentation | ✅ |
 | 1 | Interface complète et responsive (FR/EN/ES) | ✅ |
-| 2 | Fonctionnalités core : QR, TOTP, ECDSA, offline 4h | ✅ |
+| 2 | Fonctionnalités core : QR, TOTP, ECDSA, NFC, offline 4h | ✅ |
 | 3 | Backend : API REST, JWT, WebSocket, PostgreSQL, Redis | ✅ |
-| 4 | Export Capacitor (iOS + Android) | ⏳ |
+| 4 | Capacitor Android, CI/CD, APK signé, sécurité mobile | ✅ |
 | 5 | Tests et validation | ⏳ |
-| 6 | Documentation finale | ⏳ |
+| 6 | Documentation finale | 🔄 |
 
 ---
 
-*AUTH-BADGE CM14 · OMC Yaoundé 2025 · v3.0.0*
+*AUTH-BADGE CM14 · OMC Yaoundé 2025 · v1.0.0*

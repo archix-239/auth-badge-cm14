@@ -108,7 +108,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | 4.6 | Test build production local validé (web admin + mobile agent) | ✅ |
 | 4.7 | Pipeline CI/CD GitHub Actions (build, sign APK/AAB, deploy backend) | 🔄 |
 | 4.8 | Build Android signé (keystore + APK/AAB release) | ⏳ |
-| 4.9 | Distribution via MDM sur les terminaux agents | ⏳ |
+| 4.9 | Distribution via MDM sur les terminaux agents | — géré par l'administrateur de l'événement |
 
 ---
 
