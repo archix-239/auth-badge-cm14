@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
+import { CapacitorNfc } from '@capgo/capacitor-nfc'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { PARTICIPANTS, getCategoryColor } from '../../data/mockData'
+import { getCategoryColor } from '../../data/mockData'
 import { Html5Qrcode } from 'html5-qrcode'
 import { verifyBadge } from '../../utils/badgeCrypto'
 import { playScanFeedback } from '../../utils/scanFeedback'
@@ -177,24 +178,39 @@ export default function Scanner() {
   }
 
   const handleNfc = async () => {
-    if (!('NDEFReader' in window)) {
-      alert(t('scanner.nfc.unavailable', 'NFC non disponible sur cet appareil.'))
-      return
-    }
     try {
-      const reader = new window.NDEFReader()
-      await reader.scan()
-      reader.addEventListener('reading', ({ message }) => {
-        for (const record of message.records) {
-          if (record.recordType === 'text') {
-            const text = new TextDecoder().decode(record.data)
-            doScan(text, 400)
-            break
+      const { supported } = await CapacitorNfc.isSupported()
+      if (!supported) {
+        alert(t('scanner.nfc.unavailable', 'NFC non disponible sur cet appareil.'))
+        return
+      }
+      const { status } = await CapacitorNfc.getStatus()
+      if (status !== 'NFC_OK') {
+        await CapacitorNfc.showSettings()
+        return
+      }
+
+      const listener = await CapacitorNfc.addListener('ndefDiscovered', async ({ tag }) => {
+        await listener.remove()
+        await CapacitorNfc.stopScanning().catch(() => {})
+
+        const records = tag.ndefMessage ?? []
+        for (const record of records) {
+          // NDEF Text record : payload[0]=status, payload[1..langLen]=lang, reste=texte
+          if (record.payload && record.payload.length > 1) {
+            const langLen = record.payload[0] & 0x3f
+            const textBytes = Uint8Array.from(record.payload.slice(1 + langLen))
+            const text = new TextDecoder('utf-8').decode(textBytes)
+            if (text) { doScan(text, 400); return }
           }
         }
-      }, { once: true })
-    } catch {
-      alert(t('scanner.nfc.error', 'Impossible de démarrer le scan NFC.'))
+        alert(t('scanner.nfc.no_text', 'Aucun texte trouvé sur le badge NFC.'))
+      })
+
+      await CapacitorNfc.startScanning()
+    } catch (err) {
+      console.error('[NFC] Erreur:', err?.message ?? err)
+      alert(t('scanner.nfc.error', 'Impossible de démarrer le scan NFC.') + '\n' + (err?.message ?? ''))
     }
   }
 

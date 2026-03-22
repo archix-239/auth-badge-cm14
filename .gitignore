@@ -13,9 +13,18 @@ dev-dist/
 .env.test.local
 .env.production.local
 
-# ── Capacitor (dossiers natifs générés automatiquement) ──────
+# ── Capacitor ────────────────────────────────────────────────
 ios/
-android/
+# android/ inclus — contient des modifications manuelles (AndroidManifest, permissions)
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/local.properties
+android/app/.cxx/
+
+# Variables d'environnement Android (IP locale spécifique à la machine)
+.env.android
 
 # ── Logs ─────────────────────────────────────────────────────
 logs/
