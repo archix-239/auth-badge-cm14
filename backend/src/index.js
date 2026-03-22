@@ -40,16 +40,15 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }, // pour les photos
 }))
 
-app.use(cors({
-  origin: (origin, cb) => {
-    // Autorise les requêtes sans origin (ex: app native, Postman)
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true)
-    cb(new Error(`CORS bloqué : ${origin}`))
-  },
-  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+const corsOptions = {
+  origin: true, // reflète l'origine exacte — compatible credentials, sécurisé en Phase 3
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-}))
+  optionsSuccessStatus: 204,
+}
+app.options('*', cors(corsOptions))
+app.use(cors(corsOptions))
 
 app.use(express.json({ limit: '1mb' }))
 

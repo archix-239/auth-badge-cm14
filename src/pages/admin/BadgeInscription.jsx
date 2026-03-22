@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import html2canvas from 'html2canvas'
 import { useTranslation } from 'react-i18next'
-import { QRCodeSVG } from 'qrcode.react'
+import { QRCodeCanvas } from 'qrcode.react'
 import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
 import { signBadge } from '../../utils/badgeCrypto'
 import { api } from '../../utils/api'
@@ -20,6 +21,7 @@ export default function BadgeInscription() {
   const [step, setStep]                 = useState('form')
   const [revoking, setRevoking]         = useState(null)
   const qrContainerRef                  = useRef(null)
+  const badgeCardRef                    = useRef(null)
 
   // Charge les vrais participants depuis l'API au mount
   useEffect(() => {
@@ -89,19 +91,30 @@ export default function BadgeInscription() {
     setRevoking(null)
   }
 
-  const handlePrint = () => window.print()
+  const captureBadge = useCallback(async () => {
+    if (!badgeCardRef.current) return null
+    return html2canvas(badgeCardRef.current, { scale: 2, useCORS: true, backgroundColor: null })
+  }, [])
 
-  const handleDownload = () => {
-    const svgEl = qrContainerRef.current?.querySelector('svg')
-    if (!svgEl) return
-    const serialized = new XMLSerializer().serializeToString(svgEl)
-    const blob = new Blob([serialized], { type: 'image/svg+xml' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href     = url
-    a.download = `badge_${generated?.id ?? 'cm14'}.svg`
+  const handlePrint = async () => {
+    const canvas = await captureBadge()
+    if (!canvas) return
+    const win = window.open('', '_blank')
+    win.document.write(`<html><head><title>Badge CM14</title>
+      <style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#fff}
+      img{max-width:100%;height:auto}@media print{body{margin:0}}</style></head>
+      <body><img src="${canvas.toDataURL('image/png')}" /></body></html>`)
+    win.document.close()
+    win.onload = () => { win.print() }
+  }
+
+  const handleDownload = async () => {
+    const canvas = await captureBadge()
+    if (!canvas) return
+    const a = document.createElement('a')
+    a.href     = canvas.toDataURL('image/png')
+    a.download = `badge_${generated?.id ?? 'cm14'}.png`
     a.click()
-    URL.revokeObjectURL(url)
   }
 
   const filtered = participants.filter(p =>
@@ -203,13 +216,13 @@ export default function BadgeInscription() {
 
           {step === 'badge' && generated && (
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-br from-slate-900 to-slate-700 p-6 text-white text-center">
+              <div ref={badgeCardRef} className="bg-gradient-to-br from-slate-900 to-slate-700 p-6 text-white text-center">
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <span className="material-symbols-outlined text-sm">shield_person</span>
                   <span className="text-xs font-bold uppercase tracking-widest">OMC CM14 — Yaoundé 2025</span>
                 </div>
                 <div ref={qrContainerRef} className="bg-white rounded-2xl p-5 inline-block mb-4 shadow-lg">
-                  <QRCodeSVG
+                  <QRCodeCanvas
                     value={qrValue || '{}'}
                     size={220}
                     level="H"

@@ -102,8 +102,9 @@ export default function Scanner() {
         let participantId = null
         try {
           const payload = JSON.parse(decodedText)
-          const { valid } = await verifyBadge(payload)
-          participantId = valid ? (payload.id ?? null) : null
+          // Phase 2 : vérification ECDSA cross-device activée en Phase 3
+          await verifyBadge(payload)
+          participantId = payload.id ?? null
         } catch {
           participantId = decodedText.trim() || null
         }
