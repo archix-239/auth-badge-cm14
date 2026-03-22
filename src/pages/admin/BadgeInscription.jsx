@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import html2canvas from 'html2canvas'
 import { useTranslation } from 'react-i18next'
 import { QRCodeCanvas } from 'qrcode.react'
 import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
@@ -91,28 +90,96 @@ export default function BadgeInscription() {
     setRevoking(null)
   }
 
-  const captureBadge = useCallback(async () => {
-    if (!badgeCardRef.current) return null
-    return html2canvas(badgeCardRef.current, { scale: 2, useCORS: true, backgroundColor: null })
-  }, [])
+  // Génère le badge comme canvas 2D (bypass html2canvas — fiable avec les canvas QR)
+  const buildBadgeCanvas = useCallback(() => {
+    const qrEl = qrContainerRef.current?.querySelector('canvas')
+    if (!qrEl || !generated) return null
 
-  const handlePrint = async () => {
-    const canvas = await captureBadge()
-    if (!canvas) return
+    const W = 680, H = 400
+    const cv = document.createElement('canvas')
+    cv.width = W; cv.height = H
+    const c = cv.getContext('2d')
+
+    // Fond dégradé sombre
+    const bg = c.createLinearGradient(0, 0, W, H)
+    bg.addColorStop(0, '#0f172a'); bg.addColorStop(1, '#1e293b')
+    c.fillStyle = bg; c.fillRect(0, 0, W, H)
+
+    // Bandeau header bleu
+    c.fillStyle = '#1e40af'; c.fillRect(0, 0, W, 64)
+
+    // Texte header
+    c.fillStyle = '#ffffff'; c.font = 'bold 15px Arial'
+    c.fillText('OMC CM14 — YAOUNDÉ 2025', 20, 28)
+    c.fillStyle = '#93c5fd'; c.font = '10px Arial'
+    c.fillText("BADGE D'ACCÈS OFFICIEL — CONFÉRENCE MINISTÉRIELLE N°14", 20, 48)
+
+    // Badge catégorie (haut droite)
+    c.fillStyle = '#ffffff'; c.fillRect(W - 90, 16, 72, 30)
+    c.fillStyle = '#1e40af'; c.font = 'bold 13px Arial'
+    c.textAlign = 'center'; c.fillText(generated.categorie, W - 54, 36); c.textAlign = 'left'
+
+    // QR Code (droite)
+    const qrSize = 210, qrX = W - qrSize - 24, qrY = 80
+    c.fillStyle = '#ffffff'; c.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20)
+    c.drawImage(qrEl, qrX, qrY, qrSize, qrSize)
+
+    // ID sous le QR
+    c.fillStyle = '#64748b'; c.font = '10px monospace'
+    c.textAlign = 'center'; c.fillText(generated.id, qrX + qrSize / 2, qrY + qrSize + 20); c.textAlign = 'left'
+
+    // Prénom + Nom
+    c.fillStyle = '#cbd5e1'; c.font = 'bold 22px Arial'
+    c.fillText(generated.prenom, 24, 108)
+    c.fillStyle = '#ffffff'; c.font = 'bold 30px Arial'
+    c.fillText(generated.nom.toUpperCase(), 24, 148)
+
+    // Délégation
+    c.fillStyle = '#94a3b8'; c.font = '15px Arial'
+    c.fillText(generated.delegation, 24, 178)
+
+    // Séparateur
+    c.fillStyle = '#334155'; c.fillRect(24, 195, 200, 1)
+
+    // Zones
+    let zx = 24
+    generated.zones.forEach(z => {
+      c.font = 'bold 11px Arial'
+      const tw = c.measureText(z).width + 18
+      c.fillStyle = '#1e40af'; c.fillRect(zx, 208, tw, 22)
+      c.fillStyle = '#ffffff'; c.fillText(z, zx + 9, 224)
+      zx += tw + 6
+    })
+
+    // Date expiration
+    c.fillStyle = '#475569'; c.font = '11px Arial'
+    c.fillText(`Exp : ${generated.dateExpiration}`, 24, 260)
+
+    // Bandeau footer
+    c.fillStyle = '#0f172a'; c.fillRect(0, H - 36, W, 36)
+    c.fillStyle = '#334155'; c.font = '10px Arial'
+    c.fillText('AUTH-BADGE CM14 — Système de contrôle d\'accès OMC', 20, H - 14)
+
+    return cv
+  }, [generated])
+
+  const handlePrint = () => {
+    const cv = buildBadgeCanvas()
+    if (!cv) return
     const win = window.open('', '_blank')
     win.document.write(`<html><head><title>Badge CM14</title>
-      <style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#fff}
-      img{max-width:100%;height:auto}@media print{body{margin:0}}</style></head>
-      <body><img src="${canvas.toDataURL('image/png')}" /></body></html>`)
+      <style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh}
+      img{max-width:100%}@media print{body{margin:0}}</style></head>
+      <body><img src="${cv.toDataURL('image/png')}" /></body></html>`)
     win.document.close()
-    win.onload = () => { win.print() }
+    win.onload = () => win.print()
   }
 
-  const handleDownload = async () => {
-    const canvas = await captureBadge()
-    if (!canvas) return
+  const handleDownload = () => {
+    const cv = buildBadgeCanvas()
+    if (!cv) return
     const a = document.createElement('a')
-    a.href     = canvas.toDataURL('image/png')
+    a.href = cv.toDataURL('image/png')
     a.download = `badge_${generated?.id ?? 'cm14'}.png`
     a.click()
   }
