@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+
+    <!-- Développement : autorise HTTP local + certificats utilisateur -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+
+    <!-- Production : HTTPS uniquement avec certificate pinning -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!--
+        Certificate Pinning — Phase 4.3
+        Pin SHA-256 de la clé publique du certificat backend AUTH-BADGE CM14.
+        À mettre à jour à chaque renouvellement du certificat.
+        Généré le : 2026-03-22
+    -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">authbadge-cm14</domain>
+        <pin-set expiration="2028-03-22">
+            <pin digest="SHA-256">44fhYKQsSj10LZIuMaAY11euqcnFAcV5WPmKXE10aZs=</pin>
+        </pin-set>
+    </domain-config>
+
+</network-security-config>

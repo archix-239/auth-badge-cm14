@@ -12,6 +12,7 @@
     "cap:open": "npx cap open android"
   },
   "dependencies": {
+    "@basecom-gmbh/capacitor-jailbreak-root-detection": "^7.0.4",
     "@capacitor/android": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "@capgo/capacitor-nfc": "^8.0.18",

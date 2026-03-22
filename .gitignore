@@ -26,6 +26,10 @@ android/app/.cxx/
 # Variables d'environnement Android (IP locale spécifique à la machine)
 .env.android
 
+# ── Certificats TLS (ne jamais versionner — clé privée) ──────
+backend/certs/key.pem
+backend/certs/cert.pem
+
 # ── Logs ─────────────────────────────────────────────────────
 logs/
 *.log

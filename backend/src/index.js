@@ -1,13 +1,14 @@
 import 'dotenv/config'
 import express from 'express'
-import { createServer } from 'http'
+import { createServer as createHttpServer } from 'http'
+import { createServer as createHttpsServer } from 'https'
+import { readFileSync, existsSync, mkdirSync } from 'fs'
 import { Server as SocketIO } from 'socket.io'
 import cors from 'cors'
 import helmet from 'helmet'
 import { rateLimit } from 'express-rate-limit'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { mkdirSync } from 'fs'
 
 import authRouter        from './routes/auth.js'
 import participantsRouter from './routes/participants.js'
@@ -73,15 +74,26 @@ app.use('/uploads', express.static(uploadDir))
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }))
 
+// ─── Serveur HTTP ou HTTPS selon la présence des certificats ─────────────────
+const certPath = join(__dirname, '..', 'certs', 'cert.pem')
+const keyPath  = join(__dirname, '..', 'certs', 'key.pem')
+const useHttps = existsSync(certPath) && existsSync(keyPath)
+
+const server = useHttps
+  ? createHttpsServer({ cert: readFileSync(certPath), key: readFileSync(keyPath) }, app)
+  : createHttpServer(app)
+
+const protocol = useHttps ? 'https' : 'http'
+
 // ─── Socket.io ────────────────────────────────────────────────────────────────
-const httpServer = createServer(app)
-const io = new SocketIO(httpServer, {
+const io = new SocketIO(server, {
   cors: { origin: ALLOWED_ORIGINS, methods: ['GET', 'POST'], credentials: true },
 })
 setupSocket(io)
 
 // ─── Démarrage ───────────────────────────────────────────────────────────────
-httpServer.listen(PORT, () => {
-  console.log(`[server] AUTH-BADGE CM14 backend démarré — http://localhost:${PORT}`)
+server.listen(PORT, () => {
+  console.log(`[server] AUTH-BADGE CM14 backend démarré — ${protocol}://localhost:${PORT}`)
   console.log(`[server] Frontend autorisé : ${FRONTEND}`)
+  if (useHttps) console.log('[server] TLS activé — Certificate Pinning opérationnel')
 })

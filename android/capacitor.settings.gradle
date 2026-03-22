@@ -2,5 +2,8 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
 
+include ':basecom-gmbh-capacitor-jailbreak-root-detection'
+project(':basecom-gmbh-capacitor-jailbreak-root-detection').projectDir = new File('../node_modules/@basecom-gmbh/capacitor-jailbreak-root-detection/android')
+
 include ':capgo-capacitor-nfc'
 project(':capgo-capacitor-nfc').projectDir = new File('../node_modules/@capgo/capacitor-nfc/android')

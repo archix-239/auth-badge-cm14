@@ -1,4 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { JailbreakRootDetection } from '@basecom-gmbh/capacitor-jailbreak-root-detection'
 import { useAuth } from './context/AuthContext'
 
 import Login          from './pages/Login'
@@ -37,8 +40,47 @@ function ProtectedRoute({ children, allowedRoles }) {
   return children
 }
 
+function RootedScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-950 p-6">
+      <div className="max-w-sm text-center">
+        <span className="material-symbols-outlined text-6xl text-red-600 dark:text-red-400 mb-4 block">
+          gpp_bad
+        </span>
+        <h1 className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">
+          Appareil non autorisé
+        </h1>
+        <p className="text-sm text-red-700 dark:text-red-300">
+          AUTH-BADGE CM14 ne peut pas fonctionner sur un appareil rooté ou jailbreaké.
+          Contactez votre administrateur système.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const { user } = useAuth()
+  const [rootChecked, setRootChecked] = useState(!Capacitor.isNativePlatform())
+  const [isRooted, setIsRooted] = useState(false)
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    JailbreakRootDetection.isJailbrokenOrRooted()
+      .then(({ result }) => {
+        setIsRooted(result)
+        setRootChecked(true)
+      })
+      .catch(() => setRootChecked(true))
+  }, [])
+
+  if (!rootChecked) return (
+    <div className="min-h-screen flex items-center justify-center bg-bg-light dark:bg-bg-dark">
+      <span className="material-symbols-outlined text-4xl animate-spin text-primary">progress_activity</span>
+    </div>
+  )
+
+  if (isRooted) return <RootedScreen />
 
   return (
     <Routes>
