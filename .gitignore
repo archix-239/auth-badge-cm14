@@ -12,6 +12,7 @@ dev-dist/
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env.production
 
 # ── Capacitor ────────────────────────────────────────────────
 ios/
@@ -33,7 +34,7 @@ backend/certs/cert.pem
 # ── Signing Android (ne jamais versionner) ────────────────────
 android/app/*.jks
 android/app/*.keystore
-android/keystore.properties
+android/app/keystore.properties
 
 # ── Logs ─────────────────────────────────────────────────────
 logs/

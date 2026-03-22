@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
-import { JailbreakRootDetection } from '@basecom-gmbh/capacitor-jailbreak-root-detection'
+import { JailbreakRoot } from '@basecom-gmbh/capacitor-jailbreak-root-detection'
 import { useAuth } from './context/AuthContext'
 
 import Login          from './pages/Login'
@@ -66,7 +66,7 @@ export default function App() {
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
-    JailbreakRootDetection.isJailbrokenOrRooted()
+    JailbreakRoot.isJailbrokenOrRooted()
       .then(({ result }) => {
         setIsRooted(result)
         setRootChecked(true)

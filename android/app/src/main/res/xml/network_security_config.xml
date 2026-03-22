@@ -10,7 +10,9 @@
     </debug-overrides>
 
     <!-- Production : HTTPS uniquement avec certificate pinning -->
-    <base-config cleartextTrafficPermitted="false">
+    <!-- Dev local : cleartextTrafficPermitted="true" pour tester via IP locale (HTTP) -->
+    <!-- IMPORTANT : remettre à "false" avant le build release production -->
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

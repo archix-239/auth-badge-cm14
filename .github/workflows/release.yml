@@ -1,0 +1,85 @@
+name: Release — Build & Sign APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build signed APK/AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend (mode production)
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_SESSION_TIMEOUT_MIN: 30
+        run: npm run build:prod
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/authbadge-cm14.jks
+
+      - name: Create keystore.properties
+        run: |
+          cat > android/app/keystore.properties << PROPS
+          storeFile=authbadge-cm14.jks
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          PROPS
+
+      - name: Build signed APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Build signed AAB
+        working-directory: android
+        run: ./gradlew bundleRelease
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: authbadge-cm14-${{ github.ref_name }}.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: AUTH-BADGE CM14 ${{ github.ref_name }}
+          body: |
+            ## AUTH-BADGE CM14 ${{ github.ref_name }}
+
+            ### Installation
+            1. Télécharge `authbadge-cm14.apk`
+            2. Active "Sources inconnues" sur le terminal Android
+            3. Installe l'APK
+
+            ### Contenu
+            - APK signé (installation directe)
+            - AAB signé (Google Play / MDM)
+          files: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab

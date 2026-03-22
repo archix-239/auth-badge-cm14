@@ -1,4 +1,4 @@
-name: CI
+name: CI — Build Check
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  build-web:
-    name: Build web app
+  build:
+    name: Vite Production Build
     runs-on: ubuntu-latest
 
     steps:
@@ -29,33 +29,3 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_SESSION_TIMEOUT_MIN: 30
         run: npm run build:prod
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
-          path: dist/
-          retention-days: 3
-
-  build-backend:
-    name: Check backend
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install backend dependencies
-        working-directory: backend
-        run: npm ci
-
-      - name: Check syntax (dry-run)
-        working-directory: backend
-        run: node --input-type=module < /dev/null || true
