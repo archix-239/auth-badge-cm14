@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 
 const IS_MOCK = !import.meta.env.VITE_API_URL
-const SOCKET_EVENTS = ['scan:new', 'badge:revoked', 'alert:broadcast', 'terminal:decommissioned']
+const SOCKET_EVENTS = ['scan:new', 'badge:revoked', 'alert:broadcast', 'terminal:decommissioned', 'user:status']
 
 export function useSocket(handlers = {}) {
   const [connected, setConnected] = useState(false)

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { POINTS_CONTROLE } from '../../data/mockData'
 import { api } from '../../utils/api'
+import { useSocket } from '../../hooks/useSocket'
 
 const IS_MOCK = !import.meta.env.VITE_API_URL
 
@@ -56,6 +57,16 @@ export default function UserManagement() {
   const [saving, setSaving]      = useState(false)
   const [apiError, setApiError]  = useState(null)
   const PER_PAGE = 8
+
+  useSocket({
+    'user:status': ({ userId, status }) => {
+      setUsers(prev => prev.map(u =>
+        u.loginId === userId && u.statut !== 'BLOQUÉ'
+          ? { ...u, statut: status }
+          : u
+      ))
+    },
+  })
 
   useEffect(() => {
     if (IS_MOCK) {

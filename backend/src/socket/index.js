@@ -37,6 +37,9 @@ export function setupSocket(io) {
 
     console.log(`[socket] Connecté : ${userId} (${role}) — socket ${socket.id}`)
 
+    // Notifie admins/superviseurs du changement de statut
+    socket.to('role:admin').to('role:supervisor').emit('user:status', { userId, status: 'EN LIGNE' })
+
     // Heartbeat terminal (agent envoie toutes les 60s)
     socket.on('terminal:heartbeat', ({ terminalId }) => {
       socket.join(`terminal:${terminalId}`)
@@ -44,6 +47,7 @@ export function setupSocket(io) {
 
     socket.on('disconnect', () => {
       console.log(`[socket] Déconnecté : ${userId} — socket ${socket.id}`)
+      socket.to('role:admin').to('role:supervisor').emit('user:status', { userId, status: 'HORS LIGNE' })
     })
   })
 
