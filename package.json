@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "android": "vite build --mode android && npx cap sync android && npx cap open android",
     "cap:sync": "vite build --mode android && npx cap sync android",
-    "cap:open": "npx cap open android"
+    "cap:open": "npx cap open android",
+    "build:prod": "vite build --mode production",
+    "cap:release": "cp capacitor.config.prod.json capacitor.config.json && vite build --mode production && npx cap sync android"
   },
   "dependencies": {
     "@basecom-gmbh/capacitor-jailbreak-root-detection": "^7.0.4",

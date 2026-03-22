@@ -1,0 +1,93 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - 'v*'   # Déclenché sur les tags : v1.0.0, v1.2.3, etc.
+
+jobs:
+  build-apk:
+    name: Build & sign AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Utilise la config Capacitor de production (androidScheme: https)
+      - name: Use production Capacitor config
+        run: cp capacitor.config.prod.json capacitor.config.json
+
+      # Build Vite production (lit .env.production)
+      - name: Build web app
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_SESSION_TIMEOUT_MIN: 30
+        run: npm run build:prod
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      # Reconstruit le keystore depuis le secret GitHub (base64)
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/authbadge-cm14.jks
+
+      # Crée keystore.properties depuis les secrets
+      - name: Create keystore.properties
+        run: |
+          cat > android/keystore.properties << EOF
+          storeFile=authbadge-cm14.jks
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: Make Gradle executable
+        run: chmod +x android/gradlew
+
+      # Build AAB signé (recommandé pour le Play Store)
+      - name: Build release AAB
+        working-directory: android
+        run: ./gradlew bundleRelease
+
+      # Build APK signé (pour distribution directe / MDM)
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: authbadge-cm14-${{ github.ref_name }}.aab
+          path: android/app/build/outputs/bundle/release/*.aab
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: authbadge-cm14-${{ github.ref_name }}.apk
+          path: android/app/build/outputs/apk/release/*.apk
+
+      # Crée une GitHub Release avec les artefacts
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
+          generate_release_notes: true

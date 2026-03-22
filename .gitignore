@@ -30,6 +30,11 @@ android/app/.cxx/
 backend/certs/key.pem
 backend/certs/cert.pem
 
+# ── Signing Android (ne jamais versionner) ────────────────────
+android/app/*.jks
+android/app/*.keystore
+android/keystore.properties
+
 # ── Logs ─────────────────────────────────────────────────────
 logs/
 *.log

@@ -2,15 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
+    sourcemap: mode !== 'production',
   },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: { enabled: true }, // active le SW en dev pour les tests
+      devOptions: { enabled: mode === 'development' }, // SW actif uniquement en dev
       workbox: {
         // Precache tous les assets de l'app
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
@@ -45,4 +46,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))

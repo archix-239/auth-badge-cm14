@@ -104,8 +104,10 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | 4.2 | Configuration plugin NFC (`@capgo/capacitor-nfc`, Android natif) | ✅ |
 | 4.3 | Certificate Pinning (TLS auto-signé + `network_security_config.xml`) | ✅ |
 | 4.4 | Détection root/jailbreak (`@basecom-gmbh/capacitor-jailbreak-root-detection`) | ✅ |
-| 4.5 | Build Android signé (keystore + APK/AAB release) | 🔄 |
-| 4.6 | Distribution via MDM sur les terminaux agents | ⏳ |
+| 4.5 | Préparation production (env, Vite prod, ProGuard, Capacitor config) | ✅ |
+| 4.6 | Pipeline CI/CD GitHub Actions (build, sign APK/AAB, deploy backend) | ✅ |
+| 4.7 | Build Android signé (keystore + APK/AAB release) | 🔄 |
+| 4.8 | Distribution via MDM sur les terminaux agents | ⏳ |
 
 ---
 
@@ -159,4 +161,4 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 ---
 
-*Dernière mise à jour : 2026-03-22 — Phase 1 ✅ — Phase 2 ✅ — Phase 3 ✅ — Phase 4 (4.1–4.4) ✅ — 4.5 en cours*
+*Dernière mise à jour : 2026-03-22 — Phase 1 ✅ — Phase 2 ✅ — Phase 3 ✅ — Phase 4 (4.1–4.6) ✅ — 4.7 build signé en cours*

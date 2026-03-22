@@ -1,21 +1,22 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ─── Capacitor WebView ────────────────────────────────────────────────────────
+-keep class com.getcapacitor.** { *; }
+-keep class cm.omc.authbadge14.** { *; }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ─── Plugins Capacitor ────────────────────────────────────────────────────────
+-keep class com.basecom.capacitor.jailbreakrootdetection.** { *; }
+-keep class ee.forgr.capacitor.nfc.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
+# ─── WebView JavaScript Interface ─────────────────────────────────────────────
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# ─── Annotations et réflexion ─────────────────────────────────────────────────
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes Exceptions
+
+# ─── Stack traces lisibles en production (optionnel) ─────────────────────────
+# Décommenter pour faciliter le débogage des crashes en prod
 #-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
 #-renamesourcefileattribute SourceFile

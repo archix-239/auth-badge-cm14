@@ -1,0 +1,42 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    name: Deploy to production server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd /opt/authbadge-cm14/backend
+
+            # Récupérer les derniers changements
+            git pull origin main
+
+            # Installer les dépendances de production uniquement
+            npm ci --omit=dev
+
+            # Redémarrer le service (PM2)
+            pm2 restart authbadge-backend --update-env
+
+            # Vérification santé
+            sleep 3
+            curl -sf http://localhost:3001/health || (pm2 logs authbadge-backend --lines 20 && exit 1)
+
+            echo "✅ Backend déployé avec succès"
