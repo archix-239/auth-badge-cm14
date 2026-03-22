@@ -46,16 +46,16 @@ jobs:
       # Reconstruit le keystore depuis le secret GitHub (base64)
       - name: Decode keystore
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/authbadge-cm14.jks
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/authbadge-cm14.jks
 
       # Crée keystore.properties depuis les secrets
       - name: Create keystore.properties
         run: |
-          cat > android/keystore.properties << EOF
+          cat > android/app/keystore.properties << EOF
           storeFile=authbadge-cm14.jks
-          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
           EOF
 
       - name: Make Gradle executable
