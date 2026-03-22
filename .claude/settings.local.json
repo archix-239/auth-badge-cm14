@@ -13,7 +13,12 @@
       "Bash(\"C:/Program Files/Git/mingw64/bin/openssl.exe\" pkey -pubin -outform DER)",
       "Bash(\"C:/Program Files/Git/mingw64/bin/openssl.exe\" dgst -sha256 -binary)",
       "Bash('C:/Program Files/Git/mingw64/bin/openssl.exe' base64)",
-      "Bash(npm search:*)"
+      "Bash(npm search:*)",
+      "Bash(keytool -version)",
+      "Bash(ls d:/DevEnix/Projets_Enix/authbadge-cm14/android/app/*.jks)",
+      "Read(//c/Program Files/Android/Android Studio/jbr/bin/**)",
+      "Read(//c//**)",
+      "Read(//c/Users/Dev-Enix/AppData/Local/Programs/**)"
     ]
   }
 }

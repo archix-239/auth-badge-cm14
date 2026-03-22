@@ -66,7 +66,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | 2.3 | Vérification ECDSA P-256 réelle (Web Crypto API) | US-03/04 | ✅ |
 | 2.4 | Alerte sonore + vibration au scan (Web Audio + Vibration API) | US-05 | ✅ |
 | 2.5 | Mode offline 4h (Service Worker + IndexedDB + AES-256) | US-06 | ✅ |
-| 2.6 | Scan NFC via plugin Capacitor (Android + iOS) | US-02 | ❌ Dépend de 4.1 |
+| 2.6 | Scan NFC via plugin Capacitor (Android + iOS) | US-02 | ✅ |
 
 ---
 
@@ -100,11 +100,11 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 | # | Tâche | État |
 |---|---|---|
-| 4.1 | Intégration de Capacitor dans le projet React/Vite | ⏳ |
-| 4.2 | Configuration plugin NFC (Android + iOS natif) | ⏳ |
-| 4.3 | Configuration Certificate Pinning | ⏳ |
-| 4.4 | Détection jailbreak/root (plugin Capacitor) | ⏳ |
-| 4.5 | Build iOS (Xcode) + Android (Android Studio) | ⏳ |
+| 4.1 | Intégration de Capacitor dans le projet React/Vite | ✅ |
+| 4.2 | Configuration plugin NFC (`@capgo/capacitor-nfc`, Android natif) | ✅ |
+| 4.3 | Certificate Pinning (TLS auto-signé + `network_security_config.xml`) | ✅ |
+| 4.4 | Détection root/jailbreak (`@basecom-gmbh/capacitor-jailbreak-root-detection`) | ✅ |
+| 4.5 | Build Android signé (keystore + APK/AAB release) | 🔄 |
 | 4.6 | Distribution via MDM sur les terminaux agents | ⏳ |
 
 ---
@@ -142,7 +142,7 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | ID | Description | Phase | État |
 |---|---|---|---|
 | US-01 | Authentification 2FA agent | Phase 2 | ✅ |
-| US-02 | Scan NFC | Phase 4 | ❌ |
+| US-02 | Scan NFC | Phase 4 | ✅ |
 | US-03 | Scan QR Code caméra | Phase 2 | ✅ |
 | US-04 | Résultat plein écran avec photo | Phase 3 | ✅ |
 | US-05 | Alerte visuelle + sonore + vibration | Phase 2 | ✅ |
@@ -159,4 +159,4 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 ---
 
-*Dernière mise à jour : 2026-03-20 — Phase 1 ✅ — Phase 2 (2.1–2.5) ✅ — Phase 3 (3.1–3.15) ✅ — Phase 4 suivante*
+*Dernière mise à jour : 2026-03-22 — Phase 1 ✅ — Phase 2 ✅ — Phase 3 ✅ — Phase 4 (4.1–4.4) ✅ — 4.5 en cours*
