@@ -9,9 +9,9 @@ const pool = new Pool({
   database: process.env.POSTGRES_DB       || 'authbadge_cm14',
   user:     process.env.POSTGRES_USER     || 'postgres',
   password: process.env.POSTGRES_PASSWORD || 'changeme',
-  max: 20,
+  max: parseInt(process.env.POSTGRES_POOL_MAX || '50'),
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 2_000,
+  connectionTimeoutMillis: 5_000,
 })
 
 pool.on('error', (err) => {

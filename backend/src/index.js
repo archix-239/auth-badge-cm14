@@ -53,11 +53,11 @@ app.use(cors(corsOptions))
 
 app.use(express.json({ limit: '1mb' }))
 
-// Limite globale : 300 req/min par IP
-app.use(rateLimit({ windowMs: 60_000, max: 300, standardHeaders: true, legacyHeaders: false }))
+// Limite globale — configurable via RATE_LIMIT_MAX (ex: augmenter pour les tests de charge)
+app.use(rateLimit({ windowMs: 60_000, max: parseInt(process.env.RATE_LIMIT_MAX ?? '300'), standardHeaders: true, legacyHeaders: false }))
 
-// Limite stricte sur /auth/login : 10 req/min par IP
-app.use('/api/auth/login', rateLimit({ windowMs: 60_000, max: 10 }))
+// Limite stricte sur /auth/login — configurable via RATE_LIMIT_AUTH_MAX
+app.use('/api/auth/login', rateLimit({ windowMs: 60_000, max: parseInt(process.env.RATE_LIMIT_AUTH_MAX ?? '10') }))
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api/auth',         authRouter)

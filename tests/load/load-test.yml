@@ -1,0 +1,88 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AUTH-BADGE CM14 — Test de charge Artillery
+# Objectif : valider le comportement du backend sous 500 terminaux simultanés.
+#
+# Avant de lancer :
+#   1. Démarrer le backend avec les limites de taux élevées :
+#      RATE_LIMIT_MAX=30000 RATE_LIMIT_AUTH_MAX=100 node src/index.js
+#   2. Depuis la racine du projet :
+#      npx artillery run tests/load/load-test.yml
+# ─────────────────────────────────────────────────────────────────────────────
+
+config:
+  target: "https://localhost:3001"
+  tls:
+    rejectUnauthorized: false   # Certificat auto-signé en développement
+
+  processor: "./processor.cjs"
+
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+  # Seuils de performance acceptables (le test échoue si dépassés)
+  ensure:
+    thresholds:
+      - http.response_time.p95: 2000   # 95% des requêtes < 2 secondes
+      - http.response_time.p99: 5000   # 99% des requêtes < 5 secondes
+
+  phases:
+    - name: "Préchauffage (50 terminaux)"
+      duration: 30
+      arrivalRate: 5
+      rampTo: 50
+
+    - name: "Charge nominale (250 terminaux actifs)"
+      duration: 60
+      arrivalRate: 50
+
+    - name: "Pic de charge (500 terminaux)"
+      duration: 60
+      arrivalRate: 100
+
+    - name: "Retour au calme"
+      duration: 30
+      arrivalRate: 100
+      rampTo: 10
+
+scenarios:
+  # ── 80% du trafic : workflow agent (login + scans répétés) ──────────────────
+  - name: "Terminal agent — scan de badges"
+    weight: 80
+    flow:
+      - function: "ensureLogin"
+      - loop:
+          - function: "pickParticipant"
+          - post:
+              url: "/api/scans"
+              headers:
+                Authorization: "Bearer {{ accessToken }}"
+              json:
+                participant_id: "{{ participant_id }}"
+                nom: "{{ nom }}"
+                delegation: "{{ delegation }}"
+                categorie: "{{ categorie }}"
+                zone: "{{ zone }}"
+                point_controle_id: "{{ point_controle_id }}"
+                resultat: "{{ resultat }}"
+          - think: 2   # Pause réaliste entre deux scans (secondes)
+        count: 5
+
+  # ── 15% du trafic : vérification de disponibilité ──────────────────────────
+  - name: "Health check"
+    weight: 15
+    flow:
+      - get:
+          url: "/health"
+
+  # ── 5% du trafic : consultation de l'historique ────────────────────────────
+  - name: "Consultation historique"
+    weight: 5
+    flow:
+      - function: "ensureLogin"
+      - get:
+          url: "/api/scans"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          qs:
+            limit: 20

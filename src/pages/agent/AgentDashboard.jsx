@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { LOGS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
-import { getBadgeStoreSize } from '../../utils/badgeStore'
+import { getBadgeStoreSize, syncBadgeStore } from '../../utils/badgeStore'
 import { api } from '../../utils/api'
-import { mapScanLog } from '../../utils/dataMappers'
+import { mapScanLog, mapParticipant } from '../../utils/dataMappers'
 
 const IS_MOCK = !import.meta.env.VITE_API_URL
 
@@ -17,7 +17,7 @@ export default function AgentDashboard() {
   const navigate = useNavigate()
 
   const [isOnline,   setIsOnline]   = useState(navigator.onLine)
-  const [lastSync,   setLastSync]   = useState(() => {
+  const [lastSync, setLastSync] = useState(() => {
     const stored = localStorage.getItem('cm14_last_sync')
     return stored ? new Date(stored) : new Date()
   })
@@ -39,18 +39,29 @@ export default function AgentDashboard() {
           setRecentLogs(recent.map(mapScanLog))
           setSessionCount(todayLogs.length)
         })
-        .catch(() => setRecentLogs(LOGS.filter(l => l.agentId === user?.id).slice(0, 5)))
+        .catch(() => { setRecentLogs([]); setSessionCount(0) })
     } else {
       const myMockLogs = LOGS.filter(l => l.agentId === user?.id)
       setRecentLogs(myMockLogs.slice(0, 5))
       setSessionCount(myMockLogs.length)
     }
 
-    const syncTime = new Date()
-    setLastSync(syncTime)
-    localStorage.setItem('cm14_last_sync', syncTime.toISOString())
-
-    const handleOnline  = () => setIsOnline(true)
+    const handleOnline  = () => {
+      setIsOnline(true)
+      if (!IS_MOCK) {
+        // Recharge l'historique
+        api.get('/api/scans?limit=5')
+          .then(rows => setRecentLogs(rows.map(mapScanLog)))
+          .catch(() => {})
+        // Resync le cache badges et remet le compteur à zéro
+        api.get('/api/participants')
+          .then(rows => {
+            syncBadgeStore(rows.map(mapParticipant))
+            setLastSync(new Date())
+          })
+          .catch(() => {})
+      }
+    }
     const handleOffline = () => setIsOnline(false)
     window.addEventListener('online',  handleOnline)
     window.addEventListener('offline', handleOffline)
