@@ -112,6 +112,23 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 ---
 
+## Phase 4b — Complément fonctionnel (alignement documentation)
+
+> **But** : Combler les écarts entre le prototype et les guides utilisateur rédigés. Toutes les fonctionnalités décrites dans guide-agent.md et guide-admin.md sont maintenant implémentées.
+
+| # | Tâche | État |
+|---|---|---|
+| 4b.1 | Alertes broadcast avec overlay agent + verrouillage terminal (AgentLayout) | ✅ |
+| 4b.2 | Formulaire création/modification participant (ParticipantManagement) | ✅ |
+| 4b.3 | Affichage QR badge signé depuis la fiche participant | ✅ |
+| 4b.4 | Affichage QR TOTP agent depuis la gestion utilisateurs | ✅ |
+| 4b.5 | Historique offline — scans enqueués et flushés à la reconnexion | ✅ |
+| 4b.6 | Message personnalisé pour l'alerte broadcast (SupervisionConsole) | ✅ |
+| 4b.7 | Bouton "Copier la valeur NFC" sur la page d'inscription | ✅ |
+| 4b.8 | Page Statistiques agent (/agent/stats) avec KPIs, barres et volume horaire | ✅ |
+
+---
+
 ## Phase 5 — Tests et validation
 
 > **But** : Valider que chaque user story est réellement satisfaite avant la mise en production.
@@ -162,4 +179,4 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 ---
 
-*Dernière mise à jour : 2026-03-22 — Phase 1 ✅ — Phase 2 ✅ — Phase 3 ✅ — Phase 4 (4.1–4.6) ✅ — 4.7 CI/CD en cours*
+*Dernière mise à jour : 2026-03-23 — Phase 1 ✅ — Phase 2 ✅ — Phase 3 ✅ — Phase 4 (4.1–4.6) ✅ — Phase 4b ✅ — 4.7 CI/CD en cours*
