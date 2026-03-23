@@ -160,6 +160,7 @@
     },
     "entries_one": "{{count}} entrada",
     "entries_other": "{{count}} entradas",
+    "pending": "Pendiente",
     "detail": {
       "delegation": "Delegación",
       "category": "Categoría",

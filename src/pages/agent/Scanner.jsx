@@ -7,6 +7,7 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { verifyBadge } from '../../utils/badgeCrypto'
 import { playScanFeedback } from '../../utils/scanFeedback'
 import { lookupBadge, updateBadgeStatus } from '../../utils/badgeStore'
+import { enqueueScan } from '../../utils/scanQueue'
 import { api } from '../../utils/api'
 import { mapParticipant } from '../../utils/dataMappers'
 import { useSocket } from '../../hooks/useSocket'
@@ -154,8 +155,9 @@ export default function Scanner() {
       const scanResult = { id: `S-${Date.now()}`, participant, resultat, zone: currentZone, timestamp: new Date(), agentId: user?.id }
       playScanFeedback(resultat)
       // Persiste le scan dans le backend (best-effort, ne bloque pas l'UI)
+      // En cas d'échec (hors ligne), le scan est mis en file d'attente locale
       if (!IS_MOCK) {
-        api.post('/api/scans', {
+        const apiPayload = {
           participant_id:    participant?.id    ?? null,
           nom:               participant?.nom   ?? 'Inconnu',
           delegation:        participant?.delegation ?? null,
@@ -163,7 +165,15 @@ export default function Scanner() {
           zone:              currentZone,
           point_controle_id: null,
           resultat,
-        }).catch(() => {})
+        }
+        api.post('/api/scans', apiPayload).catch(() => {
+          enqueueScan({
+            id:         scanResult.id,
+            timestamp:  scanResult.timestamp,
+            agentId:    user?.id,
+            ...apiPayload,
+          })
+        })
       }
       setResult(scanResult)
       setScanLog(prev => [scanResult, ...prev].slice(0, 20))

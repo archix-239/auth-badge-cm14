@@ -160,6 +160,7 @@
     },
     "entries_one": "{{count}} entry",
     "entries_other": "{{count}} entries",
+    "pending": "Pending",
     "detail": {
       "delegation": "Delegation",
       "category": "Category",

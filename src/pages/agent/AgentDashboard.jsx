@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { LOGS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
 import { getBadgeStoreSize, syncBadgeStore } from '../../utils/badgeStore'
+import { getPendingScans, removeSyncedScans } from '../../utils/scanQueue'
 import { api } from '../../utils/api'
 import { mapScanLog, mapParticipant } from '../../utils/dataMappers'
 
@@ -49,6 +50,28 @@ export default function AgentDashboard() {
     const handleOnline  = () => {
       setIsOnline(true)
       if (!IS_MOCK) {
+        // Envoie les scans en attente (effectués hors ligne)
+        const pending = getPendingScans()
+        if (pending.length > 0) {
+          Promise.allSettled(
+            pending.map(scan =>
+              api.post('/api/scans', {
+                participant_id:    scan.participant_id    ?? null,
+                nom:               scan.nom,
+                delegation:        scan.delegation        ?? null,
+                categorie:         scan.categorie         ?? null,
+                zone:              scan.zone,
+                point_controle_id: scan.point_controle_id ?? null,
+                resultat:          scan.resultat,
+              }).then(() => scan.id)
+            )
+          ).then(results => {
+            const synced = results
+              .filter(r => r.status === 'fulfilled')
+              .map(r => r.value)
+            if (synced.length > 0) removeSyncedScans(synced)
+          })
+        }
         // Recharge l'historique
         api.get('/api/scans?limit=5')
           .then(rows => setRecentLogs(rows.map(mapScanLog)))

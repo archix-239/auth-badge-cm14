@@ -4,6 +4,7 @@ import { LOGS, getResultConfig, formatDateTime, getCategoryColor } from '../../d
 import { useAuth } from '../../context/AuthContext'
 import { api } from '../../utils/api'
 import { mapScanLog } from '../../utils/dataMappers'
+import { getPendingScans } from '../../utils/scanQueue'
 
 const IS_MOCK = !import.meta.env.VITE_API_URL
 
@@ -22,9 +23,21 @@ export default function AgentHistory() {
       setLogs(LOGS.filter(l => l.agentId === user?.id))
       return
     }
+    // Scans en attente de synchronisation (hors ligne)
+    const pendingLogs = getPendingScans().map(s => ({ ...mapScanLog(s), _queued: true }))
+
     api.get('/api/scans?limit=200')
-      .then(rows => setLogs(rows.map(mapScanLog)))
-      .catch(() => setLogs(LOGS.filter(l => l.agentId === user?.id)))
+      .then(rows => {
+        const serverLogs = rows.map(mapScanLog)
+        // Les scans en attente sont affichés en tête de liste (les plus récents)
+        const serverIds = new Set(serverLogs.map(l => l.id))
+        const stillPending = pendingLogs.filter(l => !serverIds.has(l.id))
+        setLogs([...stillPending, ...serverLogs])
+      })
+      .catch(() => {
+        // Hors ligne : afficher uniquement les scans en attente
+        setLogs(pendingLogs)
+      })
       .finally(() => setLoading(false))
   }, [user?.id])
 
@@ -145,7 +158,14 @@ export default function AgentHistory() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{log.nom}</p>
-                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full border ${cfg.light}`}>{log.resultat}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {log._queued && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700 font-semibold">
+                          {t('agent_history.pending')}
+                        </span>
+                      )}
+                      <span className={`text-xs px-2 py-0.5 rounded-full border ${cfg.light}`}>{log.resultat}</span>
+                    </div>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{log.delegation} · {log.zone}</p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
