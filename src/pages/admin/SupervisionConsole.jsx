@@ -12,9 +12,10 @@ export default function SupervisionConsole() {
   const [liveEvents,    setLiveEvents]    = useState([])
   const [terminals,     setTerminals]     = useState([])
   const [revokedList,   setRevokedList]   = useState([])
-  const [alertActive,   setAlertActive]   = useState(false)
-  const [revokeTarget,  setRevokeTarget]  = useState('')
-  const [now,           setNow]           = useState(new Date())
+  const [alertActive,       setAlertActive]       = useState(false)
+  const [revokeTarget,      setRevokeTarget]      = useState('')
+  const [broadcastMessage,  setBroadcastMessage]  = useState('')
+  const [now,               setNow]               = useState(new Date())
 
   // ── Horloge ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -82,9 +83,11 @@ export default function SupervisionConsole() {
   // ── Alerte d'urgence (broadcast à tous les terminaux) ─────────────────────
   const handleEmergencyAlert = async () => {
     setAlertActive(true) // affichage local immédiat
+    const msg = broadcastMessage.trim() || t('supervision.emergency_message', 'ALERTE D\'URGENCE — Sécurité maximale activée')
     if (!IS_MOCK) {
-      await api.post('/api/alerts', { message: t('supervision.emergency_message', 'ALERTE D\'URGENCE — Sécurité maximale activée'), level: 'critical' }).catch(() => {})
+      await api.post('/api/alerts', { message: msg, level: 'critical' }).catch(() => {})
     }
+    setBroadcastMessage('')
   }
 
   // ── Révocation rapide ──────────────────────────────────────────────────────
@@ -243,6 +246,17 @@ export default function SupervisionConsole() {
             {/* Actions critiques */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-5 space-y-3">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('supervision.critical_actions')}</h3>
+
+              <div className="space-y-1.5">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">{t('supervision.broadcast_label')}</p>
+                <textarea
+                  value={broadcastMessage}
+                  onChange={e => setBroadcastMessage(e.target.value)}
+                  rows={2}
+                  placeholder={t('supervision.broadcast_placeholder')}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 resize-none"
+                />
+              </div>
 
               <button onClick={handleEmergencyAlert}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors group">

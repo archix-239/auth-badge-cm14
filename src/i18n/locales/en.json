@@ -372,6 +372,8 @@
     "events_count": "{{count}} events",
     "checkpoints_title": "Checkpoints",
     "critical_actions": "Critical actions",
+    "broadcast_label": "Alert message",
+    "broadcast_placeholder": "Leave blank for the default message…",
     "emergency_btn": "GENERAL EMERGENCY ALERT",
     "quick_revoke": "Quick revocation",
     "revoke_placeholder": "Badge ID (e.g.: P-006)",

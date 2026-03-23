@@ -372,6 +372,8 @@
     "events_count": "{{count}} eventos",
     "checkpoints_title": "Puntos de control",
     "critical_actions": "Acciones críticas",
+    "broadcast_label": "Mensaje de alerta",
+    "broadcast_placeholder": "Dejar en blanco para el mensaje predeterminado…",
     "emergency_btn": "ALERTA GENERAL DE EMERGENCIA",
     "quick_revoke": "Revocación rápida",
     "revoke_placeholder": "ID Credencial (ej: P-006)",
