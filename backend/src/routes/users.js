@@ -106,6 +106,23 @@ router.patch('/:id', requireAuth, requireRole('admin'), async (req, res) => {
   }
 })
 
+// ─── GET /api/users/:id/totp — secret TOTP pour configuration Google Auth ─────
+// Admin uniquement. Retourne le secret en base32 pour affichage QR unique.
+router.get('/:id/totp', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT id, name, totp_secret FROM users WHERE id = $1`,
+      [req.params.id]
+    )
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable.' })
+    const { id, name, totp_secret } = result.rows[0]
+    res.json({ id, name, totpSecret: totp_secret })
+  } catch (err) {
+    console.error('[users/totp]', err)
+    res.status(500).json({ error: 'Erreur serveur.' })
+  }
+})
+
 // ─── PATCH /api/users/:id/lock — toggle verrouillage ─────────────────────────
 router.patch('/:id/lock', requireAuth, requireRole('admin'), async (req, res) => {
   if (req.params.id === req.user.id) {

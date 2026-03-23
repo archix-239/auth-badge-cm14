@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { QRCodeCanvas } from 'qrcode.react'
 import { POINTS_CONTROLE } from '../../data/mockData'
 import { api } from '../../utils/api'
 import { useSocket } from '../../hooks/useSocket'
@@ -56,6 +57,7 @@ export default function UserManagement() {
   const [showPwd, setShowPwd]    = useState(false)
   const [saving, setSaving]      = useState(false)
   const [apiError, setApiError]  = useState(null)
+  const [totpModal, setTotpModal] = useState(null) // { id, name, totpSecret } | null
   const PER_PAGE = 8
 
   useSocket({
@@ -129,6 +131,24 @@ export default function UserManagement() {
   const openAdd    = () => { setForm(EMPTY_FORM); setEditing(null); setModal('add') }
   const openEdit   = (u) => { setForm({ name: u.name, loginId: u.loginId, password: u.password, role: u.role, zone: u.zone, statut: u.statut }); setEditing(u); setModal('edit') }
   const openDel    = (u) => { setEditing(u); setModal('delete') }
+  const openTotp   = async (u) => {
+    if (IS_MOCK) {
+      // En mock, on utilise des secrets de démonstration
+      const MOCK_SECRETS = {
+        'ADMIN-001': 'JBSWY3DPEHPK3PXP', 'SUPER-001': 'KVKFKRCPNZQUYMLX',
+        'AG-8824': 'JBSWY3DPEHPK3PXP', 'AG-0031': 'KVKFKRCPNZQUYMLX',
+        'AG-0433': 'MFRA2YTNJFQWCYLB', 'AG-1122': 'GEZDGNBVGY3TQOJQ',
+      }
+      setTotpModal({ id: u.loginId, name: u.name, totpSecret: MOCK_SECRETS[u.loginId] ?? 'JBSWY3DPEHPK3PXP' })
+      return
+    }
+    try {
+      const data = await api.get(`/api/users/${u.loginId}/totp`)
+      setTotpModal({ id: data.id, name: data.name, totpSecret: data.totpSecret })
+    } catch {
+      setTotpModal(null)
+    }
+  }
   const closeModal = () => { setModal(null); setEditing(null); setShowPwd(false); setApiError(null) }
 
   const handleSave = async () => {
@@ -285,6 +305,10 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
+                      <button onClick={() => openTotp(u)} title={t('users.btn.show_totp')}
+                        className="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                        <span className="material-symbols-outlined text-base">qr_code_2</span>
+                      </button>
                       <button onClick={() => openEdit(u)} title={t('users.btn.edit')}
                         className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors">
                         <span className="material-symbols-outlined text-base">edit</span>
@@ -460,6 +484,39 @@ export default function UserManagement() {
                 className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors">
                 {t('users.delete.btn')}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal QR TOTP ── */}
+      {totpModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={e => { if (e.target === e.currentTarget) setTotpModal(null) }}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-xs">
+            <div className="px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white">{t('users.totp_modal.title')}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{totpModal.name} · {totpModal.id}</p>
+              </div>
+              <button onClick={() => setTotpModal(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="px-5 py-5 flex flex-col items-center gap-4">
+              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <QRCodeCanvas
+                  value={`otpauth://totp/AUTH-BADGE%20CM14:${totpModal.id}?secret=${totpModal.totpSecret}&issuer=AUTH-BADGE%20CM14`}
+                  size={200} level="M"
+                />
+              </div>
+              <div className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 text-center">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('users.totp_modal.manual_secret')}</p>
+                <p className="font-mono font-bold text-slate-800 dark:text-white tracking-widest text-sm">{totpModal.totpSecret}</p>
+              </div>
+              <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                {t('users.totp_modal.warning')}
+              </p>
             </div>
           </div>
         </div>

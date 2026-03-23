@@ -322,9 +322,15 @@
     "btn": {
       "add": "Add user",
       "edit": "Edit",
+      "show_totp": "Show TOTP QR",
       "block": "Block",
       "unblock": "Unblock",
       "delete": "Delete"
+    },
+    "totp_modal": {
+      "title": "TOTP — Google Authenticator",
+      "manual_secret": "Manual secret",
+      "warning": "This QR Code must be scanned only once, in the physical presence of the agent. Do not photograph the screen."
     },
     "kpi": {
       "active": "Active Access",
