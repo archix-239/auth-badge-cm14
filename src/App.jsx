@@ -12,6 +12,7 @@ import AgentDashboard from './pages/agent/AgentDashboard'
 import Scanner        from './pages/agent/Scanner'
 import AgentHistory   from './pages/agent/AgentHistory'
 import AgentProfile   from './pages/agent/AgentProfile'
+import AgentStats     from './pages/agent/AgentStats'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import BadgeInscription from './pages/admin/BadgeInscription'
 import PassageHistory from './pages/admin/PassageHistory'
@@ -97,6 +98,7 @@ export default function App() {
         <Route path="dashboard" element={<AgentDashboard />} />
         <Route path="scanner"   element={<Scanner />} />
         <Route path="history"   element={<AgentHistory />} />
+        <Route path="stats"     element={<AgentStats />} />
         <Route path="profile"   element={<AgentProfile />} />
       </Route>
 

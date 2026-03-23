@@ -169,6 +169,21 @@
       "event_id": "ID de evento"
     }
   },
+  "agent_stats": {
+    "nav": "Stats",
+    "title": "Estadísticas",
+    "subtitle": "Resumen de tu actividad de escaneo",
+    "empty": "Sin registros de escaneo",
+    "kpi": {
+      "total": "Total escaneos",
+      "auth_rate": "Tasa de autorización",
+      "alerts": "Alertas",
+      "zone_denied": "Zonas denegadas"
+    },
+    "breakdown_title": "Desglose por resultado",
+    "hourly_title": "Volumen por hora (hoy)",
+    "top_zones_title": "Zonas más escaneadas"
+  },
   "agent_profile": {
     "role": {
       "agent": "Agente Nivel 4",

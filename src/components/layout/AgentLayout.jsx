@@ -100,6 +100,7 @@ export default function AgentLayout() {
             { to: '/agent/dashboard', icon: 'dashboard',       label: t('admin_sidebar.nav.dashboard') },
             { to: '/agent/scanner',   icon: 'qr_code_scanner', label: 'Scanner', fab: true },
             { to: '/agent/history',   icon: 'history',         label: t('admin_sidebar.nav.history') },
+            { to: '/agent/stats',     icon: 'bar_chart',       label: t('agent_stats.nav') },
             { to: '/agent/profile',   icon: 'person',          label: t('agent_profile.role.agent').split(' ')[0] },
           ].map(item => (
             <NavLink key={item.to} to={item.to}

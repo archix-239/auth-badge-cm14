@@ -169,6 +169,21 @@
       "event_id": "Event ID"
     }
   },
+  "agent_stats": {
+    "nav": "Stats",
+    "title": "Statistics",
+    "subtitle": "Summary of your scanning activity",
+    "empty": "No scans recorded",
+    "kpi": {
+      "total": "Total scans",
+      "auth_rate": "Authorization rate",
+      "alerts": "Alerts",
+      "zone_denied": "Zone denied"
+    },
+    "breakdown_title": "Breakdown by result",
+    "hourly_title": "Hourly volume (today)",
+    "top_zones_title": "Top scanned zones"
+  },
   "agent_profile": {
     "role": {
       "agent": "Level 4 Agent",
