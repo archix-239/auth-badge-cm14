@@ -3,6 +3,17 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => ({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['src/__tests__/setup.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['src/utils/**/*.js'],
+      thresholds: { lines: 80, functions: 80 },
+    },
+  },
   build: {
     outDir: 'dist',
     sourcemap: mode !== 'production',

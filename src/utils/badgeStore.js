@@ -80,14 +80,19 @@ function openDB() {
  * @param {Array} participants
  */
 export async function syncBadgeStore(participants) {
+  // Chiffrement en dehors de la transaction — évite TransactionInactiveError
+  // (les transactions IDB se ferment dès qu'on await une opération non-IDB)
+  const records = await Promise.all(
+    participants.map(async p => ({ id: p.id, enc: await encryptRecord(p) }))
+  )
+
   const db = await openDB()
   const tx = db.transaction(STORE, 'readwrite')
   const st = tx.objectStore(STORE)
 
   st.clear()
-  for (const p of participants) {
-    const enc = await encryptRecord(p)
-    st.put({ id: p.id, enc })
+  for (const record of records) {
+    st.put(record)
   }
 
   await new Promise((res, rej) => {
