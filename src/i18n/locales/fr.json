@@ -109,7 +109,17 @@
   },
   "agent_layout": {
     "header_title": "CM14 SOVEREIGN",
-    "header_sub": "Terminal agent"
+    "header_sub": "Terminal agent",
+    "alert": {
+      "title": "ALERTE SÉCURITÉ",
+      "sent_by": "Envoyé par : Centre de commandement",
+      "confirm_btn": "Confirmer réception"
+    },
+    "decommission": {
+      "title": "TERMINAL DÉSACTIVÉ",
+      "desc": "Ce terminal a été désactivé par l'administration CM14.",
+      "contact": "Contacter votre superviseur."
+    }
   },
   "agent_dashboard": {
     "greeting": "Bonjour, {{name}} 👋",

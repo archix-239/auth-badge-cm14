@@ -109,7 +109,17 @@
   },
   "agent_layout": {
     "header_title": "CM14 SOVEREIGN",
-    "header_sub": "Agent terminal"
+    "header_sub": "Agent terminal",
+    "alert": {
+      "title": "SECURITY ALERT",
+      "sent_by": "Sent by: Command Center",
+      "confirm_btn": "Confirm receipt"
+    },
+    "decommission": {
+      "title": "TERMINAL DISABLED",
+      "desc": "This terminal has been disabled by the CM14 administration.",
+      "contact": "Contact your supervisor."
+    }
   },
   "agent_dashboard": {
     "greeting": "Hello, {{name}} 👋",

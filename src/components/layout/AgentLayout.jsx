@@ -1,10 +1,25 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { useSocket } from '../../hooks/useSocket'
 
 export default function AgentLayout() {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const [broadcastAlert, setBroadcastAlert] = useState(null) // { message, timestamp }
+  const [isDecommissioned, setIsDecommissioned] = useState(false)
+
+  useSocket({
+    'alert:broadcast': (data) => {
+      setBroadcastAlert({ message: data.message, timestamp: new Date() })
+    },
+    'terminal:decommissioned': ({ userId } = {}) => {
+      if (!userId || userId === user?.id) setIsDecommissioned(true)
+    },
+  })
+
+  const locale = i18n.language === 'en' ? 'en-GB' : i18n.language === 'es' ? 'es-ES' : 'fr-FR'
 
   return (
     <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto bg-slate-100 dark:bg-bg-dark pb-24">
@@ -32,6 +47,51 @@ export default function AgentLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
+
+      {/* ── Overlay alerte broadcast ── */}
+      {broadcastAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="bg-red-600 px-5 py-4 flex items-center gap-3">
+              <span className="material-symbols-outlined text-white text-2xl animate-pulse">warning</span>
+              <p className="text-white font-bold text-base">{t('agent_layout.alert.title')}</p>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-slate-800 dark:text-white font-semibold">{broadcastAlert.message}</p>
+              <p className="text-xs text-slate-400">
+                {t('agent_layout.alert.sent_by')} · {broadcastAlert.timestamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+            <div className="px-5 pb-5">
+              <button
+                onClick={() => setBroadcastAlert(null)}
+                className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors">
+                {t('agent_layout.alert.confirm_btn')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Écran verrouillage terminal décommissionné ── */}
+      {isDecommissioned && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900">
+          <div className="text-center space-y-6 max-w-sm">
+            <div className="flex justify-center">
+              <div className="bg-red-600/20 p-5 rounded-full">
+                <span className="material-symbols-outlined text-red-500 text-5xl">lock</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-white">{t('agent_layout.decommission.title')}</h2>
+              <p className="text-slate-400 text-sm">{t('agent_layout.decommission.desc')}</p>
+            </div>
+            <div className="bg-slate-800 rounded-xl px-4 py-3">
+              <p className="text-slate-300 text-sm">{t('agent_layout.decommission.contact')}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-20 shadow-lg">
