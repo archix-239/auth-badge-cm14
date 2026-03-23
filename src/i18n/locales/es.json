@@ -264,7 +264,9 @@
       "generate": "Generar credencial QR",
       "new": "Nuevo participante",
       "print": "Imprimir",
-      "download": "Descargar"
+      "download": "Descargar",
+      "copy_nfc": "Copiar valor NFC",
+      "nfc_copied": "¡Valor copiado!"
     },
     "badge": {
       "success": "Credencial generada y registrada con éxito"

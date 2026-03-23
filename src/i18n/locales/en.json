@@ -264,7 +264,9 @@
       "generate": "Generate QR badge",
       "new": "New participant",
       "print": "Print",
-      "download": "Download"
+      "download": "Download",
+      "copy_nfc": "Copy NFC value",
+      "nfc_copied": "Value copied!"
     },
     "badge": {
       "success": "Badge generated and registered successfully"

@@ -19,6 +19,7 @@ export default function BadgeInscription() {
   const [search, setSearch]             = useState('')
   const [step, setStep]                 = useState('form')
   const [revoking, setRevoking]         = useState(null)
+  const [nfcCopied, setNfcCopied]       = useState(false)
   const qrContainerRef                  = useRef(null)
   const badgeCardRef                    = useRef(null)
 
@@ -319,6 +320,21 @@ export default function BadgeInscription() {
                 <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-200 transition-colors">
                   <span className="material-symbols-outlined text-lg">download</span>
                   {t('inscription.btn.download')}
+                </button>
+              </div>
+              <div className="px-4 pb-3">
+                <button
+                  onClick={() => {
+                    if (!qrValue) return
+                    navigator.clipboard.writeText(qrValue).then(() => {
+                      setNfcCopied(true)
+                      setTimeout(() => setNfcCopied(false), 2000)
+                    })
+                  }}
+                  disabled={!qrValue}
+                  className="w-full flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40">
+                  <span className="material-symbols-outlined text-lg">{nfcCopied ? 'check_circle' : 'nfc'}</span>
+                  {nfcCopied ? t('inscription.btn.nfc_copied') : t('inscription.btn.copy_nfc')}
                 </button>
               </div>
               <div className="px-4 pb-4">
