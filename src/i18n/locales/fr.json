@@ -460,8 +460,28 @@
       "zones": "Zones autorisées"
     },
     "action": {
+      "new": "+ Nouveau participant",
+      "edit": "Modifier",
+      "view_badge": "Afficher le badge",
+      "generate_badge": "Page badges",
       "revoke": "Révoquer le badge",
       "delete": "Supprimer le participant"
+    },
+    "form": {
+      "title_create": "Nouveau participant",
+      "title_edit": "Modifier le participant",
+      "firstname": "Prénom",
+      "lastname": "Nom",
+      "delegation": "Délégation",
+      "category": "Catégorie",
+      "zones": "Zones autorisées",
+      "expiration": "Date d'expiration",
+      "expiration_hint": "Laisser vide pour J+365 automatique",
+      "save": "Enregistrer"
+    },
+    "badge_modal": {
+      "title": "Badge QR Code",
+      "download": "Télécharger PNG"
     },
     "modal": {
       "revoke": {

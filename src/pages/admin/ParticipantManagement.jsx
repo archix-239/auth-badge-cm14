@@ -1,13 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { QRCodeCanvas } from 'qrcode.react'
 import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
+import { signBadge } from '../../utils/badgeCrypto'
 import { api } from '../../utils/api'
 import { mapParticipant } from '../../utils/dataMappers'
 
 const IS_MOCK = !import.meta.env.VITE_API_URL
 
+const EMPTY_FORM = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: ['Z1'], dateExpiration: '' }
+
 export default function ParticipantManagement() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [participants, setParticipants] = useState([])
   const [loading, setLoading]           = useState(true)
   const [search, setSearch]             = useState('')
@@ -15,6 +21,12 @@ export default function ParticipantManagement() {
   const [filterStatut, setFilterStatut] = useState('')
   const [selectedId, setSelectedId]     = useState(null)
   const [modal, setModal]               = useState(null)
+  // form state (create / edit)
+  const [formData, setFormData]         = useState(EMPTY_FORM)
+  const [formMode, setFormMode]         = useState('create') // 'create' | 'edit'
+  const [formLoading, setFormLoading]   = useState(false)
+  const [badgeQrValue, setBadgeQrValue] = useState('')
+  const qrRef = useRef(null)
 
   useEffect(() => {
     if (IS_MOCK) {
@@ -39,6 +51,8 @@ export default function ParticipantManagement() {
 
   const selected = selectedId ? participants.find(p => p.id === selectedId) ?? null : null
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
   const handleRevoke = async () => {
     if (!IS_MOCK) {
       await api.patch(`/api/participants/${selectedId}`, { statut: 'révoqué' }).catch(() => {})
@@ -56,17 +70,111 @@ export default function ParticipantManagement() {
     setModal(null)
   }
 
+  const openCreate = () => {
+    setFormData(EMPTY_FORM)
+    setFormMode('create')
+    setModal('form')
+  }
+
+  const openBadge = async () => {
+    setBadgeQrValue('')
+    setModal('badge')
+    const payload = {
+      id: selected.id, nom: selected.nom, prenom: selected.prenom,
+      delegation: selected.delegation, categorie: selected.categorie,
+      zones: selected.zones, exp: selected.dateExpiration,
+    }
+    const sig = await signBadge(payload)
+    setBadgeQrValue(JSON.stringify({ ...payload, sig }))
+  }
+
+  const downloadBadge = useCallback(() => {
+    const canvas = qrRef.current?.querySelector('canvas')
+    if (!canvas || !selected) return
+    const link = document.createElement('a')
+    link.download = `badge_${selected.id}_${selected.nom}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }, [selected])
+
+  const openEdit = () => {
+    setFormData({
+      prenom:         selected.prenom,
+      nom:            selected.nom,
+      delegation:     selected.delegation,
+      categorie:      selected.categorie,
+      zones:          [...selected.zones],
+      dateExpiration: selected.dateExpiration ?? '',
+    })
+    setFormMode('edit')
+    setModal('form')
+  }
+
+  const handleZoneToggle = (zid) => {
+    setFormData(prev => ({
+      ...prev,
+      zones: prev.zones.includes(zid)
+        ? prev.zones.filter(z => z !== zid)
+        : [...prev.zones, zid],
+    }))
+  }
+
+  const handleSubmitForm = async (e) => {
+    e.preventDefault()
+    if (!formData.prenom.trim() || !formData.nom.trim() || formData.zones.length === 0) return
+    setFormLoading(true)
+
+    const payload = {
+      prenom:          formData.prenom.trim(),
+      nom:             formData.nom.trim(),
+      delegation:      formData.delegation.trim(),
+      categorie:       formData.categorie,
+      zones:           formData.zones,
+      date_expiration: formData.dateExpiration || null,
+    }
+
+    if (formMode === 'create') {
+      if (!IS_MOCK) {
+        const created = await api.post('/api/participants', payload).catch(() => null)
+        if (created) setParticipants(prev => [...prev, mapParticipant(created)])
+      } else {
+        const newId = `P-${String(participants.length + 1).padStart(3, '0')}`
+        const mock = { id: newId, statut: 'actif', dateExpiration: formData.dateExpiration || 'N/A', ...payload, zones: formData.zones }
+        setParticipants(prev => [...prev, mock])
+      }
+    } else {
+      if (!IS_MOCK) {
+        await api.patch(`/api/participants/${selectedId}`, payload).catch(() => {})
+      }
+      setParticipants(prev => prev.map(p =>
+        p.id === selectedId ? { ...p, ...payload, zones: formData.zones, dateExpiration: formData.dateExpiration || p.dateExpiration } : p
+      ))
+    }
+
+    setFormLoading(false)
+    setModal(formMode === 'edit' ? 'detail' : null)
+    setSelectedId(formMode === 'edit' ? selectedId : null)
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <div className="p-4 md:p-8 space-y-6">
 
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('participants.title')}</h2>
-        <p className="text-slate-500 text-sm mt-1">{t('participants.subtitle')}</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('participants.title')}</h2>
+          <p className="text-slate-500 text-sm mt-1">{t('participants.subtitle')}</p>
+        </div>
+        <button onClick={openCreate}
+          className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white rounded-xl px-4 py-2.5 text-sm font-semibold shadow-lg shadow-primary/20 transition-colors shrink-0">
+          <span className="material-symbols-outlined text-lg">person_add</span>
+          {t('participants.action.new')}
+        </button>
       </div>
 
       <div>
-
         {/* ── Liste ── */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
 
@@ -153,7 +261,6 @@ export default function ParticipantManagement() {
             </table>
           </div>
         </div>
-
       </div>
 
       {/* ── Modale détail ── */}
@@ -164,12 +271,10 @@ export default function ParticipantManagement() {
         >
           <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full sm:max-w-md flex flex-col max-h-[92dvh] sm:max-h-[88vh]">
 
-            {/* Drag handle — mobile only */}
             <div className="flex justify-center pt-3 pb-1 sm:hidden shrink-0">
               <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
 
-            {/* En-tête fixe */}
             <div className="px-6 pt-4 sm:pt-6 pb-4 shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('participants.detail.title')}</h3>
@@ -193,7 +298,6 @@ export default function ParticipantManagement() {
               </div>
             </div>
 
-            {/* Informations scrollables */}
             <div className="px-4 sm:px-6 py-2 overflow-y-auto flex-1 border-t border-slate-100 dark:border-slate-800">
               {[
                 { label: t('participants.detail.id'),         value: selected.id,            mono: true },
@@ -210,7 +314,6 @@ export default function ParticipantManagement() {
                 </div>
               ))}
 
-              {/* Zones */}
               <div className="py-3">
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t('participants.detail.zones')}</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -227,19 +330,171 @@ export default function ParticipantManagement() {
               </div>
             </div>
 
-            {/* Actions fixées en bas */}
-            <div className="px-4 sm:px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
-              {selected.statut === 'actif' && (
-                <button onClick={() => setModal('revoke')}
-                  className="flex-1 flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg py-3 sm:py-2.5 text-sm font-semibold hover:bg-amber-100 transition-colors">
-                  <span className="material-symbols-outlined text-base">block</span>
-                  {t('participants.action.revoke')}
+            {/* Actions */}
+            <div className="px-4 sm:px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-slate-100 dark:border-slate-800 space-y-2 shrink-0">
+              {/* Actions badge */}
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={openBadge}
+                  className="flex items-center justify-center gap-2 bg-primary/10 border border-primary/20 text-primary rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/20 transition-colors">
+                  <span className="material-symbols-outlined text-base">qr_code_2</span>
+                  {t('participants.action.view_badge')}
                 </button>
-              )}
-              <button onClick={() => setModal('delete')}
-                className="flex-1 flex items-center justify-center gap-2 bg-red-50 border border-red-200 text-red-600 rounded-lg py-3 sm:py-2.5 text-sm font-semibold hover:bg-red-100 transition-colors">
-                <span className="material-symbols-outlined text-base">delete</span>
-                {t('participants.action.delete')}
+                <button
+                  onClick={() => navigate('/admin/badges', { state: { participantId: selected.id } })}
+                  className="flex items-center justify-center gap-2 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <span className="material-symbols-outlined text-base">badge</span>
+                  {t('participants.action.generate_badge')}
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={openEdit}
+                  className="flex-1 flex items-center justify-center gap-2 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <span className="material-symbols-outlined text-base">edit</span>
+                  {t('participants.action.edit')}
+                </button>
+                {selected.statut === 'actif' && (
+                  <button onClick={() => setModal('revoke')}
+                    className="flex-1 flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg py-2.5 text-sm font-semibold hover:bg-amber-100 transition-colors">
+                    <span className="material-symbols-outlined text-base">block</span>
+                    {t('participants.action.revoke')}
+                  </button>
+                )}
+                <button onClick={() => setModal('delete')}
+                  className="flex items-center justify-center gap-1 bg-red-50 border border-red-200 text-red-600 rounded-lg px-3 py-2.5 text-sm font-semibold hover:bg-red-100 transition-colors">
+                  <span className="material-symbols-outlined text-base">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modale formulaire (création / édition) ── */}
+      {modal === 'form' && (
+        <div
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end sm:items-center justify-center z-50 sm:p-4"
+          onClick={e => { if (e.target === e.currentTarget) setModal(formMode === 'edit' ? 'detail' : null) }}
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full sm:max-w-md flex flex-col max-h-[92dvh] sm:max-h-[90vh]">
+
+            <div className="flex justify-center pt-3 pb-1 sm:hidden shrink-0">
+              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+            </div>
+
+            <div className="px-6 pt-4 sm:pt-6 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {formMode === 'create' ? t('participants.form.title_create') : t('participants.form.title_edit')}
+              </h3>
+              <button onClick={() => setModal(formMode === 'edit' ? 'detail' : null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitForm} className="flex flex-col flex-1 overflow-hidden">
+              <div className="px-6 py-4 overflow-y-auto flex-1 space-y-4">
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('participants.form.firstname')} *</label>
+                    <input required value={formData.prenom} onChange={e => setFormData(p => ({ ...p, prenom: e.target.value }))}
+                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('participants.form.lastname')} *</label>
+                    <input required value={formData.nom} onChange={e => setFormData(p => ({ ...p, nom: e.target.value }))}
+                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('participants.form.delegation')}</label>
+                  <input value={formData.delegation} onChange={e => setFormData(p => ({ ...p, delegation: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('participants.form.category')}</label>
+                  <select value={formData.categorie} onChange={e => setFormData(p => ({ ...p, categorie: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    {CATEGORIES.map(c => <option key={c.code} value={c.code}>{c.code} — {c.label}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">{t('participants.form.zones')} *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {ZONES.map(z => (
+                      <label key={z.id} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                        formData.zones.includes(z.id)
+                          ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                      }`}>
+                        <input type="checkbox" checked={formData.zones.includes(z.id)} onChange={() => handleZoneToggle(z.id)} className="accent-primary" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-800 dark:text-white">{z.id}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{z.nom}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('participants.form.expiration')}</label>
+                  <input type="date" value={formData.dateExpiration} onChange={e => setFormData(p => ({ ...p, dateExpiration: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <p className="text-[10px] text-slate-400 mt-1">{t('participants.form.expiration_hint')}</p>
+                </div>
+
+              </div>
+
+              <div className="px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-slate-100 dark:border-slate-800 flex gap-3 shrink-0">
+                <button type="button" onClick={() => setModal(formMode === 'edit' ? 'detail' : null)}
+                  className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                  {t('common.btn.cancel')}
+                </button>
+                <button type="submit" disabled={formLoading || formData.zones.length === 0}
+                  className="flex-1 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50">
+                  {formLoading ? '…' : t('participants.form.save')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal badge QR ── */}
+      {modal === 'badge' && selected && (
+        <div
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={e => { if (e.target === e.currentTarget) setModal('detail') }}
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-xs">
+            <div className="px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="font-bold text-slate-900 dark:text-white">{t('participants.badge_modal.title')}</h3>
+              <button onClick={() => setModal('detail')} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="px-5 py-5 flex flex-col items-center gap-4">
+              <div ref={qrRef} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                {badgeQrValue
+                  ? <QRCodeCanvas value={badgeQrValue} size={200} level="M" />
+                  : <div className="w-[200px] h-[200px] flex items-center justify-center">
+                      <span className="material-symbols-outlined text-4xl text-slate-300 animate-spin">progress_activity</span>
+                    </div>
+                }
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-slate-800 dark:text-white">{selected.prenom} {selected.nom}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{selected.delegation} · <span className={`font-bold px-1.5 py-0.5 rounded ${getCategoryColor(selected.categorie)}`}>{selected.categorie}</span></p>
+                <p className="text-xs text-slate-400 font-mono mt-1">{selected.id}</p>
+              </div>
+              <button onClick={downloadBadge} disabled={!badgeQrValue}
+                className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-40">
+                <span className="material-symbols-outlined text-base">download</span>
+                {t('participants.badge_modal.download')}
               </button>
             </div>
           </div>

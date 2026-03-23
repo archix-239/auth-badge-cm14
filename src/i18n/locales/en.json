@@ -460,8 +460,28 @@
       "zones": "Authorized zones"
     },
     "action": {
+      "new": "+ New participant",
+      "edit": "Edit",
+      "view_badge": "View badge",
+      "generate_badge": "Badges page",
       "revoke": "Revoke badge",
       "delete": "Delete participant"
+    },
+    "form": {
+      "title_create": "New participant",
+      "title_edit": "Edit participant",
+      "firstname": "First name",
+      "lastname": "Last name",
+      "delegation": "Delegation",
+      "category": "Category",
+      "zones": "Authorised zones",
+      "expiration": "Expiry date",
+      "expiration_hint": "Leave empty for automatic D+365",
+      "save": "Save"
+    },
+    "badge_modal": {
+      "title": "Badge QR Code",
+      "download": "Download PNG"
     },
     "modal": {
       "revoke": {
