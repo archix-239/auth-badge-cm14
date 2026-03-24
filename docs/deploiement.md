@@ -471,41 +471,152 @@ La commande affiche une chaîne de type :
 AbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdefghijk=
 ```
 
-#### Mettre à jour le Certificate Pinning dans l'application Android
+#### Intégrer le certificat dans l'APK Android (trust anchor)
 
-Ouvrir le fichier `android/app/src/main/res/xml/network_security_config.xml` dans le projet et remplacer la valeur du pin :
+Avec un certificat auto-signé, Android rejette la connexion TLS avant même de vérifier le pin — parce que le cert n'est pas dans le trust store système du téléphone. La solution est de **bundler le certificat directement dans l'APK** comme trust anchor.
 
-```xml
-<domain-config cleartextTrafficPermitted="false">
-    <domain includeSubdomains="false">authbadge-cm14</domain>
-    <pin-set expiration="2028-03-22">
-        <pin digest="SHA-256">AbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdefghijk=</pin>
-    </pin-set>
-</domain-config>
+**Étape 1 — Copier le certificat dans les ressources Android**
+
+Récupérer le certificat depuis le serveur et le placer dans le projet Android :
+
+```bash
+# Depuis le poste de développement (pendant la phase de préparation)
+scp ubuntu@<ip_serveur>:/etc/ssl/authbadge/fullchain.pem \
+  android/app/src/main/res/raw/cm14_cert.pem
 ```
 
-> Mettre à jour la date d'expiration `expiration` en conséquence (2 ans après la date de génération du certificat).
+**Étape 2 — Mettre à jour network_security_config.xml**
+
+Ouvrir `android/app/src/main/res/xml/network_security_config.xml` et configurer le fichier complet ainsi :
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+
+    <!-- Comportement par défaut : HTTPS uniquement, trust store système -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Règle spécifique au serveur CM14 :
+         1. Le certificat auto-signé est reconnu (trust anchor bundlé dans l'APK)
+         2. Le pin SHA-256 vérifie qu'il s'agit bien du bon certificat (anti-MITM) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">192.168.1.10</domain>  <!-- IP fixe du serveur CM14 -->
+        <trust-anchors>
+            <certificates src="@raw/cm14_cert" />  <!-- cert bundlé dans l'APK -->
+        </trust-anchors>
+        <pin-set expiration="2028-03-22">
+            <pin digest="SHA-256">AbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdefghijk=</pin>
+        </pin-set>
+    </domain-config>
+
+</network-security-config>
+```
+
+> Remplacer `192.168.1.10` par l'IP fixe réelle du serveur CM14, `AbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdefghijk=` par le pin SHA-256 extrait à l'étape précédente, et la date `expiration` par la date de validité du certificat (2 ans après génération).
+
+**Pourquoi les deux mécanismes (trust anchor + pin) ?**
+
+```
+Connexion HTTPS depuis l'APK
+         │
+         ▼
+  [1] Trust anchor   ←  Le cert est-il dans @raw/cm14_cert ?
+         │ OUI → connexion TLS établie
+         │ NON → connexion refusée (ERR_CERT_AUTHORITY_INVALID)
+         ▼
+  [2] Certificate Pinning  ←  La clé publique correspond-elle au pin SHA-256 ?
+         │ OUI → connexion autorisée
+         │ NON → connexion bloquée (protection anti-MITM)
+```
+
+Sans le trust anchor, Android bloque dès l'étape [1] et le pinning n'est jamais vérifié.
+
+Committer les deux fichiers avant le build release :
+
+```bash
+git add android/app/src/main/res/raw/cm14_cert.pem \
+        android/app/src/main/res/xml/network_security_config.xml
+git commit -m "chore: bundle CM14 cert + update pin for production release"
+```
+
+---
+
+#### Faire confiance au certificat auto-signé sur le PC administrateur
+
+L'interface admin s'ouvre dans un navigateur de bureau. Sans action préalable, Chrome et Firefox affichent **"Votre connexion n'est pas privée"** (ERR_CERT_AUTHORITY_INVALID).
+
+**Option A — Importer le certificat dans le système d'exploitation (recommandé)**
+
+Récupérer d'abord le fichier `fullchain.pem` depuis le serveur, puis l'importer selon l'OS du PC admin.
+
+*Windows :*
+
+```
+1. Cliquer droit sur fullchain.pem → "Installer le certificat"
+2. Choisir "Ordinateur local"
+3. Sélectionner "Placer tous les certificats dans le magasin suivant"
+4. Cliquer "Parcourir" → choisir "Autorités de certification racines de confiance"
+5. Cliquer "Terminer"
+6. Redémarrer Chrome ou Edge (Firefox a son propre magasin, voir ci-dessous)
+```
+
+*Ubuntu / Debian :*
+
+```bash
+sudo cp fullchain.pem /usr/local/share/ca-certificates/cm14.crt
+sudo update-ca-certificates
+# Redémarrer le navigateur
+```
+
+**Option B — Importer dans Firefox uniquement**
+
+Firefox gère son propre magasin de certificats, indépendant de l'OS :
+
+```
+Paramètres → Vie privée et sécurité → Afficher les certificats
+→ Onglet "Autorités" → Importer → sélectionner fullchain.pem
+→ Cocher "Faire confiance à cette AC pour identifier des sites web"
+→ OK
+```
+
+**Option C — Exception navigateur (dépannage rapide uniquement)**
+
+En cas d'urgence, Chrome permet de passer outre l'avertissement :
+
+```
+Page d'avertissement → "Paramètres avancés" → "Continuer vers le site (dangereux)"
+```
+
+> Cette option n'est acceptable que pour un test rapide — elle ne supprime pas le message à chaque session et ne convient pas à une utilisation en production.
+
+---
+
+#### Procédure de renouvellement du certificat
+
+Si le certificat expire ou doit être regénéré (changement d'IP du serveur, compromission…), toute la chaîne doit être mise à jour dans l'ordre suivant :
+
+```
+1. Regénérer le cert sur le serveur          (openssl req -x509 ...)
+2. Recharger Nginx                            (systemctl reload nginx)
+3. Extraire le nouveau pin SHA-256            (openssl x509 | openssl dgst -sha256)
+4. Copier le nouveau cert.pem dans android/app/src/main/res/raw/cm14_cert.pem
+5. Mettre à jour le pin dans network_security_config.xml
+6. Mettre à jour la date d'expiration dans network_security_config.xml
+7. Rebuilder et redistribuer l'APK            (voir section 3.1)
+8. Réimporter le nouveau cert sur le PC admin (voir ci-dessus)
+```
+
+> Attention : entre l'étape 2 et la redistribution de l'APK (étape 7), les téléphones agents avec l'ancien APK ne pourront plus se connecter au serveur. Planifier ce renouvellement hors des heures d'opération.
 
 #### IMPORTANT — Désactiver le trafic HTTP avant le build release
 
-Dans le même fichier `network_security_config.xml`, vérifier que `cleartextTrafficPermitted` est bien à `"false"` dans la `<base-config>` :
+Vérifier que `cleartextTrafficPermitted` est bien à `"false"` dans la `<base-config>` du fichier `network_security_config.xml` (comme indiqué dans la configuration complète ci-dessus).
 
-```xml
-<base-config cleartextTrafficPermitted="false">
-    <trust-anchors>
-        <certificates src="system" />
-    </trust-anchors>
-</base-config>
-```
-
-> Cette valeur est parfois mise à `"true"` pendant le développement pour permettre les tests en HTTP local. Elle **doit impérativement** être à `"false"` avant tout build de production. Un APK release avec `cleartextTrafficPermitted="true"` expose les communications en clair et ne sera pas accepté.
-
-Committer le fichier modifié avant de déclencher le build release :
-
-```bash
-git add android/app/src/main/res/xml/network_security_config.xml
-git commit -m "chore: update certificate pin + enforce HTTPS for production release"
-```
+> Cette valeur est parfois mise à `"true"` pendant le développement pour permettre les tests en HTTP local. Elle **doit impérativement** être à `"false"` avant tout build de production.
 
 ---
 
