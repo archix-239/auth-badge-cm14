@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../utils/api'
+import { useSocket } from '../../hooks/useSocket'
 
 const EMPTY_FORM = { id: '', nom: '', description: '', statut: 'actif', niveauAcces: 1 }
 
@@ -28,7 +29,7 @@ export default function ZoneManagement() {
   const [saving,   setSaving]   = useState(false)
   const [apiError, setApiError] = useState(null)
 
-  useEffect(() => {
+  const loadZones = () =>
     api.get('/api/zones')
       .then(rows => setZones(rows.map(z => ({
         ...z,
@@ -36,10 +37,14 @@ export default function ZoneManagement() {
         statut: 'actif',
       }))))
       .catch(() => {})
-      .finally(() => setLoading(false))
+
+  useEffect(() => {
+    loadZones().finally(() => setLoading(false))
   }, [])
 
-  const pCount = (zid) => zones.find(z => z.id === zid)?.portes_count ?? 0
+  useSocket({ 'terminal:decommissioned': () => loadZones() })
+
+  const pCount = (zid) => parseInt(zones.find(z => z.id === zid)?.portes_count ?? 0, 10)
 
   const filtered = zones.filter(z =>
     !search ||

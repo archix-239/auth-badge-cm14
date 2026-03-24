@@ -90,7 +90,8 @@
       "sub_zone_denied": "Redirect to authorized zone",
       "sub_unknown": "Alert supervisor immediately",
       "zone_warning_title": "Unauthorized zone for this accreditation",
-      "zone_warning_redirect": "Direct participant to: General Entrance Z1",
+      "zone_warning_redirect": "Direct participant to:",
+      "zone_warning_no_access": "No authorized zones on this accreditation.",
       "alert_title": "Supervisor automatically notified",
       "alert_sub": "Alert sent · Do not let through",
       "unknown_title": "Badge not recognized",
@@ -431,11 +432,11 @@
     "level_5": "Ultra-restricted",
     "kpi": {
       "total": "Defined zones",
-      "participants": "Assigned participants",
+      "participants": "Assigned terminals",
       "active": "Active zones"
     },
     "card": {
-      "participants": "participants",
+      "participants": "terminals",
       "level": "Lvl.",
       "active": "Active",
       "inactive": "Inactive"

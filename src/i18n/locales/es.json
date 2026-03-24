@@ -90,7 +90,8 @@
       "sub_zone_denied": "Redirigir a zona autorizada",
       "sub_unknown": "Alertar al supervisor inmediatamente",
       "zone_warning_title": "Zona no autorizada para esta acreditación",
-      "zone_warning_redirect": "Dirigir al participante a: Entrada General Z1",
+      "zone_warning_redirect": "Dirigir al participante a:",
+      "zone_warning_no_access": "Sin zonas autorizadas en esta acreditación.",
       "alert_title": "Supervisor notificado automáticamente",
       "alert_sub": "Alerta enviada · No dejar pasar",
       "unknown_title": "Credencial no reconocida",
@@ -431,11 +432,11 @@
     "level_5": "Ultra-restringido",
     "kpi": {
       "total": "Zonas definidas",
-      "participants": "Participantes asignados",
+      "participants": "Terminales asignados",
       "active": "Zonas activas"
     },
     "card": {
-      "participants": "participantes",
+      "participants": "terminales",
       "level": "Niv.",
       "active": "Activo",
       "inactive": "Inactivo"

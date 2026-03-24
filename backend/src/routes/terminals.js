@@ -39,11 +39,16 @@ router.get('/', requireAuth, requireRole('admin', 'supervisor'), async (req, res
 // Appelé toutes les 60s par chaque terminal pour signaler qu'il est en ligne.
 router.post('/:id/heartbeat', requireAuth, async (req, res) => {
   try {
+    const wasOnline = await getTerminalStatus(req.params.id)
     await setTerminalOnline(req.params.id, req.user.id)
     await query(
       `UPDATE points_controle SET last_seen = NOW() WHERE id = $1`,
       [req.params.id]
     )
+    // Publie un événement socket uniquement lors du premier heartbeat (passage hors-ligne → en ligne)
+    if (!wasOnline) {
+      await publish('terminal:online', { terminalId: req.params.id, agentId: req.user.id })
+    }
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur.' })
@@ -122,16 +127,22 @@ router.delete('/:id', requireAuth, requireRole('admin', 'supervisor'), async (re
 
 // ─── PATCH /api/terminals/:id ─────────────────────────────────────────────────
 router.patch('/:id', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
-  const { statut, agent_id, zone_id, nom } = req.body
   try {
+    const fields = []
+    const values = []
+    let i = 1
+
+    if ('statut'   in req.body) { fields.push(`statut   = $${i++}`); values.push(req.body.statut   || null) }
+    if ('nom'      in req.body) { fields.push(`nom      = $${i++}`); values.push(req.body.nom      || null) }
+    if ('zone_id'  in req.body) { fields.push(`zone_id  = $${i++}`); values.push(req.body.zone_id  || null) }
+    if ('agent_id' in req.body) { fields.push(`agent_id = $${i++}`); values.push(req.body.agent_id || null) }
+
+    if (fields.length === 0) return res.status(400).json({ error: 'Aucun champ à modifier.' })
+
+    values.push(req.params.id)
     const result = await query(
-      `UPDATE points_controle SET
-         statut   = COALESCE($1, statut),
-         agent_id = COALESCE($2, agent_id),
-         zone_id  = COALESCE($3, zone_id),
-         nom      = COALESCE($4, nom)
-       WHERE id = $5 RETURNING *`,
-      [statut || null, agent_id || null, zone_id || null, nom || null, req.params.id]
+      `UPDATE points_controle SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`,
+      values
     )
     if (result.rowCount === 0) return res.status(404).json({ error: 'Terminal introuvable.' })
     res.json(result.rows[0])

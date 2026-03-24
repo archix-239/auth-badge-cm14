@@ -17,6 +17,9 @@ export default function Scanner() {
   const { t, i18n } = useTranslation()
   const [phase, setPhase]           = useState('idle')
   const [result, setResult]         = useState(null)
+  const [zonesMap, setZonesMap]     = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cm14_zones_map') || '{}') } catch { return {} }
+  })
   const [scanLog, setScanLog]       = useState([])
   const [elapsed, setElapsed]       = useState(0)
   const [manualId, setManualId]         = useState('')
@@ -37,6 +40,15 @@ export default function Scanner() {
       )
     },
   })
+
+  // Charge la carte zones {id → nom} depuis l'API, avec fallback localStorage
+  useEffect(() => {
+    api.get('/api/zones').then(rows => {
+      const map = Object.fromEntries(rows.map(z => [z.id, z.nom]))
+      setZonesMap(map)
+      localStorage.setItem('cm14_zones_map', JSON.stringify(map))
+    }).catch(() => {})
+  }, [])
 
   // Zone courante = zone du checkpoint assigné à l'agent (via login)
   const checkpoint   = user?.checkpoint ?? null
@@ -501,7 +513,18 @@ export default function Scanner() {
                     <span className="material-symbols-outlined text-orange-500 text-xl shrink-0">directions</span>
                     <div>
                       <p className="text-sm font-bold text-orange-800 dark:text-orange-300">{t('scanner.result.zone_warning_title')}</p>
-                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">{t('scanner.result.zone_warning_redirect')}</p>
+                      {result.participant?.zones?.length > 0 ? (
+                        <div className="mt-1 space-y-0.5">
+                          <p className="text-xs text-orange-600 dark:text-orange-400">{t('scanner.result.zone_warning_redirect')}</p>
+                          {result.participant.zones.map(zid => (
+                            <p key={zid} className="text-xs font-bold text-orange-800 dark:text-orange-300">
+                              {zid}{zonesMap[zid] ? ` — ${zonesMap[zid]}` : ''}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">{t('scanner.result.zone_warning_no_access')}</p>
+                      )}
                     </div>
                   </div>
                 )}

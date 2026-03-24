@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../utils/api'
+import { useSocket } from '../../hooks/useSocket'
 
 const EMPTY_FORM = { id: '', nom: '', zone_id: '' }
 
@@ -24,6 +25,11 @@ export default function DoorManagement() {
       setZones(zoneRows)
     }).finally(() => setLoading(false))
   }, [])
+
+  useSocket({
+    'terminal:online':         () => api.get('/api/terminals').catch(() => doors).then(rows => setDoors(rows)),
+    'terminal:decommissioned': () => api.get('/api/terminals').catch(() => doors).then(rows => setDoors(rows)),
+  })
 
   const handleRefresh = () => {
     if (refreshing) return
@@ -61,10 +67,16 @@ export default function DoorManagement() {
 
   const handleDelete = async () => {
     try {
-      // /decommission envoie l'événement socket terminal:decommissioned + révoque les tokens
+      // Décommissionne d'abord (notifie l'agent + révoque ses tokens)
       await api.post(`/api/terminals/${deleting.id}/decommission`)
     } catch (err) {
       console.error('[doors/decommission]', err)
+    }
+    try {
+      // Supprime réellement de la DB
+      await api.delete(`/api/terminals/${deleting.id}`)
+    } catch (err) {
+      console.error('[doors/delete]', err)
     }
     setDoors(prev => prev.filter(d => d.id !== deleting.id))
     closeModal()
@@ -125,10 +137,10 @@ export default function DoorManagement() {
                   <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-sm">{d.agentId ?? d.agent_name ?? '—'}</td>
                   <td className="px-6 py-4">
                     <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
-                      d.statut === 'actif' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : d.statut === 'alerte' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      d.statut === 'alerte' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      : d.online ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                       : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                    }`}>{d.statut ?? '—'}</span>
+                    }`}>{d.statut === 'alerte' ? 'alerte' : d.online ? 'en ligne' : 'hors ligne'}</span>
                   </td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{d.scans ?? 0}</td>
                   <td className="px-6 py-4">

@@ -10,7 +10,7 @@ const router = Router()
 // Le frontend a déjà déterminé le résultat (autorisé / révoqué / zone-refusée / inconnu).
 // Le backend persiste le log et propage en temps réel.
 router.post('/', requireAuth, async (req, res) => {
-  const { participant_id, nom, delegation, categorie, zone, point_controle_id, resultat } = req.body
+  const { participant_id, nom, delegation, categorie, zone, point_controle_id, resultat, timestamp } = req.body
 
   if (!nom || !resultat) {
     return res.status(400).json({ error: 'Champs nom et resultat requis.' })
@@ -22,12 +22,14 @@ router.post('/', requireAuth, async (req, res) => {
 
   try {
     // Persist le log
+    // Utilise le timestamp du scan si fourni (sync hors-ligne), sinon NOW()
+    const ts = timestamp ? new Date(timestamp) : null
     const logResult = await query(
-      `INSERT INTO scan_logs (participant_id, nom, delegation, categorie, zone, point_controle_id, resultat, agent_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      `INSERT INTO scan_logs (participant_id, nom, delegation, categorie, zone, point_controle_id, resultat, agent_id, timestamp)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE($9, NOW()))
        RETURNING id, timestamp`,
       [participant_id || null, nom, delegation || null, categorie || null,
-       zone || null, point_controle_id || null, resultat, req.user.id]
+       zone || null, point_controle_id || null, resultat, req.user.id, ts]
     )
 
     // Met à jour le compteur du point de contrôle

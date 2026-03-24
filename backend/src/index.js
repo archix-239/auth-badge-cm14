@@ -77,7 +77,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOSt
 // ─── Serveur HTTP ou HTTPS selon la présence des certificats ─────────────────
 const certPath = join(__dirname, '..', 'certs', 'cert.pem')
 const keyPath  = join(__dirname, '..', 'certs', 'key.pem')
-const useHttps = existsSync(certPath) && existsSync(keyPath)
+const useHttps = !process.env.FORCE_HTTP && existsSync(certPath) && existsSync(keyPath)
 
 const server = useHttps
   ? createHttpsServer({ cert: readFileSync(certPath), key: readFileSync(keyPath) }, app)

@@ -87,7 +87,7 @@ export default function Login() {
                 <input
                   type="text"
                   value={id}
-                  onChange={e => setId(e.target.value)}
+                  onChange={e => setId(e.target.value.toUpperCase())}
                   placeholder={t('login.field.id_placeholder')}
                   required
                   disabled={locked}

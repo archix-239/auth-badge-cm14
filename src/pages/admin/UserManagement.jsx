@@ -4,7 +4,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { api } from '../../utils/api'
 import { useSocket } from '../../hooks/useSocket'
 
-const EMPTY_FORM = { name: '', loginId: '', password: '', role: 'agent', zone: '', statut: 'HORS LIGNE' }
+const EMPTY_FORM = { name: '', loginId: '', password: '', role: 'agent', checkpoint_id: '', statut: 'HORS LIGNE' }
 
 const ROLE_BADGE = {
   admin:      'bg-primary text-white',
@@ -100,7 +100,7 @@ export default function UserManagement() {
     const matchSearch = !q || u.name.toLowerCase().includes(q) || u.loginId.toLowerCase().includes(q) || u.id.toLowerCase().includes(q)
     const matchRole   = roleFilter === 'all' || u.role === roleFilter
     const matchStatut = statutFilter === 'all' || u.statut === statutFilter
-    const matchZone   = zoneFilter === 'all' || u.zone.includes(zoneFilter)
+    const matchZone   = zoneFilter === 'all' || (u.zone ?? '').includes(zoneFilter)
     return matchSearch && matchRole && matchStatut && matchZone
   })
 
@@ -108,7 +108,12 @@ export default function UserManagement() {
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   const openAdd    = () => { setForm(EMPTY_FORM); setEditing(null); setModal('add') }
-  const openEdit   = (u) => { setForm({ name: u.name, loginId: u.loginId, password: u.password, role: u.role, zone: u.zone, statut: u.statut }); setEditing(u); setModal('edit') }
+  const openEdit   = (u) => {
+    const assignedDoor = doors.find(d => d.agent_id === u.id || d.agent_id === u.loginId)
+    setForm({ name: u.name, loginId: u.loginId, password: '', role: u.role, checkpoint_id: assignedDoor?.id ?? '', statut: u.statut })
+    setEditing(u)
+    setModal('edit')
+  }
   const openDel    = (u) => { setEditing(u); setModal('delete') }
   const openTotp   = async (u) => {
     try {
@@ -125,15 +130,33 @@ export default function UserManagement() {
     setSaving(true)
     setApiError(null)
     try {
+      const selectedDoor = doors.find(d => d.id === form.checkpoint_id)
+      const zoneName = selectedDoor?.nom ?? ''
+
+      let userId
       if (modal === 'add') {
-        const payload = { loginId: form.loginId.toUpperCase(), name: form.name, password: form.password, role: form.role, zone: form.zone }
+        const payload = { loginId: form.loginId.toUpperCase(), name: form.name, password: form.password, role: form.role, zone: zoneName }
         const created = await api.post('/api/users', payload)
-        setUsers(prev => [created, ...prev])
+        userId = created.id
+        setUsers(prev => [{ ...created, zone: zoneName }, ...prev])
       } else {
-        const payload = { name: form.name, role: form.role, zone: form.zone }
+        const payload = { name: form.name, role: form.role, zone: zoneName }
         const updated = await api.patch(`/api/users/${editing.id}`, payload)
-        setUsers(prev => prev.map(u => u.id === editing.id ? { ...u, ...updated } : u))
+        userId = editing.id
+        setUsers(prev => prev.map(u => u.id === editing.id ? { ...u, ...updated, zone: zoneName } : u))
       }
+
+      // Sync terminal assignment
+      const oldDoor = doors.find(d => d.agent_id === userId)
+      if (oldDoor && oldDoor.id !== form.checkpoint_id) {
+        await api.patch(`/api/terminals/${oldDoor.id}`, { agent_id: null })
+        setDoors(prev => prev.map(d => d.id === oldDoor.id ? { ...d, agent_id: null, agent_name: null } : d))
+      }
+      if (form.checkpoint_id) {
+        await api.patch(`/api/terminals/${form.checkpoint_id}`, { agent_id: userId })
+        setDoors(prev => prev.map(d => d.id === form.checkpoint_id ? { ...d, agent_id: userId, agent_name: form.name } : d))
+      }
+
       closeModal()
     } catch (err) {
       setApiError(err.status === 409 ? 'Identifiant déjà utilisé.' : err.message)
@@ -362,10 +385,10 @@ export default function UserManagement() {
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t('users.modal.field_zone')}</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">door_front</span>
-                  <select value={form.zone} onChange={e => setForm(p => ({ ...p, zone: e.target.value }))}
+                  <select value={form.checkpoint_id} onChange={e => setForm(p => ({ ...p, checkpoint_id: e.target.value }))}
                     className="w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none">
                     <option value="">-- Sélectionner une porte --</option>
-                    {doors.map(d => <option key={d.id} value={d.nom}>{d.nom}</option>)}
+                    {doors.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
                   </select>
                 </div>
               </div>

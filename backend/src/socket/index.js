@@ -59,7 +59,7 @@ export function setupSocket(io) {
   })
 
   // ─── Redis Pub/Sub → Socket.io broadcast ─────────────────────────────────
-  sub.subscribe('scan:new', 'badge:revoked', 'alert:broadcast', 'terminal:decommissioned',
+  sub.subscribe('scan:new', 'badge:revoked', 'alert:broadcast', 'terminal:decommissioned', 'terminal:online',
     (err) => {
       if (err) console.error('[socket] Redis subscribe error:', err.message)
     }
@@ -88,6 +88,11 @@ export function setupSocket(io) {
       // Décommissionnement → agent ciblé uniquement
       case 'terminal:decommissioned':
         io.to(`user:${payload.agentId}`).emit('terminal:decommissioned', payload)
+        break
+
+      // Terminal en ligne → admins/superviseurs
+      case 'terminal:online':
+        io.to('role:admin').to('role:supervisor').emit('terminal:online', payload)
         break
     }
   })

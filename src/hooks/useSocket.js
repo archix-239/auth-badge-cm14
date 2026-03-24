@@ -15,7 +15,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 
-const SOCKET_EVENTS = ['scan:new', 'badge:revoked', 'alert:broadcast', 'terminal:decommissioned', 'user:status']
+const SOCKET_EVENTS = ['scan:new', 'badge:revoked', 'alert:broadcast', 'terminal:decommissioned', 'terminal:online', 'user:status']
 
 export function useSocket(handlers = {}) {
   const [connected, setConnected] = useState(false)

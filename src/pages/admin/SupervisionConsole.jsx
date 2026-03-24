@@ -37,6 +37,9 @@ export default function SupervisionConsole() {
   }, [])
 
   // ── Socket.io — événements temps réel ─────────────────────────────────────
+  const refreshTerminals = () =>
+    api.get('/api/terminals').then(rows => setTerminals(rows)).catch(() => {})
+
   const { connected } = useSocket({
     'scan:new': (data) => {
       setLiveEvents(prev => [mapScanLog(data), ...prev].slice(0, 50))
@@ -50,6 +53,8 @@ export default function SupervisionConsole() {
     'alert:broadcast': () => {
       setAlertActive(true)
     },
+    'terminal:online':         () => refreshTerminals(),
+    'terminal:decommissioned': () => refreshTerminals(),
   })
 
   // ── Export logs CSV ────────────────────────────────────────────────────────
@@ -89,7 +94,7 @@ export default function SupervisionConsole() {
 
   const alertCount     = liveEvents.filter(e => ['révoqué','inconnu'].includes(e.resultat)).length
   const authRate       = Math.round(liveEvents.filter(e => e.resultat === 'autorisé').length / Math.max(1, liveEvents.length) * 100)
-  const activeTerms    = terminals.filter(p => p.statut === 'actif').length
+  const activeTerms    = terminals.filter(p => p.online).length
 
   const kpis = [
     { key: 'live_scans',       value: liveEvents.length, icon: 'qr_code_scanner', color: 'text-primary dark:text-blue-400',       bg: 'bg-primary/10 dark:bg-primary/20',       border: 'border-primary/20 dark:border-primary/30' },
@@ -211,8 +216,8 @@ export default function SupervisionConsole() {
                   <li key={pc.id} className="flex items-center justify-between px-5 py-3">
                     <div className="flex items-center gap-2.5">
                       <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                        pc.statut === 'actif'  ? 'bg-emerald-500' :
-                        pc.statut === 'alerte' ? 'bg-red-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'
+                        pc.statut === 'alerte' ? 'bg-red-500 animate-pulse' :
+                        pc.online              ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
                       }`}></div>
                       <div>
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{pc.nom}</p>
@@ -222,9 +227,9 @@ export default function SupervisionConsole() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{pc.scans}</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                        pc.statut === 'actif'  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                        pc.statut === 'alerte' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500'
-                      }`}>{t(`common.status.${pc.statut}`, { defaultValue: pc.statut })}</span>
+                        pc.statut === 'alerte' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                        pc.online              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500'
+                      }`}>{pc.statut === 'alerte' ? t('common.status.alerte', 'alerte') : pc.online ? t('common.status.online') : t('common.status.offline')}</span>
                     </div>
                   </li>
                 ))}

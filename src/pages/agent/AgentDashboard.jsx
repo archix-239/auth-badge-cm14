@@ -43,55 +43,86 @@ export default function AgentDashboard() {
       })
       .catch(() => { setRecentLogs([]); setSessionCount(0) })
 
-    const handleOnline  = () => {
-      setIsOnline(true)
-      // Réinitialise immédiatement le compteur offline
+    const reloadHistory = () => {
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+      Promise.all([
+        api.get('/api/scans?limit=5'),
+        api.get(`/api/scans?limit=500&from=${todayStart.toISOString()}`),
+      ]).then(([recent, todayLogs]) => {
+        setRecentLogs(recent.map(mapScanLog))
+        setSessionCount(todayLogs.length)
+      }).catch(() => {})
+    }
+
+    const syncPendingAndReload = () => {
       const now = new Date()
       setLastSync(now)
       localStorage.setItem('cm14_last_sync', now.toISOString())
 
-      // Envoie les scans en attente (effectués hors ligne)
       const pending = getPendingScans()
-      if (pending.length > 0) {
-        Promise.allSettled(
-          pending.map(scan =>
-            api.post('/api/scans', {
-              participant_id:    scan.participant_id    ?? null,
-              nom:               scan.nom,
-              delegation:        scan.delegation        ?? null,
-              categorie:         scan.categorie         ?? null,
-              zone:              scan.zone,
-              point_controle_id: scan.point_controle_id ?? null,
-              resultat:          scan.resultat,
-            }).then(() => scan.id)
-          )
-        ).then(results => {
-          const synced = results
-            .filter(r => r.status === 'fulfilled')
-            .map(r => r.value)
-          if (synced.length > 0) removeSyncedScans(synced)
-        })
-      }
-      // Recharge l'historique
-      api.get('/api/scans?limit=5')
-        .then(rows => setRecentLogs(rows.map(mapScanLog)))
-        .catch(() => {})
-      // Resync le cache badges
-      api.get('/api/participants')
-        .then(rows => syncBadgeStore(rows.map(mapParticipant)))
-        .catch(() => {})
+      const syncPromise = pending.length > 0
+        ? Promise.allSettled(
+            pending.map(scan =>
+              api.post('/api/scans', {
+                participant_id:    scan.participant_id    ?? null,
+                nom:               scan.nom,
+                delegation:        scan.delegation        ?? null,
+                categorie:         scan.categorie         ?? null,
+                zone:              scan.zone,
+                point_controle_id: scan.point_controle_id ?? null,
+                resultat:          scan.resultat,
+                timestamp:         scan.timestamp         ?? null,
+              }).then(() => scan.id)
+            )
+          ).then(results => {
+            const synced = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+            if (synced.length > 0) removeSyncedScans(synced)
+          })
+        : Promise.resolve()
+
+      syncPromise.then(() => {
+        reloadHistory()
+        api.get('/api/participants')
+          .then(rows => syncBadgeStore(rows.map(mapParticipant)))
+          .catch(() => {})
+      })
     }
-    const handleOffline = () => setIsOnline(false)
+
+    const handleOnline  = () => { setIsOnline(true);  syncPendingAndReload() }
+    const handleOffline = () =>   setIsOnline(false)
     window.addEventListener('online',  handleOnline)
     window.addEventListener('offline', handleOffline)
 
     // Mise à jour de l'horloge toutes les 30 secondes
     const tick = setInterval(() => setNow(new Date()), 30_000)
 
+    // Heartbeat toutes les 60s — détecte aussi la perte réseau
+    const cpId = user?.checkpoint?.id
+    const sendHeartbeat = () => {
+      api.post(`/api/terminals/${cpId}/heartbeat`)
+        .then(() => { if (!isOnline) { setIsOnline(true); syncPendingAndReload() } })
+        .catch(() => setIsOnline(false))
+    }
+    if (cpId) { sendHeartbeat(); }
+    const heartbeat = cpId ? setInterval(sendHeartbeat, 60_000) : null
+
+    // Ping léger toutes les 10s pour détecter coupure/retour réseau sans attendre le heartbeat
+    let wasOnline = navigator.onLine
+    const ping = setInterval(() => {
+      api.get('/api/health').then(() => {
+        if (!wasOnline) { wasOnline = true; setIsOnline(true); syncPendingAndReload() }
+      }).catch(() => {
+        if (wasOnline) { wasOnline = false; setIsOnline(false) }
+      })
+    }, 10_000)
+
     return () => {
       window.removeEventListener('online',  handleOnline)
       window.removeEventListener('offline', handleOffline)
       clearInterval(tick)
+      clearInterval(ping)
+      if (heartbeat) clearInterval(heartbeat)
     }
   }, [])
 
@@ -132,7 +163,8 @@ export default function AgentDashboard() {
   const today      = new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
   const autorises  = myLogs.filter(l => l.resultat === 'autorisé').length
   const alertes    = myLogs.filter(l => ['révoqué','inconnu'].includes(l.resultat)).length
-  const totalScans = sessionCount ?? (myPC?.scans ?? myLogs.length)
+  const pendingCount = getPendingScans().length
+  const totalScans = (sessionCount ?? (myPC?.scans ?? myLogs.length)) + pendingCount
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 dark:bg-bg-dark p-4 space-y-4">
@@ -197,12 +229,12 @@ export default function AgentDashboard() {
             val:  myPC?.zone_id ? `${myPC.zone_id}${myPC.zone_nom ? ` — ${myPC.zone_nom}` : ''}` : '—',
             valc: 'text-purple-600 dark:text-purple-400',
           },
-          {
+          ...(!isOnline ? [{
             icon: 'offline_bolt', bg: 'bg-amber-100 dark:bg-amber-900/30', ic: 'text-amber-600 dark:text-amber-400',
             title: t('agent_dashboard.status.offline_title'),
             val:  offlineLabel,
             valc: remainingMs < 3_600_000 ? 'text-red-500 dark:text-red-400' : 'text-amber-600 dark:text-amber-400',
-          },
+          }] : []),
         ].map(s => (
           <div key={s.title} className="bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-2.5 min-w-0">
             <div className={`${s.bg} p-2 rounded-xl shrink-0`}>
