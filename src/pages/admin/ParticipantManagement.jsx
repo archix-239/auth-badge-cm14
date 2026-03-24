@@ -6,6 +6,7 @@ import { CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockDat
 import { signBadge } from '../../utils/badgeCrypto'
 import { api } from '../../utils/api'
 import { mapParticipant } from '../../utils/dataMappers'
+import { buildBadgeCanvas } from '../../utils/badgeCanvas'
 
 const EMPTY_FORM = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: [], dateExpiration: '' }
 
@@ -81,60 +82,19 @@ export default function ParticipantManagement() {
     setBadgeQrValue(JSON.stringify({ ...payload, sig }))
   }
 
-  const buildBadgeCanvas = useCallback(() => {
+  const getBadgeCanvas = useCallback(() => {
     const qrEl = qrRef.current?.querySelector('canvas')
-    if (!qrEl || !selected) return null
-    const W = 680, H = 400
-    const cv = document.createElement('canvas')
-    cv.width = W; cv.height = H
-    const c = cv.getContext('2d')
-    const bg = c.createLinearGradient(0, 0, W, H)
-    bg.addColorStop(0, '#0f172a'); bg.addColorStop(1, '#1e293b')
-    c.fillStyle = bg; c.fillRect(0, 0, W, H)
-    c.fillStyle = '#1e40af'; c.fillRect(0, 0, W, 64)
-    c.fillStyle = '#ffffff'; c.font = 'bold 15px Arial'
-    c.fillText('OMC CM14 — YAOUNDÉ 2025', 20, 28)
-    c.fillStyle = '#93c5fd'; c.font = '10px Arial'
-    c.fillText("BADGE D'ACCÈS OFFICIEL — CONFÉRENCE MINISTÉRIELLE N°14", 20, 48)
-    c.fillStyle = '#ffffff'; c.fillRect(W - 90, 16, 72, 30)
-    c.fillStyle = '#1e40af'; c.font = 'bold 13px Arial'
-    c.textAlign = 'center'; c.fillText(selected.categorie, W - 54, 36); c.textAlign = 'left'
-    const qrSize = 210, qrX = W - qrSize - 24, qrY = 80
-    c.fillStyle = '#ffffff'; c.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20)
-    c.drawImage(qrEl, qrX, qrY, qrSize, qrSize)
-    c.fillStyle = '#64748b'; c.font = '10px monospace'
-    c.textAlign = 'center'; c.fillText(selected.id, qrX + qrSize / 2, qrY + qrSize + 20); c.textAlign = 'left'
-    c.fillStyle = '#cbd5e1'; c.font = 'bold 22px Arial'
-    c.fillText(selected.prenom, 24, 108)
-    c.fillStyle = '#ffffff'; c.font = 'bold 30px Arial'
-    c.fillText(selected.nom.toUpperCase(), 24, 148)
-    c.fillStyle = '#94a3b8'; c.font = '15px Arial'
-    c.fillText(selected.delegation, 24, 178)
-    c.fillStyle = '#334155'; c.fillRect(24, 195, 200, 1)
-    let zx = 24
-    selected.zones.forEach(z => {
-      c.font = 'bold 11px Arial'
-      const tw = c.measureText(z).width + 18
-      c.fillStyle = '#1e40af'; c.fillRect(zx, 208, tw, 22)
-      c.fillStyle = '#ffffff'; c.fillText(z, zx + 9, 224)
-      zx += tw + 6
-    })
-    c.fillStyle = '#475569'; c.font = '11px Arial'
-    c.fillText(`Exp : ${selected.dateExpiration}`, 24, 260)
-    c.fillStyle = '#0f172a'; c.fillRect(0, H - 36, W, 36)
-    c.fillStyle = '#334155'; c.font = '10px Arial'
-    c.fillText("AUTH-BADGE CM14 — Système de contrôle d'accès OMC", 20, H - 14)
-    return cv
+    return buildBadgeCanvas(selected, qrEl)
   }, [selected])
 
   const downloadBadge = useCallback(() => {
-    const cv = buildBadgeCanvas()
+    const cv = getBadgeCanvas()
     if (!cv || !selected) return
     const link = document.createElement('a')
     link.download = `badge_${selected.id}_${selected.nom}.png`
     link.href = cv.toDataURL('image/png')
     link.click()
-  }, [buildBadgeCanvas, selected])
+  }, [getBadgeCanvas, selected])
 
   const openEdit = () => {
     setFormData({

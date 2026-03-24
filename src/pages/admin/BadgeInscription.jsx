@@ -5,6 +5,7 @@ import { CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockDat
 import { signBadge } from '../../utils/badgeCrypto'
 import { api } from '../../utils/api'
 import { mapParticipant } from '../../utils/dataMappers'
+import { buildBadgeCanvas, CAT_META } from '../../utils/badgeCanvas'
 
 const emptyForm = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: [], dateExpiration: '' }
 
@@ -84,81 +85,13 @@ export default function BadgeInscription() {
     setRevoking(null)
   }
 
-  // Génère le badge comme canvas 2D (bypass html2canvas — fiable avec les canvas QR)
-  const buildBadgeCanvas = useCallback(() => {
+  const getBadgeCanvas = useCallback(() => {
     const qrEl = qrContainerRef.current?.querySelector('canvas')
-    if (!qrEl || !generated) return null
-
-    const W = 680, H = 400
-    const cv = document.createElement('canvas')
-    cv.width = W; cv.height = H
-    const c = cv.getContext('2d')
-
-    // Fond dégradé sombre
-    const bg = c.createLinearGradient(0, 0, W, H)
-    bg.addColorStop(0, '#0f172a'); bg.addColorStop(1, '#1e293b')
-    c.fillStyle = bg; c.fillRect(0, 0, W, H)
-
-    // Bandeau header bleu
-    c.fillStyle = '#1e40af'; c.fillRect(0, 0, W, 64)
-
-    // Texte header
-    c.fillStyle = '#ffffff'; c.font = 'bold 15px Arial'
-    c.fillText('OMC CM14 — YAOUNDÉ 2025', 20, 28)
-    c.fillStyle = '#93c5fd'; c.font = '10px Arial'
-    c.fillText("BADGE D'ACCÈS OFFICIEL — CONFÉRENCE MINISTÉRIELLE N°14", 20, 48)
-
-    // Badge catégorie (haut droite)
-    c.fillStyle = '#ffffff'; c.fillRect(W - 90, 16, 72, 30)
-    c.fillStyle = '#1e40af'; c.font = 'bold 13px Arial'
-    c.textAlign = 'center'; c.fillText(generated.categorie, W - 54, 36); c.textAlign = 'left'
-
-    // QR Code (droite)
-    const qrSize = 210, qrX = W - qrSize - 24, qrY = 80
-    c.fillStyle = '#ffffff'; c.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20)
-    c.drawImage(qrEl, qrX, qrY, qrSize, qrSize)
-
-    // ID sous le QR
-    c.fillStyle = '#64748b'; c.font = '10px monospace'
-    c.textAlign = 'center'; c.fillText(generated.id, qrX + qrSize / 2, qrY + qrSize + 20); c.textAlign = 'left'
-
-    // Prénom + Nom
-    c.fillStyle = '#cbd5e1'; c.font = 'bold 22px Arial'
-    c.fillText(generated.prenom, 24, 108)
-    c.fillStyle = '#ffffff'; c.font = 'bold 30px Arial'
-    c.fillText(generated.nom.toUpperCase(), 24, 148)
-
-    // Délégation
-    c.fillStyle = '#94a3b8'; c.font = '15px Arial'
-    c.fillText(generated.delegation, 24, 178)
-
-    // Séparateur
-    c.fillStyle = '#334155'; c.fillRect(24, 195, 200, 1)
-
-    // Zones
-    let zx = 24
-    generated.zones.forEach(z => {
-      c.font = 'bold 11px Arial'
-      const tw = c.measureText(z).width + 18
-      c.fillStyle = '#1e40af'; c.fillRect(zx, 208, tw, 22)
-      c.fillStyle = '#ffffff'; c.fillText(z, zx + 9, 224)
-      zx += tw + 6
-    })
-
-    // Date expiration
-    c.fillStyle = '#475569'; c.font = '11px Arial'
-    c.fillText(`Exp : ${generated.dateExpiration}`, 24, 260)
-
-    // Bandeau footer
-    c.fillStyle = '#0f172a'; c.fillRect(0, H - 36, W, 36)
-    c.fillStyle = '#334155'; c.font = '10px Arial'
-    c.fillText('AUTH-BADGE CM14 — Système de contrôle d\'accès OMC', 20, H - 14)
-
-    return cv
+    return buildBadgeCanvas(generated, qrEl)
   }, [generated])
 
   const handlePrint = () => {
-    const cv = buildBadgeCanvas()
+    const cv = getBadgeCanvas()
     if (!cv) return
     const win = window.open('', '_blank')
     win.document.write(`<html><head><title>Badge CM14</title>
@@ -170,7 +103,7 @@ export default function BadgeInscription() {
   }
 
   const handleDownload = () => {
-    const cv = buildBadgeCanvas()
+    const cv = getBadgeCanvas()
     if (!cv) return
     const a = document.createElement('a')
     a.href = cv.toDataURL('image/png')
@@ -275,69 +208,115 @@ export default function BadgeInscription() {
             </div>
           )}
 
-          {step === 'badge' && generated && (
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div ref={badgeCardRef} className="bg-gradient-to-br from-slate-900 to-slate-700 p-6 text-white text-center">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <span className="material-symbols-outlined text-sm">shield_person</span>
-                  <span className="text-xs font-bold uppercase tracking-widest">OMC CM14 — Yaoundé 2025</span>
+          {step === 'badge' && generated && (() => {
+            const cat      = CAT_META[generated.categorie] ?? CAT_META.DEL
+            const catColor = cat.color
+            const catLabel = cat.label
+            return (
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+
+                {/* Prévisualisation badge vertical */}
+                <div className="flex justify-center py-6 bg-slate-100 dark:bg-slate-800">
+                  <div className="w-[280px] rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700">
+
+                    {/* Header */}
+                    <div className="relative overflow-hidden text-center py-5 px-4"
+                      style={{ background: 'linear-gradient(135deg, #0f2d6b 0%, #1e40af 100%)' }}>
+                      <div className="absolute top-[-30px] right-[-30px] w-32 h-32 rounded-full opacity-[0.07] bg-white"></div>
+                      <div className="absolute bottom-[-20px] left-[-20px] w-20 h-20 rounded-full opacity-[0.07] bg-white"></div>
+                      <div className="relative z-10">
+                        <p className="text-3xl font-black text-white tracking-tight leading-none">CM14</p>
+                        <p className="text-blue-200 text-[9px] font-bold uppercase tracking-[0.18em] mt-1">Conférence Ministérielle</p>
+                        <p className="text-blue-300 text-[8px] mt-0.5">Yaoundé · Cameroun · 2026</p>
+                      </div>
+                    </div>
+
+                    {/* Bandeau catégorie */}
+                    <div className="py-2 text-center" style={{ backgroundColor: catColor }}>
+                      <span className="text-white text-[11px] font-black uppercase tracking-widest">{catLabel}</span>
+                    </div>
+
+                    {/* Corps */}
+                    <div className="bg-white px-4 pt-5 pb-4 text-center">
+                      {/* Avatar */}
+                      <div className="w-[68px] h-[68px] rounded-full mx-auto mb-3 flex items-center justify-center text-white text-[22px] font-black shadow-lg ring-[3px] ring-white"
+                        style={{ backgroundColor: catColor }}>
+                        {generated.prenom?.charAt(0)}{generated.nom?.charAt(0)}
+                      </div>
+
+                      {/* Nom */}
+                      <p className="text-slate-500 text-sm leading-none">{generated.prenom}</p>
+                      <p className="text-slate-900 text-[22px] font-black mt-1 leading-tight">{generated.nom.toUpperCase()}</p>
+                      <p className="text-slate-400 text-xs mt-1">{generated.delegation}</p>
+
+                      {/* Séparateur */}
+                      <div className="w-10 h-[3px] mx-auto mt-3 mb-3 rounded-full" style={{ backgroundColor: catColor }}></div>
+
+                      {/* Zones */}
+                      {generated.zones.length > 0 && (
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Zones autorisées</p>
+                          <div className="flex flex-wrap justify-center gap-1 mb-3">
+                            {generated.zones.map(z => (
+                              <span key={z} className="text-[10px] font-bold px-2 py-0.5 rounded border"
+                                style={{ color: catColor, borderColor: catColor + '50', backgroundColor: catColor + '12' }}>
+                                {z}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* QR Code */}
+                      <div ref={qrContainerRef} className="inline-block rounded-xl p-2.5 shadow-sm border border-slate-100">
+                        <QRCodeCanvas value={qrValue || '{}'} size={150} level="H" includeMargin={false} fgColor="#0f172a" bgColor="#ffffff" />
+                      </div>
+                      <p className="text-slate-300 text-[9px] font-mono mt-1.5 tracking-wider">{generated.id}</p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="bg-slate-900 py-2.5 text-center space-y-0.5">
+                      <p className="text-slate-500 text-[8px] uppercase tracking-wide">AUTH-BADGE CM14 — OMC</p>
+                      <p className="text-slate-600 text-[8px]">Valide jusqu'au {generated.dateExpiration}</p>
+                    </div>
+                  </div>
                 </div>
-                <div ref={qrContainerRef} className="bg-white rounded-2xl p-5 inline-block mb-4 shadow-lg">
-                  <QRCodeCanvas
-                    value={qrValue || '{}'}
-                    size={220}
-                    level="H"
-                    includeMargin={false}
-                    fgColor="#0f172a"
-                    bgColor="#ffffff"
-                  />
+
+                {/* Boutons d'action */}
+                <div className="p-4 flex gap-3">
+                  <button onClick={handlePrint} className="flex-1 flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-primary-dark transition-colors">
+                    <span className="material-symbols-outlined text-lg">print</span>
+                    {t('inscription.btn.print')}
+                  </button>
+                  <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-200 transition-colors">
+                    <span className="material-symbols-outlined text-lg">download</span>
+                    {t('inscription.btn.download')}
+                  </button>
                 </div>
-                <h3 className="text-xl font-bold">{generated.prenom} {generated.nom}</h3>
-                <p className="text-slate-300 text-sm mt-1">{generated.delegation}</p>
-                <div className="flex items-center justify-center gap-3 mt-3">
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/20 text-white">{generated.categorie}</span>
-                  <span className="text-xs text-slate-400 font-mono">{generated.id}</span>
+                <div className="px-4 pb-3">
+                  <button
+                    onClick={() => {
+                      if (!qrValue) return
+                      navigator.clipboard.writeText(qrValue).then(() => {
+                        setNfcCopied(true)
+                        setTimeout(() => setNfcCopied(false), 2000)
+                      })
+                    }}
+                    disabled={!qrValue}
+                    className="w-full flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40">
+                    <span className="material-symbols-outlined text-lg">{nfcCopied ? 'check_circle' : 'nfc'}</span>
+                    {nfcCopied ? t('inscription.btn.nfc_copied') : t('inscription.btn.copy_nfc')}
+                  </button>
                 </div>
-                <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
-                  {generated.zones.map(z => (
-                    <span key={z} className="text-xs bg-white/10 text-white px-2 py-0.5 rounded font-medium">{z}</span>
-                  ))}
+                <div className="px-4 pb-4">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-emerald-600 text-lg">check_circle</span>
+                    <p className="text-sm text-emerald-700 font-medium">{t('inscription.badge.success')}</p>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-400 mt-3">Exp: {generated.dateExpiration}</p>
               </div>
-              <div className="p-4 flex gap-3">
-                <button onClick={handlePrint} className="flex-1 flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-primary-dark transition-colors">
-                  <span className="material-symbols-outlined text-lg">print</span>
-                  {t('inscription.btn.print')}
-                </button>
-                <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-200 transition-colors">
-                  <span className="material-symbols-outlined text-lg">download</span>
-                  {t('inscription.btn.download')}
-                </button>
-              </div>
-              <div className="px-4 pb-3">
-                <button
-                  onClick={() => {
-                    if (!qrValue) return
-                    navigator.clipboard.writeText(qrValue).then(() => {
-                      setNfcCopied(true)
-                      setTimeout(() => setNfcCopied(false), 2000)
-                    })
-                  }}
-                  disabled={!qrValue}
-                  className="w-full flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg py-2.5 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40">
-                  <span className="material-symbols-outlined text-lg">{nfcCopied ? 'check_circle' : 'nfc'}</span>
-                  {nfcCopied ? t('inscription.btn.nfc_copied') : t('inscription.btn.copy_nfc')}
-                </button>
-              </div>
-              <div className="px-4 pb-4">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-emerald-600 text-lg">check_circle</span>
-                  <p className="text-sm text-emerald-700 font-medium">{t('inscription.badge.success')}</p>
-                </div>
-              </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* RIGHT: participants list */}
