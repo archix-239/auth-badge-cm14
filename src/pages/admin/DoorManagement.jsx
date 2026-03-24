@@ -64,9 +64,10 @@ export default function DoorManagement() {
   const handleDelete = async () => {
     if (!IS_MOCK) {
       try {
-        await api.delete(`/api/terminals/${deleting.id}`)
+        // /decommission envoie l'événement socket terminal:decommissioned + révoque les tokens
+        await api.post(`/api/terminals/${deleting.id}/decommission`)
       } catch (err) {
-        console.error('[doors/delete]', err)
+        console.error('[doors/decommission]', err)
       }
     }
     setDoors(prev => prev.filter(d => d.id !== deleting.id))

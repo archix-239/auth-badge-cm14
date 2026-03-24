@@ -14,8 +14,8 @@ export default function AgentLayout() {
     'alert:broadcast': (data) => {
       setBroadcastAlert({ message: data.message, timestamp: new Date() })
     },
-    'terminal:decommissioned': ({ userId } = {}) => {
-      if (!userId || userId === user?.id) setIsDecommissioned(true)
+    'terminal:decommissioned': ({ agentId } = {}) => {
+      if (!agentId || agentId === user?.id) setIsDecommissioned(true)
     },
   })
 
