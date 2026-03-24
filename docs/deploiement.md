@@ -722,23 +722,48 @@ zipalign -v 4 app-release-unsigned.apk authbadge-cm14-v1.1.0.apk
 cp authbadge-cm14-v1.1.0.apk /media/usb/
 ```
 
-**Étape 3 — Installer sur chaque téléphone agent via ADB (recommandé)**
+**Étape 3 — Installer sur chaque téléphone agent**
 
-Brancher chaque téléphone au poste de développement en USB :
+Puisque tous les appareils (téléphones agents et poste de développement) sont sur le **même réseau local CM14**, utiliser ADB over WiFi — pas besoin de câble USB.
+
+Activer ADB WiFi sur chaque téléphone (une seule fois, en USB) :
 
 ```bash
-adb devices                                      # Vérifier que le téléphone est détecté
-adb install -r authbadge-cm14-v1.1.0.apk        # -r met à jour sans effacer les données
+# Brancher le téléphone en USB une première fois pour le jumeler
+adb tcpip 5555
+# Débrancher le câble USB — le téléphone reste joignable via WiFi
 ```
 
-> L'option `-r` (replace) met à jour l'application existante **sans effacer les données** ni déconnecter l'agent.
+Puis déployer l'APK sur chaque téléphone **sans câble** :
 
-**Procédure alternative si ADB n'est pas disponible :**
+```bash
+# Remplacer <ip_telephone> par l'IP du téléphone sur le réseau CM14
+adb connect <ip_telephone>:5555
+adb -s <ip_telephone>:5555 install -r authbadge-cm14-v1.1.0.apk
+```
 
-1. Transférer l'APK depuis la clé USB sur le téléphone
-2. Ouvrir le fichier APK depuis le gestionnaire de fichiers
-3. Confirmer la mise à jour
-4. Relancer l'application et se reconnecter
+> L'option `-r` (replace) met à jour l'application existante **sans effacer les données** ni déconnecter l'agent. L'IP du téléphone est visible dans Paramètres → À propos → Statut réseau WiFi.
+
+**Exemple concret — mise à jour simultanée de 3 téléphones :**
+
+```bash
+adb connect 192.168.10.11:5555
+adb connect 192.168.10.12:5555
+adb connect 192.168.10.13:5555
+adb devices   # Les 3 appareils doivent apparaître
+
+# Déployer sur les 3 en parallèle (3 terminaux séparés)
+adb -s 192.168.10.11:5555 install -r authbadge-cm14-v1.1.0.apk
+adb -s 192.168.10.12:5555 install -r authbadge-cm14-v1.1.0.apk
+adb -s 192.168.10.13:5555 install -r authbadge-cm14-v1.1.0.apk
+```
+
+**Procédure de repli si ADB WiFi n'est pas disponible :**
+
+1. Copier l'APK sur une clé USB
+2. Transférer le fichier sur le téléphone via USB
+3. Ouvrir le fichier APK depuis le gestionnaire de fichiers Android
+4. Confirmer la mise à jour, relancer l'application
 
 ---
 
