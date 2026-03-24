@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { LOGS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
+import { getResultConfig, timeAgo } from '../../data/mockData'
 import { getBadgeStoreSize, syncBadgeStore } from '../../utils/badgeStore'
 import { getPendingScans, removeSyncedScans } from '../../utils/scanQueue'
 import { api } from '../../utils/api'
 import { mapScanLog, mapParticipant } from '../../utils/dataMappers'
-
-const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const MAX_OFFLINE_MS = 4 * 60 * 60 * 1000 // 4h autonomie
 
@@ -18,9 +16,13 @@ export default function AgentDashboard() {
   const navigate = useNavigate()
 
   const [isOnline,   setIsOnline]   = useState(navigator.onLine)
+  const [syncing,    setSyncing]    = useState(false)
   const [lastSync, setLastSync] = useState(() => {
     const stored = localStorage.getItem('cm14_last_sync')
-    return stored ? new Date(stored) : new Date()
+    if (stored) return new Date(stored)
+    const now = new Date()
+    localStorage.setItem('cm14_last_sync', now.toISOString())
+    return now
   })
   const [now,        setNow]        = useState(new Date())
   const [storeSize,   setStoreSize]   = useState(0)
@@ -29,61 +31,55 @@ export default function AgentDashboard() {
 
   useEffect(() => {
     getBadgeStoreSize().then(setStoreSize)
-    if (!IS_MOCK) {
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
-      Promise.all([
-        api.get('/api/scans?limit=5'),
-        api.get(`/api/scans?limit=500&from=${todayStart.toISOString()}`),
-      ])
-        .then(([recent, todayLogs]) => {
-          setRecentLogs(recent.map(mapScanLog))
-          setSessionCount(todayLogs.length)
-        })
-        .catch(() => { setRecentLogs([]); setSessionCount(0) })
-    } else {
-      const myMockLogs = LOGS.filter(l => l.agentId === user?.id)
-      setRecentLogs(myMockLogs.slice(0, 5))
-      setSessionCount(myMockLogs.length)
-    }
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    Promise.all([
+      api.get('/api/scans?limit=5'),
+      api.get(`/api/scans?limit=500&from=${todayStart.toISOString()}`),
+    ])
+      .then(([recent, todayLogs]) => {
+        setRecentLogs(recent.map(mapScanLog))
+        setSessionCount(todayLogs.length)
+      })
+      .catch(() => { setRecentLogs([]); setSessionCount(0) })
 
     const handleOnline  = () => {
       setIsOnline(true)
-      if (!IS_MOCK) {
-        // Envoie les scans en attente (effectués hors ligne)
-        const pending = getPendingScans()
-        if (pending.length > 0) {
-          Promise.allSettled(
-            pending.map(scan =>
-              api.post('/api/scans', {
-                participant_id:    scan.participant_id    ?? null,
-                nom:               scan.nom,
-                delegation:        scan.delegation        ?? null,
-                categorie:         scan.categorie         ?? null,
-                zone:              scan.zone,
-                point_controle_id: scan.point_controle_id ?? null,
-                resultat:          scan.resultat,
-              }).then(() => scan.id)
-            )
-          ).then(results => {
-            const synced = results
-              .filter(r => r.status === 'fulfilled')
-              .map(r => r.value)
-            if (synced.length > 0) removeSyncedScans(synced)
-          })
-        }
-        // Recharge l'historique
-        api.get('/api/scans?limit=5')
-          .then(rows => setRecentLogs(rows.map(mapScanLog)))
-          .catch(() => {})
-        // Resync le cache badges et remet le compteur à zéro
-        api.get('/api/participants')
-          .then(rows => {
-            syncBadgeStore(rows.map(mapParticipant))
-            setLastSync(new Date())
-          })
-          .catch(() => {})
+      // Réinitialise immédiatement le compteur offline
+      const now = new Date()
+      setLastSync(now)
+      localStorage.setItem('cm14_last_sync', now.toISOString())
+
+      // Envoie les scans en attente (effectués hors ligne)
+      const pending = getPendingScans()
+      if (pending.length > 0) {
+        Promise.allSettled(
+          pending.map(scan =>
+            api.post('/api/scans', {
+              participant_id:    scan.participant_id    ?? null,
+              nom:               scan.nom,
+              delegation:        scan.delegation        ?? null,
+              categorie:         scan.categorie         ?? null,
+              zone:              scan.zone,
+              point_controle_id: scan.point_controle_id ?? null,
+              resultat:          scan.resultat,
+            }).then(() => scan.id)
+          )
+        ).then(results => {
+          const synced = results
+            .filter(r => r.status === 'fulfilled')
+            .map(r => r.value)
+          if (synced.length > 0) removeSyncedScans(synced)
+        })
       }
+      // Recharge l'historique
+      api.get('/api/scans?limit=5')
+        .then(rows => setRecentLogs(rows.map(mapScanLog)))
+        .catch(() => {})
+      // Resync le cache badges
+      api.get('/api/participants')
+        .then(rows => syncBadgeStore(rows.map(mapParticipant)))
+        .catch(() => {})
     }
     const handleOffline = () => setIsOnline(false)
     window.addEventListener('online',  handleOnline)
@@ -99,6 +95,26 @@ export default function AgentDashboard() {
     }
   }, [])
 
+  const handleManualSync = async () => {
+    if (syncing || !isOnline) return
+    setSyncing(true)
+    try {
+      const [rows] = await Promise.all([
+        api.get('/api/participants'),
+        api.get('/api/scans?limit=5').then(r => setRecentLogs(r.map(mapScanLog))).catch(() => {}),
+      ])
+      syncBadgeStore(rows.map(mapParticipant))
+      const now = new Date()
+      setLastSync(now)
+      localStorage.setItem('cm14_last_sync', now.toISOString())
+      getBadgeStoreSize().then(setStoreSize)
+    } catch {
+      // Silencieux
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   // Labels dynamiques cache + offline
   const syncDiffMin = Math.floor((now - lastSync) / 60_000)
   const cacheLabel  = syncDiffMin < 1
@@ -111,10 +127,7 @@ export default function AgentDashboard() {
   const offlineLabel = t('agent_dashboard.status.offline_remaining', { h: offH, m: String(offM).padStart(2, '0') })
 
   const myLogs     = recentLogs
-  // En mode mock, fallback sur POINTS_CONTROLE ; en mode API, utilise user.checkpoint
-  const myPC       = IS_MOCK
-    ? POINTS_CONTROLE.find(pc => pc.agentId === user?.id)
-    : (user?.checkpoint ?? null)
+  const myPC       = user?.checkpoint ?? null
   const locale     = i18n.language === 'en' ? 'en-GB' : i18n.language === 'es' ? 'es-ES' : 'fr-FR'
   const today      = new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
   const autorises  = myLogs.filter(l => l.resultat === 'autorisé').length
@@ -181,7 +194,7 @@ export default function AgentDashboard() {
           {
             icon: 'map', bg: 'bg-purple-100 dark:bg-purple-900/30', ic: 'text-purple-600 dark:text-purple-400',
             title: t('agent_dashboard.status.zones_title'),
-            val:  'Z1 · Z2 · Z3',
+            val:  myPC?.zone_id ? `${myPC.zone_id}${myPC.zone_nom ? ` — ${myPC.zone_nom}` : ''}` : '—',
             valc: 'text-purple-600 dark:text-purple-400',
           },
           {
@@ -207,7 +220,16 @@ export default function AgentDashboard() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800">
           <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('agent_dashboard.recent_title')}</h3>
-          <button onClick={() => navigate('/agent/history')} className="text-xs text-primary font-semibold hover:underline">{t('common.btn.view_all')}</button>
+          <div className="flex items-center gap-3">
+            {isOnline && (
+              <button onClick={handleManualSync} disabled={syncing} title={t('agent_dashboard.btn_sync')}
+                className="flex items-center gap-1 text-xs text-primary font-semibold hover:underline disabled:opacity-50">
+                <span className={`material-symbols-outlined text-base ${syncing ? 'animate-spin' : ''}`}>sync</span>
+                {syncing ? t('agent_dashboard.syncing') : t('agent_dashboard.btn_sync')}
+              </button>
+            )}
+            <button onClick={() => navigate('/agent/history')} className="text-xs text-primary font-semibold hover:underline">{t('common.btn.view_all')}</button>
+          </div>
         </div>
         <ul className="divide-y divide-slate-50 dark:divide-slate-800">
           {myLogs.length === 0 && (

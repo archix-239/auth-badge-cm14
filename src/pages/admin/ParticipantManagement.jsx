@@ -2,14 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { QRCodeCanvas } from 'qrcode.react'
-import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
+import { CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
 import { signBadge } from '../../utils/badgeCrypto'
 import { api } from '../../utils/api'
 import { mapParticipant } from '../../utils/dataMappers'
 
-const IS_MOCK = !import.meta.env.VITE_API_URL
-
-const EMPTY_FORM = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: ['Z1'], dateExpiration: '' }
+const EMPTY_FORM = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: [], dateExpiration: '' }
 
 export default function ParticipantManagement() {
   const { t } = useTranslation()
@@ -26,18 +24,17 @@ export default function ParticipantManagement() {
   const [formMode, setFormMode]         = useState('create') // 'create' | 'edit'
   const [formLoading, setFormLoading]   = useState(false)
   const [badgeQrValue, setBadgeQrValue] = useState('')
+  const [zones, setZones]               = useState([])
   const qrRef = useRef(null)
 
   useEffect(() => {
-    if (IS_MOCK) {
-      setParticipants(PARTICIPANTS)
-      setLoading(false)
-      return
-    }
     api.get('/api/participants')
       .then(rows => setParticipants(rows.map(mapParticipant)))
-      .catch(() => setParticipants(PARTICIPANTS))
+      .catch(() => {})
       .finally(() => setLoading(false))
+    api.get('/api/zones')
+      .then(rows => setZones(rows))
+      .catch(() => {})
   }, [])
 
   const filtered = participants.filter(p => {
@@ -54,17 +51,13 @@ export default function ParticipantManagement() {
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleRevoke = async () => {
-    if (!IS_MOCK) {
-      await api.patch(`/api/participants/${selectedId}`, { statut: 'révoqué' }).catch(() => {})
-    }
+    await api.patch(`/api/participants/${selectedId}`, { statut: 'révoqué' }).catch(() => {})
     setParticipants(prev => prev.map(p => p.id === selectedId ? { ...p, statut: 'révoqué' } : p))
     setModal('detail')
   }
 
   const handleDelete = async () => {
-    if (!IS_MOCK) {
-      await api.delete(`/api/participants/${selectedId}`).catch(() => {})
-    }
+    await api.delete(`/api/participants/${selectedId}`).catch(() => {})
     setParticipants(prev => prev.filter(p => p.id !== selectedId))
     setSelectedId(null)
     setModal(null)
@@ -88,14 +81,60 @@ export default function ParticipantManagement() {
     setBadgeQrValue(JSON.stringify({ ...payload, sig }))
   }
 
+  const buildBadgeCanvas = useCallback(() => {
+    const qrEl = qrRef.current?.querySelector('canvas')
+    if (!qrEl || !selected) return null
+    const W = 680, H = 400
+    const cv = document.createElement('canvas')
+    cv.width = W; cv.height = H
+    const c = cv.getContext('2d')
+    const bg = c.createLinearGradient(0, 0, W, H)
+    bg.addColorStop(0, '#0f172a'); bg.addColorStop(1, '#1e293b')
+    c.fillStyle = bg; c.fillRect(0, 0, W, H)
+    c.fillStyle = '#1e40af'; c.fillRect(0, 0, W, 64)
+    c.fillStyle = '#ffffff'; c.font = 'bold 15px Arial'
+    c.fillText('OMC CM14 — YAOUNDÉ 2025', 20, 28)
+    c.fillStyle = '#93c5fd'; c.font = '10px Arial'
+    c.fillText("BADGE D'ACCÈS OFFICIEL — CONFÉRENCE MINISTÉRIELLE N°14", 20, 48)
+    c.fillStyle = '#ffffff'; c.fillRect(W - 90, 16, 72, 30)
+    c.fillStyle = '#1e40af'; c.font = 'bold 13px Arial'
+    c.textAlign = 'center'; c.fillText(selected.categorie, W - 54, 36); c.textAlign = 'left'
+    const qrSize = 210, qrX = W - qrSize - 24, qrY = 80
+    c.fillStyle = '#ffffff'; c.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20)
+    c.drawImage(qrEl, qrX, qrY, qrSize, qrSize)
+    c.fillStyle = '#64748b'; c.font = '10px monospace'
+    c.textAlign = 'center'; c.fillText(selected.id, qrX + qrSize / 2, qrY + qrSize + 20); c.textAlign = 'left'
+    c.fillStyle = '#cbd5e1'; c.font = 'bold 22px Arial'
+    c.fillText(selected.prenom, 24, 108)
+    c.fillStyle = '#ffffff'; c.font = 'bold 30px Arial'
+    c.fillText(selected.nom.toUpperCase(), 24, 148)
+    c.fillStyle = '#94a3b8'; c.font = '15px Arial'
+    c.fillText(selected.delegation, 24, 178)
+    c.fillStyle = '#334155'; c.fillRect(24, 195, 200, 1)
+    let zx = 24
+    selected.zones.forEach(z => {
+      c.font = 'bold 11px Arial'
+      const tw = c.measureText(z).width + 18
+      c.fillStyle = '#1e40af'; c.fillRect(zx, 208, tw, 22)
+      c.fillStyle = '#ffffff'; c.fillText(z, zx + 9, 224)
+      zx += tw + 6
+    })
+    c.fillStyle = '#475569'; c.font = '11px Arial'
+    c.fillText(`Exp : ${selected.dateExpiration}`, 24, 260)
+    c.fillStyle = '#0f172a'; c.fillRect(0, H - 36, W, 36)
+    c.fillStyle = '#334155'; c.font = '10px Arial'
+    c.fillText("AUTH-BADGE CM14 — Système de contrôle d'accès OMC", 20, H - 14)
+    return cv
+  }, [selected])
+
   const downloadBadge = useCallback(() => {
-    const canvas = qrRef.current?.querySelector('canvas')
-    if (!canvas || !selected) return
+    const cv = buildBadgeCanvas()
+    if (!cv || !selected) return
     const link = document.createElement('a')
     link.download = `badge_${selected.id}_${selected.nom}.png`
-    link.href = canvas.toDataURL('image/png')
+    link.href = cv.toDataURL('image/png')
     link.click()
-  }, [selected])
+  }, [buildBadgeCanvas, selected])
 
   const openEdit = () => {
     setFormData({
@@ -134,18 +173,10 @@ export default function ParticipantManagement() {
     }
 
     if (formMode === 'create') {
-      if (!IS_MOCK) {
-        const created = await api.post('/api/participants', payload).catch(() => null)
-        if (created) setParticipants(prev => [...prev, mapParticipant(created)])
-      } else {
-        const newId = `P-${String(participants.length + 1).padStart(3, '0')}`
-        const mock = { id: newId, statut: 'actif', dateExpiration: formData.dateExpiration || 'N/A', ...payload, zones: formData.zones }
-        setParticipants(prev => [...prev, mock])
-      }
+      const created = await api.post('/api/participants', payload).catch(() => null)
+      if (created) setParticipants(prev => [...prev, mapParticipant(created)])
     } else {
-      if (!IS_MOCK) {
-        await api.patch(`/api/participants/${selectedId}`, payload).catch(() => {})
-      }
+      await api.patch(`/api/participants/${selectedId}`, payload).catch(() => {})
       setParticipants(prev => prev.map(p =>
         p.id === selectedId ? { ...p, ...payload, zones: formData.zones, dateExpiration: formData.dateExpiration || p.dateExpiration } : p
       ))
@@ -318,7 +349,7 @@ export default function ParticipantManagement() {
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t('participants.detail.zones')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {selected.zones.map(zid => {
-                    const zone = ZONES.find(z => z.id === zid)
+                    const zone = zones.find(z => z.id === zid)
                     return (
                       <span key={zid} title={zone?.nom}
                         className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-medium">
@@ -424,7 +455,7 @@ export default function ParticipantManagement() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">{t('participants.form.zones')} *</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {ZONES.map(z => (
+                    {zones.map(z => (
                       <label key={z.id} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
                         formData.zones.includes(z.id)
                           ? 'border-primary bg-primary/5 dark:bg-primary/10'

@@ -12,7 +12,8 @@
       "logout": "CERRAR SESIÓN",
       "search": "Buscar",
       "export_csv": "Exportar CSV",
-      "view_all": "Ver todo"
+      "view_all": "Ver todo",
+      "refresh": "Actualizar"
     },
     "label": {
       "delegation": "Delegación",
@@ -132,6 +133,8 @@
     },
     "btn_scan": "Escanear credencial",
     "btn_scan_sub": "Presione para activar la cámara",
+    "btn_sync": "Sincronizar",
+    "syncing": "Sincronizando…",
     "status": {
       "network_title": "Red",
       "network_val": "En línea",
@@ -354,6 +357,7 @@
       "active": "Accesos Activos",
       "alerts": "Alertas de Seguridad",
       "sync": "Última Sincronización",
+      "online_agents": "Agentes en línea",
       "action_required": "ACCIÓN REQUERIDA",
       "no_alert": "Sin alertas",
       "protocol": "Protocolo AES-256"

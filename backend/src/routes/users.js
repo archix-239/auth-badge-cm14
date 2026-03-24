@@ -2,6 +2,7 @@ import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { query } from '../db/postgres.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
+import { isUserOnline } from '../db/redis.js'
 
 const router = Router()
 
@@ -24,13 +25,15 @@ router.get('/', requireAuth, requireRole('admin', 'supervisor'), async (req, res
          CASE u.role WHEN 'admin' THEN 1 WHEN 'supervisor' THEN 2 ELSE 3 END,
          u.name`
     )
-    res.json(result.rows.map(u => ({
+    const rows = result.rows
+    const onlineChecks = await Promise.all(rows.map(u => isUserOnline(u.id).catch(() => false)))
+    res.json(rows.map((u, i) => ({
       id:      u.id,
       loginId: u.id,
       name:    u.name,
       role:    u.role,
       zone:    u.checkpoint_nom ?? u.zone ?? '',
-      statut:  u.is_locked ? 'BLOQUÉ' : 'HORS LIGNE',
+      statut:  u.is_locked ? 'BLOQUÉ' : onlineChecks[i] ? 'EN LIGNE' : 'HORS LIGNE',
       title:   u.title ?? null,
     })))
   } catch (err) {

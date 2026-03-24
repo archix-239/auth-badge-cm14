@@ -17,41 +17,28 @@ const ZONES = [
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 const USERS_PLAIN = [
-  { id: 'AG-8824',   password: 'Agent@CM14!',    role: 'agent',      name: 'Alima Nkemba',        zone: 'Entrée Nord — Salle Plénière', totp_secret: 'JBSWY3DPEHPK3PXP' },
-  { id: 'AG-0031',   password: 'Agent@CM14!',    role: 'agent',      name: 'Bruno Essomba',       zone: 'Entrée Est — Accueil VIP',     totp_secret: 'KVKFKRCPNZQUYMLX' },
-  { id: 'ADMIN-001', password: 'Admin@CM14!',    role: 'admin',      name: 'Jean Dupont',         title: 'Admin Principal',             totp_secret: 'MFRA2YTNJFQWCYLB' },
-  { id: 'SUPER-001', password: 'Supervisor@CM14!', role: 'supervisor', name: 'Marie Claire Owono', title: 'Superviseure Sécurité',       totp_secret: 'GEZDGNBVGY3TQOJQ' },
+  { id: 'AG-8824',   password: 'Agent@CM14!', role: 'agent', name: 'Alima Nkemba', zone: 'Entrée Nord', totp_secret: 'JBSWY3DPEHPK3PXP' },
+  { id: 'ADMIN-001', password: 'Admin@CM14!', role: 'admin', name: 'Jean Dupont',  title: 'Admin Principal', totp_secret: 'MFRA2YTNJFQWCYLB' },
 ]
 
 // ─── Points de contrôle ───────────────────────────────────────────────────────
 const POINTS_CONTROLE = [
-  { id: 'PC-01',  nom: 'Entrée Nord',    agent_id: 'AG-8824',  statut: 'actif',   scans: 47, zone_id: 'Z1' },
-  { id: 'PC-02',  nom: 'Entrée Est',     agent_id: 'AG-0031',  statut: 'actif',   scans: 31, zone_id: 'Z1' },
-  { id: 'PC-03',  nom: 'Entrée Sud',     agent_id: null,       statut: 'alerte',  scans: 12, zone_id: 'Z1' },
-  { id: 'PC-04',  nom: 'Salle Plénière', agent_id: 'AG-8824',  statut: 'actif',   scans: 28, zone_id: 'Z2' },
-  { id: 'PC-VIP', nom: 'Accueil VIP',    agent_id: 'AG-0031',  statut: 'actif',   scans: 9,  zone_id: 'Z5' },
+  { id: 'PC-01', nom: 'Entrée Nord', agent_id: 'AG-8824', statut: 'actif', scans: 0, zone_id: 'Z1' },
 ]
 
 // ─── Participants ─────────────────────────────────────────────────────────────
-const PARTICIPANTS = [
-  { id: 'P-001', nom: 'Mbeki',        prenom: 'Thabo',       delegation: 'Afrique du Sud', categorie: 'DEL',   zones: ['Z1','Z2','Z3'],          statut: 'actif',    date_expiration: '2025-03-28' },
-  { id: 'P-002', nom: 'Okonkwo',      prenom: 'Ada',         delegation: 'Nigeria',        categorie: 'DEL',   zones: ['Z1','Z2','Z3'],          statut: 'actif',    date_expiration: '2025-03-28' },
-  { id: 'P-003', nom: 'Diallo',       prenom: 'Fatoumata',   delegation: 'Sénégal',        categorie: 'OBS',   zones: ['Z1'],                    statut: 'actif',    date_expiration: '2025-03-28' },
-  { id: 'P-004', nom: 'Chen',         prenom: 'Wei',         delegation: 'Chine',          categorie: 'DEL',   zones: ['Z1','Z2','Z3','Z4'],     statut: 'actif',    date_expiration: '2025-03-26' },
-  { id: 'P-005', nom: 'Müller',       prenom: 'Klaus',       delegation: 'Allemagne',      categorie: 'PRESS', zones: ['Z1','Z5'],               statut: 'actif',    date_expiration: '2025-03-28' },
-  { id: 'P-006', nom: 'Okonkwo',      prenom: 'Chidera',     delegation: 'Nigeria',        categorie: 'STAFF', zones: ['Z1','Z2'],               statut: 'révoqué',  date_expiration: '2025-03-28' },
-  { id: 'P-007', nom: 'Traoré',       prenom: 'Moussa',      delegation: 'Mali',           categorie: 'DEL',   zones: ['Z1','Z2','Z3'],          statut: 'actif',    date_expiration: '2025-03-28' },
-  { id: 'P-008', nom: 'Fernandez',    prenom: 'Carlos',      delegation: 'Espagne',        categorie: 'VIP',   zones: ['Z1','Z2','Z3','Z4','Z5'], statut: 'actif',   date_expiration: '2025-03-28' },
-  { id: 'P-009', nom: 'Johnson',      prenom: 'Sarah',       delegation: 'États-Unis',     categorie: 'PRESS', zones: ['Z1','Z5'],               statut: 'actif',    date_expiration: '2025-03-28' },
-  { id: 'P-010', nom: 'Dubois',       prenom: 'Amélie',      delegation: 'France',         categorie: 'STAFF', zones: ['Z1','Z2'],               statut: 'suspendu', date_expiration: '2025-03-28' },
-  { id: 'P-011', nom: 'Nakamura',     prenom: 'Hiroshi',     delegation: 'Japon',          categorie: 'DEL',   zones: ['Z1','Z2','Z3'],          statut: 'actif',    date_expiration: '2025-03-28' },
-  { id: 'P-012', nom: 'El Amine',     prenom: 'Karim',       delegation: 'Maroc',          categorie: 'OBS',   zones: ['Z1'],                    statut: 'actif',    date_expiration: '2025-03-27' },
-]
+const PARTICIPANTS = []
 
 // ─── Seed ─────────────────────────────────────────────────────────────────────
 const client = await pool.connect()
 try {
   await client.query('BEGIN')
+
+  // Nettoyage des anciennes données de test
+  await client.query(`DELETE FROM points_controle WHERE id NOT IN ('PC-01')`)
+  await client.query(`DELETE FROM users WHERE id NOT IN ('AG-8824', 'ADMIN-001')`)
+  await client.query(`DELETE FROM participants WHERE id LIKE 'P-%'`)
+  console.log('[seed] Anciennes données de test supprimées.')
 
   // Zones
   for (const z of ZONES) {
@@ -81,7 +68,7 @@ try {
     await client.query(
       `INSERT INTO points_controle (id, nom, agent_id, statut, scans, zone_id)
        VALUES ($1,$2,$3,$4,$5,$6)
-       ON CONFLICT (id) DO UPDATE SET zone_id = EXCLUDED.zone_id`,
+       ON CONFLICT (id) DO UPDATE SET nom = EXCLUDED.nom, agent_id = EXCLUDED.agent_id, statut = EXCLUDED.statut, scans = EXCLUDED.scans, zone_id = EXCLUDED.zone_id`,
       [pc.id, pc.nom, pc.agent_id, pc.statut, pc.scans, pc.zone_id ?? null]
     )
   }

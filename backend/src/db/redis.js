@@ -30,6 +30,21 @@ export async function getTerminalStatus(terminalId) {
 }
 
 /**
+ * Marque un utilisateur comme "en ligne" (TTL 120s — renouvelé à chaque reconnexion socket).
+ */
+export async function setUserOnline(userId) {
+  await redis.setex(`user:online:${userId}`, 120, '1')
+}
+
+export async function setUserOffline(userId) {
+  await redis.del(`user:online:${userId}`)
+}
+
+export async function isUserOnline(userId) {
+  return (await redis.exists(`user:online:${userId}`)) === 1
+}
+
+/**
  * Publie un événement en temps réel (scan, révocation, alerte).
  */
 export async function publish(channel, payload) {

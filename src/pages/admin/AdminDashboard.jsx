@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LOGS, PARTICIPANTS, POINTS_CONTROLE, getResultConfig, timeAgo, getCategoryColor } from '../../data/mockData'
+import { getResultConfig, timeAgo, getCategoryColor } from '../../data/mockData'
 import { api } from '../../utils/api'
 import { mapParticipant, mapScanLog } from '../../utils/dataMappers'
 import { useSocket } from '../../hooks/useSocket'
-
-const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const KPI = ({ label, value, sub, color, icon }) => (
   <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4">
@@ -29,23 +27,17 @@ export default function AdminDashboard() {
   const [terminals,    setTerminals]    = useState([])
 
   useEffect(() => {
-    if (IS_MOCK) {
-      setLogs(LOGS)
-      setParticipants(PARTICIPANTS)
-      setTerminals(POINTS_CONTROLE)
-      return
-    }
     api.get('/api/scans?limit=100')
       .then(rows => setLogs(rows.map(mapScanLog)))
-      .catch(() => setLogs(LOGS))
+      .catch(() => {})
 
     api.get('/api/participants')
       .then(rows => setParticipants(rows.map(mapParticipant)))
-      .catch(() => setParticipants(PARTICIPANTS))
+      .catch(() => {})
 
     api.get('/api/terminals')
       .then(rows => setTerminals(rows))
-      .catch(() => setTerminals(POINTS_CONTROLE))
+      .catch(() => {})
   }, [])
 
   // Nouveaux scans en temps réel

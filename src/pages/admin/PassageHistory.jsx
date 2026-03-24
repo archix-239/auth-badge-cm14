@@ -1,18 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LOGS, getResultConfig, getCategoryColor, formatDateTime } from '../../data/mockData'
+import { getResultConfig, getCategoryColor, formatDateTime } from '../../data/mockData'
+import { api } from '../../utils/api'
+import { mapScanLog } from '../../utils/dataMappers'
 
 const RESULT_OPTIONS = ['Tous', 'autorisé', 'révoqué', 'zone-refusée', 'inconnu']
-const ZONE_OPTIONS   = ['Toutes', 'Entrée Nord', 'Entrée Est', 'Entrée Sud', 'Accueil VIP', 'Salle Plénière']
 
 export default function PassageHistory() {
   const { t } = useTranslation()
-  const [search, setSearch]     = useState('')
-  const [resFilter, setRes]     = useState('Tous')
-  const [zoneFilter, setZone]   = useState('Toutes')
-  const [sortDesc, setSortDesc] = useState(true)
+  const [logs,      setLogs]     = useState([])
+  const [loading,   setLoading]  = useState(true)
+  const [search,    setSearch]   = useState('')
+  const [resFilter, setRes]      = useState('Tous')
+  const [zoneFilter, setZone]    = useState('Toutes')
+  const [sortDesc,  setSortDesc] = useState(true)
 
-  const filtered = LOGS
+  useEffect(() => {
+    api.get('/api/scans?limit=500')
+      .then(rows => setLogs(rows.map(mapScanLog)))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Liste dynamique des zones issues des données réelles
+  const zoneOptions = ['Toutes', ...Array.from(new Set(logs.map(l => l.zone).filter(Boolean)))]
+
+  const filtered = logs
     .filter(l => {
       const matchSearch = !search ||
         l.nom.toLowerCase().includes(search.toLowerCase()) ||
@@ -67,68 +80,76 @@ export default function PassageHistory() {
               className="w-full pl-9 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder-slate-400"
               placeholder={t('passages.filter.search')} />
           </div>
-          {[[resFilter, setRes, RESULT_OPTIONS], [zoneFilter, setZone, ZONE_OPTIONS]].map(([val, setter, opts], i) => (
-            <select key={i} value={val} onChange={e => setter(e.target.value)}
-              className="px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-              {opts.map(o => <option key={o}>{o}</option>)}
-            </select>
-          ))}
+          <select value={resFilter} onChange={e => setRes(e.target.value)}
+            className="px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+            {RESULT_OPTIONS.map(o => <option key={o}>{o}</option>)}
+          </select>
+          <select value={zoneFilter} onChange={e => setZone(e.target.value)}
+            className="px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+            {zoneOptions.map(o => <option key={o}>{o}</option>)}
+          </select>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-              <tr>
-                <th className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.participant')}</th>
-                <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.delegation')}</th>
-                <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.category')}</th>
-                <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.zone')}</th>
-                <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.result')}</th>
-                <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.agent')}</th>
-                <th className="px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
-                  <button onClick={() => setSortDesc(!sortDesc)}
-                    className="flex items-center gap-1 ml-auto hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
-                    {t('passages.table.timestamp')}
-                    <span className="material-symbols-outlined text-sm">{sortDesc ? 'arrow_downward' : 'arrow_upward'}</span>
-                  </button>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-              {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-12 text-slate-400 text-sm">{t('passages.table.empty')}</td></tr>
-              )}
-              {filtered.map(log => {
-                const cfg = getResultConfig(log.resultat)
-                return (
-                  <tr key={log.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300 shrink-0">
-                          {log.nom.split(' ').map(n => n[0]).join('').slice(0,2)}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <span className="material-symbols-outlined text-4xl text-primary animate-spin">progress_activity</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                <tr>
+                  <th className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.participant')}</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.delegation')}</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.category')}</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.zone')}</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.result')}</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('passages.table.agent')}</th>
+                  <th className="px-4 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
+                    <button onClick={() => setSortDesc(!sortDesc)}
+                      className="flex items-center gap-1 ml-auto hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                      {t('passages.table.timestamp')}
+                      <span className="material-symbols-outlined text-sm">{sortDesc ? 'arrow_downward' : 'arrow_upward'}</span>
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                {filtered.length === 0 && (
+                  <tr><td colSpan={7} className="text-center py-12 text-slate-400 text-sm">{t('passages.table.empty')}</td></tr>
+                )}
+                {filtered.map(log => {
+                  const cfg = getResultConfig(log.resultat)
+                  return (
+                    <tr key={log.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300 shrink-0">
+                            {log.nom.split(' ').map(n => n[0]).join('').slice(0,2)}
+                          </div>
+                          <span className="font-medium text-slate-800 dark:text-slate-200">{log.nom}</span>
                         </div>
-                        <span className="font-medium text-slate-800 dark:text-slate-200">{log.nom}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 text-slate-600 dark:text-slate-400">{log.delegation}</td>
-                    <td className="px-4 py-3.5">
-                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${getCategoryColor(log.categorie)}`}>{log.categorie}</span>
-                    </td>
-                    <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 text-xs">{log.zone}</td>
-                    <td className="px-4 py-3.5">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.light}`}>{log.resultat}</span>
-                    </td>
-                    <td className="px-4 py-3.5 text-slate-400 dark:text-slate-500 text-xs font-mono">{log.agentId}</td>
-                    <td className="px-4 py-3.5 text-right text-xs text-slate-400 dark:text-slate-500 font-mono whitespace-nowrap">{formatDateTime(log.timestamp)}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-600 dark:text-slate-400">{log.delegation}</td>
+                      <td className="px-4 py-3.5">
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${getCategoryColor(log.categorie)}`}>{log.categorie}</span>
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 text-xs">{log.zone}</td>
+                      <td className="px-4 py-3.5">
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.light}`}>{log.resultat}</span>
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-400 dark:text-slate-500 text-xs font-mono">{log.agentId}</td>
+                      <td className="px-4 py-3.5 text-right text-xs text-slate-400 dark:text-slate-500 font-mono whitespace-nowrap">{formatDateTime(log.timestamp)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

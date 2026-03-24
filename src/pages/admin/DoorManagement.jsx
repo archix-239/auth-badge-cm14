@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { POINTS_CONTROLE, ZONES } from '../../data/mockData'
 import { api } from '../../utils/api'
-
-const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const EMPTY_FORM = { id: '', nom: '', zone_id: '' }
 
@@ -12,26 +9,33 @@ export default function DoorManagement() {
   const [doors, setDoors]       = useState([])
   const [zones, setZones]       = useState([])
   const [loading, setLoading]   = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [modal, setModal]       = useState(null) // null | 'add' | 'edit' | 'delete'
   const [editing, setEditing]   = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [form, setForm]         = useState(EMPTY_FORM)
 
   useEffect(() => {
-    if (IS_MOCK) {
-      setDoors(POINTS_CONTROLE)
-      setZones(ZONES)
-      setLoading(false)
-      return
-    }
     Promise.all([
-      api.get('/api/terminals').catch(() => POINTS_CONTROLE),
-      api.get('/api/zones').catch(() => ZONES),
+      api.get('/api/terminals').catch(() => []),
+      api.get('/api/zones').catch(() => []),
     ]).then(([rows, zoneRows]) => {
       setDoors(rows)
       setZones(zoneRows)
     }).finally(() => setLoading(false))
   }, [])
+
+  const handleRefresh = () => {
+    if (refreshing) return
+    setRefreshing(true)
+    Promise.all([
+      api.get('/api/terminals').catch(() => doors),
+      api.get('/api/zones').catch(() => zones),
+    ]).then(([rows, zoneRows]) => {
+      setDoors(rows)
+      setZones(zoneRows)
+    }).finally(() => setRefreshing(false))
+  }
 
   const openAdd  = () => { setForm(EMPTY_FORM); setEditing(null); setModal('add') }
   const openEdit = (d) => { setForm({ id: d.id, nom: d.nom, zone_id: d.zone_id ?? '' }); setEditing(d); setModal('edit') }
@@ -42,33 +46,25 @@ export default function DoorManagement() {
     if (!form.id.trim() || !form.nom.trim()) return
     const payload = { id: form.id.trim(), nom: form.nom.trim(), zone_id: form.zone_id || null }
     if (modal === 'add') {
-      if (!IS_MOCK) {
-        try {
-          const created = await api.post('/api/terminals', payload)
-          setDoors(prev => [...prev, created])
-        } catch (err) {
-          console.error('[doors/create]', err)
-        }
-      } else {
-        setDoors(prev => [...prev, { ...payload, agentId: null, statut: 'actif', scans: 0 }])
+      try {
+        const created = await api.post('/api/terminals', payload)
+        setDoors(prev => [...prev, created])
+      } catch (err) {
+        console.error('[doors/create]', err)
       }
     } else {
-      if (!IS_MOCK) {
-        await api.patch(`/api/terminals/${editing.id}`, { nom: form.nom.trim(), zone_id: form.zone_id || null }).catch(() => {})
-      }
+      await api.patch(`/api/terminals/${editing.id}`, { nom: form.nom.trim(), zone_id: form.zone_id || null }).catch(() => {})
       setDoors(prev => prev.map(d => d.id === editing.id ? { ...d, nom: form.nom.trim(), zone_id: form.zone_id || null } : d))
     }
     closeModal()
   }
 
   const handleDelete = async () => {
-    if (!IS_MOCK) {
-      try {
-        // /decommission envoie l'événement socket terminal:decommissioned + révoque les tokens
-        await api.post(`/api/terminals/${deleting.id}/decommission`)
-      } catch (err) {
-        console.error('[doors/decommission]', err)
-      }
+    try {
+      // /decommission envoie l'événement socket terminal:decommissioned + révoque les tokens
+      await api.post(`/api/terminals/${deleting.id}/decommission`)
+    } catch (err) {
+      console.error('[doors/decommission]', err)
     }
     setDoors(prev => prev.filter(d => d.id !== deleting.id))
     closeModal()
@@ -83,11 +79,18 @@ export default function DoorManagement() {
           <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">{t('doors.title')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('doors.subtitle')}</p>
         </div>
-        <button onClick={openAdd}
-          className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-5 py-3 rounded-xl text-sm font-bold transition-colors shadow-sm shadow-primary/20 shrink-0">
-          <span className="material-symbols-outlined text-xl">add</span>
-          {t('doors.add_btn')}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={handleRefresh} disabled={refreshing}
+            title={t('common.btn.refresh')}
+            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors disabled:opacity-50">
+            <span className={`material-symbols-outlined text-xl ${refreshing ? 'animate-spin' : ''}`}>refresh</span>
+          </button>
+          <button onClick={openAdd}
+            className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-5 py-3 rounded-xl text-sm font-bold transition-colors shadow-sm shadow-primary/20">
+            <span className="material-symbols-outlined text-xl">add</span>
+            {t('doors.add_btn')}
+          </button>
+        </div>
       </div>
 
       {/* Table */}

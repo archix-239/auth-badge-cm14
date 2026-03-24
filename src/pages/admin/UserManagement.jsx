@@ -1,26 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeCanvas } from 'qrcode.react'
-import { POINTS_CONTROLE } from '../../data/mockData'
 import { api } from '../../utils/api'
 import { useSocket } from '../../hooks/useSocket'
 
-const IS_MOCK = !import.meta.env.VITE_API_URL
-
-const MOCK_USERS = [
-  { id: 'CM14-8842', name: 'Jean Dupont',        role: 'admin',      zone: 'QG Central — Niveau 4',         statut: 'EN LIGNE',   password: 'Admin@CM14!',  loginId: 'ADMIN-001' },
-  { id: 'CM14-2291', name: 'Marie Claire Owono', role: 'supervisor', zone: 'Secteur Alpha — Porte 12',      statut: 'HORS LIGNE', password: 'Super@CM14!',  loginId: 'SUPER-001' },
-  { id: 'CM14-4092', name: 'Alima Nkemba',       role: 'agent',      zone: 'Zone Nord — Patrouille B',      statut: 'EN LIGNE',   password: 'Agent@CM14!',  loginId: 'AG-8824'   },
-  { id: 'CM14-9901', name: 'Bruno Essomba',       role: 'agent',      zone: 'Secteur Alpha — Accueil',       statut: 'EN LIGNE',   password: 'Agent@CM14!',  loginId: 'AG-0031'   },
-  { id: 'CM14-0433', name: 'Julian Voss',         role: 'agent',      zone: 'Zone Nord — Patrouille B',      statut: 'BLOQUÉ',     password: 'Agent@CM14!',  loginId: 'AG-0433'   },
-  { id: 'CM14-1122', name: 'Fatou Diallo',        role: 'agent',      zone: 'Entrée Est — Salle B',          statut: 'HORS LIGNE', password: 'Agent@CM14!',  loginId: 'AG-1122'   },
-  { id: 'CM14-3310', name: 'Eric Mballa',         role: 'agent',      zone: 'Accueil VIP — Niveau 3',        statut: 'EN LIGNE',   password: 'Agent@CM14!',  loginId: 'AG-3310'   },
-  { id: 'CM14-5500', name: 'Sophie Kamga',        role: 'supervisor', zone: 'Salle Plénière — Supervision',  statut: 'EN LIGNE',   password: 'Super@CM14!',  loginId: 'SUP-5500'  },
-]
-
 const EMPTY_FORM = { name: '', loginId: '', password: '', role: 'agent', zone: '', statut: 'HORS LIGNE' }
-
-const MOCK_USERS_FALLBACK = MOCK_USERS
 
 const ROLE_BADGE = {
   admin:      'bg-primary text-white',
@@ -43,7 +27,7 @@ const STATUT_DOT = {
 
 export default function UserManagement() {
   const { t, i18n } = useTranslation()
-  const [users, setUsers]        = useState(MOCK_USERS_FALLBACK)
+  const [users, setUsers]        = useState([])
   const [loading, setLoading]    = useState(true)
   const [doors, setDoors]        = useState([])
   const [search, setSearch]      = useState('')
@@ -71,11 +55,6 @@ export default function UserManagement() {
   })
 
   useEffect(() => {
-    if (IS_MOCK) {
-      setDoors(POINTS_CONTROLE)
-      setLoading(false)
-      return
-    }
     Promise.all([
       api.get('/api/users'),
       api.get('/api/terminals'),
@@ -85,8 +64,8 @@ export default function UserManagement() {
         setDoors(doorsRows)
       })
       .catch(() => {
-        setUsers(MOCK_USERS_FALLBACK)
-        setDoors(POINTS_CONTROLE)
+        setUsers([])
+        setDoors([])
       })
       .finally(() => setLoading(false))
   }, [])
@@ -132,16 +111,6 @@ export default function UserManagement() {
   const openEdit   = (u) => { setForm({ name: u.name, loginId: u.loginId, password: u.password, role: u.role, zone: u.zone, statut: u.statut }); setEditing(u); setModal('edit') }
   const openDel    = (u) => { setEditing(u); setModal('delete') }
   const openTotp   = async (u) => {
-    if (IS_MOCK) {
-      // En mock, on utilise des secrets de démonstration
-      const MOCK_SECRETS = {
-        'ADMIN-001': 'JBSWY3DPEHPK3PXP', 'SUPER-001': 'KVKFKRCPNZQUYMLX',
-        'AG-8824': 'JBSWY3DPEHPK3PXP', 'AG-0031': 'KVKFKRCPNZQUYMLX',
-        'AG-0433': 'MFRA2YTNJFQWCYLB', 'AG-1122': 'GEZDGNBVGY3TQOJQ',
-      }
-      setTotpModal({ id: u.loginId, name: u.name, totpSecret: MOCK_SECRETS[u.loginId] ?? 'JBSWY3DPEHPK3PXP' })
-      return
-    }
     try {
       const data = await api.get(`/api/users/${u.loginId}/totp`)
       setTotpModal({ id: data.id, name: data.name, totpSecret: data.totpSecret })
@@ -158,15 +127,11 @@ export default function UserManagement() {
     try {
       if (modal === 'add') {
         const payload = { loginId: form.loginId.toUpperCase(), name: form.name, password: form.password, role: form.role, zone: form.zone }
-        const created = IS_MOCK
-          ? { ...payload, id: form.loginId.toUpperCase(), statut: 'HORS LIGNE' }
-          : await api.post('/api/users', payload)
+        const created = await api.post('/api/users', payload)
         setUsers(prev => [created, ...prev])
       } else {
         const payload = { name: form.name, role: form.role, zone: form.zone }
-        const updated = IS_MOCK
-          ? { ...editing, ...payload }
-          : await api.patch(`/api/users/${editing.id}`, payload)
+        const updated = await api.patch(`/api/users/${editing.id}`, payload)
         setUsers(prev => prev.map(u => u.id === editing.id ? { ...u, ...updated } : u))
       }
       closeModal()
@@ -180,7 +145,7 @@ export default function UserManagement() {
   const handleDelete = async () => {
     setApiError(null)
     try {
-      if (!IS_MOCK) await api.delete(`/api/users/${editing.id}`)
+      await api.delete(`/api/users/${editing.id}`)
       setUsers(prev => prev.filter(u => u.id !== editing.id))
       closeModal()
     } catch (err) {
@@ -190,18 +155,11 @@ export default function UserManagement() {
 
   const handleBlock = async (userId) => {
     try {
-      if (!IS_MOCK) {
-        const res = await api.patch(`/api/users/${userId}/lock`)
-        setUsers(prev => prev.map(u => u.id === userId
-          ? { ...u, statut: res.is_locked ? 'BLOQUÉ' : 'HORS LIGNE' }
-          : u
-        ))
-      } else {
-        setUsers(prev => prev.map(u => u.id === userId
-          ? { ...u, statut: u.statut === 'BLOQUÉ' ? 'HORS LIGNE' : 'BLOQUÉ' }
-          : u
-        ))
-      }
+      const res = await api.patch(`/api/users/${userId}/lock`)
+      setUsers(prev => prev.map(u => u.id === userId
+        ? { ...u, statut: res.is_locked ? 'BLOQUÉ' : 'HORS LIGNE' }
+        : u
+      ))
     } catch {
       // Ignore silently
     }
@@ -359,7 +317,7 @@ export default function UserManagement() {
       {/* Bottom KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { key: 'active',  label: t('users.kpi.active'),  value: stats.actifs,  sub: '+4 depuis 24h',  color: 'text-primary dark:text-blue-400' },
+          { key: 'active',  label: t('users.kpi.active'),  value: stats.actifs,  sub: t('users.kpi.online_agents'),  color: 'text-primary dark:text-blue-400' },
           { key: 'alerts',  label: t('users.kpi.alerts'),  value: String(stats.alertes).padStart(2, '0'), sub: stats.alertes > 0 ? t('users.kpi.action_required') : t('users.kpi.no_alert'), color: stats.alertes > 0 ? 'text-red-500' : 'text-slate-400' },
           { key: 'sync',    label: t('users.kpi.sync'),    value: new Date().toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' }), sub: t('users.kpi.protocol'), color: 'text-slate-800 dark:text-white' },
         ].map(kpi => (

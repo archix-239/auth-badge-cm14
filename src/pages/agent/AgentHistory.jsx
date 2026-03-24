@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LOGS, getResultConfig, formatDateTime, getCategoryColor } from '../../data/mockData'
+import { getResultConfig, formatDateTime, getCategoryColor } from '../../data/mockData'
 import { useAuth } from '../../context/AuthContext'
 import { api } from '../../utils/api'
 import { mapScanLog } from '../../utils/dataMappers'
 import { getPendingScans } from '../../utils/scanQueue'
-
-const IS_MOCK = !import.meta.env.VITE_API_URL
 
 export default function AgentHistory() {
   const { user } = useAuth()
@@ -16,13 +14,9 @@ export default function AgentHistory() {
   const [resultF, setResultF]   = useState('all')
   const [selected, setSelected] = useState(null)
   const [logs, setLogs]         = useState([])
-  const [loading, setLoading]   = useState(!IS_MOCK)
+  const [loading, setLoading]   = useState(true)
 
   useEffect(() => {
-    if (IS_MOCK) {
-      setLogs(LOGS.filter(l => l.agentId === user?.id))
-      return
-    }
     // Scans en attente de synchronisation (hors ligne)
     const pendingLogs = getPendingScans().map(s => ({ ...mapScanLog(s), _queued: true }))
 

@@ -15,7 +15,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 
-const IS_MOCK = !import.meta.env.VITE_API_URL
 const SOCKET_EVENTS = ['scan:new', 'badge:revoked', 'alert:broadcast', 'terminal:decommissioned', 'user:status']
 
 export function useSocket(handlers = {}) {
@@ -25,7 +24,6 @@ export function useSocket(handlers = {}) {
   handlersRef.current = handlers
 
   useEffect(() => {
-    if (IS_MOCK) return
 
     const session = JSON.parse(localStorage.getItem('cm14_session') || '{}')
     const token = session.accessToken

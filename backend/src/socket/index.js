@@ -11,6 +11,7 @@
  */
 import Redis from 'ioredis'
 import { verifyAccessToken } from '../utils/jwt.js'
+import { setUserOnline, setUserOffline } from '../db/redis.js'
 import 'dotenv/config'
 
 export function setupSocket(io) {
@@ -38,6 +39,7 @@ export function setupSocket(io) {
     console.log(`[socket] Connecté : ${userId} (${role}) — socket ${socket.id}`)
 
     // Notifie admins/superviseurs du changement de statut
+    setUserOnline(userId).catch(() => {})
     socket.to('role:admin').to('role:supervisor').emit('user:status', { userId, status: 'EN LIGNE' })
 
     // Heartbeat terminal (agent envoie toutes les 60s)
@@ -47,7 +49,12 @@ export function setupSocket(io) {
 
     socket.on('disconnect', () => {
       console.log(`[socket] Déconnecté : ${userId} — socket ${socket.id}`)
-      socket.to('role:admin').to('role:supervisor').emit('user:status', { userId, status: 'HORS LIGNE' })
+      // Ne supprime la clé Redis que s'il n'y a plus d'autres sockets pour cet utilisateur
+      const roomSize = io.sockets.adapter.rooms.get(`user:${userId}`)?.size ?? 0
+      if (roomSize === 0) {
+        setUserOffline(userId).catch(() => {})
+        socket.to('role:admin').to('role:supervisor').emit('user:status', { userId, status: 'HORS LIGNE' })
+      }
     })
   })
 

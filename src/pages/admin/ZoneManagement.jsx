@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ZONES, PARTICIPANTS } from '../../data/mockData'
 import { api } from '../../utils/api'
-
-const IS_MOCK = !import.meta.env.VITE_API_URL
 
 const EMPTY_FORM = { id: '', nom: '', description: '', statut: 'actif', niveauAcces: 1 }
 
@@ -32,25 +29,17 @@ export default function ZoneManagement() {
   const [apiError, setApiError] = useState(null)
 
   useEffect(() => {
-    if (IS_MOCK) {
-      setZones(ZONES.map((z, i) => ({ ...z, statut: 'actif', niveauAcces: z.niveauAcces ?? i + 1 })))
-      setLoading(false)
-      return
-    }
     api.get('/api/zones')
       .then(rows => setZones(rows.map(z => ({
         ...z,
         niveauAcces: z.niveau_acces ?? 1,
         statut: 'actif',
       }))))
-      .catch(() => setZones(ZONES.map((z, i) => ({ ...z, statut: 'actif', niveauAcces: i + 1 }))))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
-  // Compteur participants par zone (mockData en mode mock, valeur backend sinon)
-  const pCount = (zid) => IS_MOCK
-    ? PARTICIPANTS.filter(p => p.statut === 'actif' && p.zones.includes(zid)).length
-    : (zones.find(z => z.id === zid)?.portes_count ?? 0)
+  const pCount = (zid) => zones.find(z => z.id === zid)?.portes_count ?? 0
 
   const filtered = zones.filter(z =>
     !search ||
@@ -80,7 +69,7 @@ export default function ZoneManagement() {
     setApiError(null)
     try {
       if (editing) {
-        const updated = IS_MOCK ? { ...editing, ...form } : await api.patch(`/api/zones/${editing.id}`, {
+        await api.patch(`/api/zones/${editing.id}`, {
           nom: form.nom.trim(), description: form.description.trim() || null, niveau_acces: form.niveauAcces,
         })
         setZones(prev => prev.map(z => z.id === editing.id
@@ -89,7 +78,7 @@ export default function ZoneManagement() {
         ))
       } else {
         const payload = { id: form.id.trim().toUpperCase(), nom: form.nom.trim(), description: form.description.trim() || null, niveau_acces: form.niveauAcces }
-        const created = IS_MOCK ? { ...payload, niveauAcces: payload.niveau_acces, statut: 'actif' } : await api.post('/api/zones', payload)
+        const created = await api.post('/api/zones', payload)
         setZones(prev => [...prev, { ...created, niveauAcces: created.niveau_acces ?? form.niveauAcces, statut: 'actif' }])
       }
       closeModal()
@@ -103,7 +92,7 @@ export default function ZoneManagement() {
   const handleDelete = async () => {
     setApiError(null)
     try {
-      if (!IS_MOCK) await api.delete(`/api/zones/${deleting.id}`)
+      await api.delete(`/api/zones/${deleting.id}`)
       setZones(prev => prev.filter(z => z.id !== deleting.id))
       closeModal()
     } catch (err) {

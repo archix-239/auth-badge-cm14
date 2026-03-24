@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LOGS, PARTICIPANTS, POINTS_CONTROLE, getResultConfig, timeAgo } from '../../data/mockData'
+import { getResultConfig, timeAgo } from '../../data/mockData'
 import { api } from '../../utils/api'
 import { mapScanLog } from '../../utils/dataMappers'
 import { useSocket } from '../../hooks/useSocket'
-
-const IS_MOCK = !import.meta.env.VITE_API_URL
 
 export default function SupervisionConsole() {
   const { t, i18n } = useTranslation()
@@ -25,23 +23,17 @@ export default function SupervisionConsole() {
 
   // ── Chargement initial ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (IS_MOCK) {
-      setLiveEvents(LOGS.slice(0, 25))
-      setTerminals(POINTS_CONTROLE)
-      setRevokedList(PARTICIPANTS.filter(p => p.statut !== 'actif'))
-      return
-    }
     api.get('/api/scans?limit=50')
       .then(rows => setLiveEvents(rows.map(mapScanLog)))
-      .catch(() => setLiveEvents(LOGS.slice(0, 25)))
+      .catch(() => {})
 
     api.get('/api/terminals')
       .then(rows => setTerminals(rows))
-      .catch(() => setTerminals(POINTS_CONTROLE))
+      .catch(() => {})
 
     api.get('/api/participants?statut=révoqué,suspendu')
       .then(rows => setRevokedList(rows))
-      .catch(() => setRevokedList(PARTICIPANTS.filter(p => p.statut !== 'actif')))
+      .catch(() => {})
   }, [])
 
   // ── Socket.io — événements temps réel ─────────────────────────────────────
@@ -84,18 +76,14 @@ export default function SupervisionConsole() {
   const handleEmergencyAlert = async () => {
     setAlertActive(true) // affichage local immédiat
     const msg = broadcastMessage.trim() || t('supervision.emergency_message', 'ALERTE D\'URGENCE — Sécurité maximale activée')
-    if (!IS_MOCK) {
-      await api.post('/api/alerts', { message: msg, level: 'critical' }).catch(() => {})
-    }
+    await api.post('/api/alerts', { message: msg, level: 'critical' }).catch(() => {})
     setBroadcastMessage('')
   }
 
   // ── Révocation rapide ──────────────────────────────────────────────────────
   const handleQuickRevoke = async () => {
     if (!revokeTarget.trim()) return
-    if (!IS_MOCK) {
-      await api.patch(`/api/participants/${revokeTarget.trim()}`, { statut: 'révoqué' }).catch(() => {})
-    }
+    await api.patch(`/api/participants/${revokeTarget.trim()}`, { statut: 'révoqué' }).catch(() => {})
     setRevokeTarget('')
   }
 
@@ -126,13 +114,13 @@ export default function SupervisionConsole() {
         </div>
         <div className="flex items-center gap-4">
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${
-            connected || IS_MOCK
+            connected
               ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
               : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
           }`}>
-            <div className={`w-2 h-2 rounded-full ${connected || IS_MOCK ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
-            <span className={`text-xs font-semibold ${connected || IS_MOCK ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
-              {connected || IS_MOCK ? t('supervision.system_active') : 'Reconnexion...'}
+            <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
+            <span className={`text-xs font-semibold ${connected ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
+              {connected ? t('supervision.system_active') : 'Reconnexion...'}
             </span>
           </div>
           <span className="text-sm font-mono text-slate-400 dark:text-slate-500 tabular-nums">

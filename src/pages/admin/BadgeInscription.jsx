@@ -1,19 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeCanvas } from 'qrcode.react'
-import { PARTICIPANTS, ZONES, CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
+import { CATEGORIES, getCategoryColor, getStatutColor } from '../../data/mockData'
 import { signBadge } from '../../utils/badgeCrypto'
 import { api } from '../../utils/api'
 import { mapParticipant } from '../../utils/dataMappers'
 
-const IS_MOCK = !import.meta.env.VITE_API_URL
-
-const emptyForm = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: ['Z1'], dateExpiration: '' }
+const emptyForm = { prenom: '', nom: '', delegation: '', categorie: 'DEL', zones: [], dateExpiration: '' }
 
 export default function BadgeInscription() {
   const { t } = useTranslation()
   const [form, setForm]                 = useState(emptyForm)
-  const [participants, setParticipants] = useState(PARTICIPANTS)
+  const [participants, setParticipants] = useState([])
+  const [zones,        setZones]        = useState([])
   const [generated, setGenerated]       = useState(null)
   const [qrValue, setQrValue]           = useState('')
   const [search, setSearch]             = useState('')
@@ -23,12 +22,17 @@ export default function BadgeInscription() {
   const qrContainerRef                  = useRef(null)
   const badgeCardRef                    = useRef(null)
 
-  // Charge les vrais participants depuis l'API au mount
   useEffect(() => {
-    if (IS_MOCK) return
     api.get('/api/participants')
       .then(rows => setParticipants(rows.map(mapParticipant)))
-      .catch(() => {}) // garde les données mock en fallback
+      .catch(() => {})
+    api.get('/api/zones')
+      .then(rows => {
+        setZones(rows)
+        // Sélectionne Z1 par défaut si disponible
+        if (rows.length > 0) setForm(f => f.zones.length === 0 ? { ...f, zones: [rows[0].id] } : f)
+      })
+      .catch(() => {})
   }, [])
 
   // Sign badge payload whenever a new badge is generated
@@ -55,35 +59,24 @@ export default function BadgeInscription() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const id = `P-${String(participants.length + 1).padStart(3, '0')}`
     const expiration = form.dateExpiration || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
-    if (!IS_MOCK) {
-      try {
-        const created = await api.post('/api/participants', {
-          nom:             form.nom,
-          prenom:          form.prenom,
-          delegation:      form.delegation,
-          categorie:       form.categorie,
-          zones:           form.zones,
-          statut:          'actif',
-          date_expiration: expiration,
-        })
-        const newP = mapParticipant(created)
-        setParticipants(prev => [newP, ...prev])
-        setGenerated(newP)
-        setStep('badge')
-        return
-      } catch (err) {
-        console.error('[inscription]', err)
-      }
+    try {
+      const created = await api.post('/api/participants', {
+        nom:             form.nom,
+        prenom:          form.prenom,
+        delegation:      form.delegation,
+        categorie:       form.categorie,
+        zones:           form.zones,
+        statut:          'actif',
+        date_expiration: expiration,
+      })
+      const newP = mapParticipant(created)
+      setParticipants(prev => [newP, ...prev])
+      setGenerated(newP)
+      setStep('badge')
+    } catch (err) {
+      console.error('[inscription]', err)
     }
-
-    // Mode mock
-    const newP = { id, ...form, statut: 'actif', dateExpiration: expiration }
-    setParticipants(prev => [newP, ...prev])
-    setGenerated(newP)
-    setStep('badge')
   }
 
   const handleRevoke = (id) => {
@@ -257,7 +250,7 @@ export default function BadgeInscription() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">{t('inscription.form.zones')}</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {ZONES.map(z => (
+                    {zones.map(z => (
                       <label key={z.id}
                         className={`flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
                           form.zones.includes(z.id) ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-slate-300'

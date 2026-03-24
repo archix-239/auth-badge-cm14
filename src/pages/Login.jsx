@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import * as OTPAuth from 'otpauth'
 import { useAuth } from '../context/AuthContext'
-import { USERS } from '../data/mockData'
+
+// Secrets TOTP des comptes de test (seed.js)
+const AGENT_TOTP_SECRET = 'JBSWY3DPEHPK3PXP'
+const ADMIN_TOTP_SECRET  = 'MFRA2YTNJFQWCYLB'
 
 export default function Login() {
   const { login, locked } = useAuth()
@@ -18,13 +21,11 @@ export default function Login() {
   const [demoOtp, setDemoOtp] = useState({ agent: '------', admin: '------', countdown: 30 })
 
   useEffect(() => {
-    const agentUser = USERS.find(u => u.id === 'AG-8824')
-    const adminUser = USERS.find(u => u.id === 'ADMIN-001')
     const compute = () => {
       const makeTotp = (secret) => new OTPAuth.TOTP({ algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(secret) })
       setDemoOtp({
-        agent: makeTotp(agentUser.totpSecret).generate(),
-        admin: makeTotp(adminUser.totpSecret).generate(),
+        agent: makeTotp(AGENT_TOTP_SECRET).generate(),
+        admin: makeTotp(ADMIN_TOTP_SECRET).generate(),
         countdown: 30 - (Math.floor(Date.now() / 1000) % 30),
       })
     }

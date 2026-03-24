@@ -1,24 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { LOGS, getResultConfig } from '../../data/mockData'
+import { getResultConfig } from '../../data/mockData'
 import { api } from '../../utils/api'
 import { mapScanLog } from '../../utils/dataMappers'
 import { getPendingScans } from '../../utils/scanQueue'
-
-const IS_MOCK = !import.meta.env.VITE_API_URL
 
 export default function AgentStats() {
   const { user } = useAuth()
   const { t, i18n } = useTranslation()
   const [logs, setLogs]       = useState([])
-  const [loading, setLoading] = useState(!IS_MOCK)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (IS_MOCK) {
-      setLogs(LOGS.filter(l => l.agentId === user?.id))
-      return
-    }
     const pending = getPendingScans().map(s => ({ ...mapScanLog(s), _queued: true }))
     api.get('/api/scans?limit=1000')
       .then(rows => {

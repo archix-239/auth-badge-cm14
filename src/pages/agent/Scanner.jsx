@@ -12,8 +12,6 @@ import { api } from '../../utils/api'
 import { mapParticipant } from '../../utils/dataMappers'
 import { useSocket } from '../../hooks/useSocket'
 
-const IS_MOCK = !import.meta.env.VITE_API_URL
-
 export default function Scanner() {
   const { user } = useAuth()
   const { t, i18n } = useTranslation()
@@ -67,13 +65,9 @@ export default function Scanner() {
       .then(p => {
         if (cancelled) return
         if (p) { setManualPreview(p); return }
-        if (!IS_MOCK) {
-          api.get(`/api/participants/${id}`)
-            .then(raw => { if (!cancelled) setManualPreview(mapParticipant(raw)) })
-            .catch(() => { if (!cancelled) setManualPreview(null) })
-        } else {
-          setManualPreview(null)
-        }
+        api.get(`/api/participants/${id}`)
+          .then(raw => { if (!cancelled) setManualPreview(mapParticipant(raw)) })
+          .catch(() => { if (!cancelled) setManualPreview(null) })
       })
     return () => { cancelled = true }
   }, [manualId])
@@ -137,7 +131,7 @@ export default function Scanner() {
       // 1. IndexedDB (offline-capable)
       let participant = participantId ? await lookupBadge(participantId) : null
       // 2. Fallback API si pas dans le cache (participant créé après la dernière sync)
-      if (!participant && participantId && !IS_MOCK) {
+      if (!participant && participantId) {
         participant = await api.get(`/api/participants/${participantId}`)
           .then(mapParticipant)
           .catch(() => null)
@@ -156,25 +150,23 @@ export default function Scanner() {
       playScanFeedback(resultat)
       // Persiste le scan dans le backend (best-effort, ne bloque pas l'UI)
       // En cas d'échec (hors ligne), le scan est mis en file d'attente locale
-      if (!IS_MOCK) {
-        const apiPayload = {
-          participant_id:    participant?.id    ?? null,
-          nom:               participant?.nom   ?? 'Inconnu',
-          delegation:        participant?.delegation ?? null,
-          categorie:         participant?.categorie  ?? null,
-          zone:              currentZone,
-          point_controle_id: null,
-          resultat,
-        }
-        api.post('/api/scans', apiPayload).catch(() => {
-          enqueueScan({
-            id:         scanResult.id,
-            timestamp:  scanResult.timestamp,
-            agentId:    user?.id,
-            ...apiPayload,
-          })
-        })
+      const apiPayload = {
+        participant_id:    participant?.id    ?? null,
+        nom:               participant?.nom   ?? 'Inconnu',
+        delegation:        participant?.delegation ?? null,
+        categorie:         participant?.categorie  ?? null,
+        zone:              currentZone,
+        point_controle_id: checkpoint?.id ?? null,
+        resultat,
       }
+      api.post('/api/scans', apiPayload).catch(() => {
+        enqueueScan({
+          id:         scanResult.id,
+          timestamp:  scanResult.timestamp,
+          agentId:    user?.id,
+          ...apiPayload,
+        })
+      })
       setResult(scanResult)
       setScanLog(prev => [scanResult, ...prev].slice(0, 20))
       setPhase('result')

@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import { POINTS_CONTROLE } from '../../data/mockData'
 
 const LANGUAGES = [
   { code: 'fr', label: 'Français' },
@@ -16,7 +15,14 @@ export default function AgentProfile() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
 
-  const myPC = POINTS_CONTROLE.find(pc => pc.agentId === user?.id)
+  const myPC = user?.checkpoint ?? null
+
+  const lastSyncLabel = (() => {
+    const stored = localStorage.getItem('cm14_last_sync')
+    if (!stored) return t('agent_profile.system.cache_ago')
+    const diffMin = Math.floor((Date.now() - new Date(stored)) / 60_000)
+    return diffMin < 1 ? t('agent_dashboard.status.cache_just_synced') : t('agent_dashboard.status.cache_ago', { count: diffMin })
+  })()
 
   const handleLogout = () => { logout(); navigate('/login') }
 
@@ -131,7 +137,7 @@ export default function AgentProfile() {
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('agent_profile.system.cache_synced')}</span>
             </div>
-            <span className="text-xs text-slate-400 dark:text-slate-500">{t('agent_profile.system.cache_ago')}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{lastSyncLabel}</span>
           </div>
 
           <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">

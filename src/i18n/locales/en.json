@@ -12,7 +12,8 @@
       "logout": "LOGOUT",
       "search": "Search",
       "export_csv": "Export CSV",
-      "view_all": "View all"
+      "view_all": "View all",
+      "refresh": "Refresh"
     },
     "label": {
       "delegation": "Delegation",
@@ -132,6 +133,8 @@
     },
     "btn_scan": "Scan a badge",
     "btn_scan_sub": "Press to activate camera",
+    "btn_sync": "Sync",
+    "syncing": "Syncing…",
     "status": {
       "network_title": "Network",
       "network_val": "Online",
@@ -354,6 +357,7 @@
       "active": "Active Access",
       "alerts": "Security Alerts",
       "sync": "Last Sync",
+      "online_agents": "Agents online",
       "action_required": "ACTION REQUIRED",
       "no_alert": "No alert",
       "protocol": "AES-256 Protocol"
