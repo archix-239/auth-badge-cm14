@@ -48,7 +48,7 @@ Le backend utilise deux types de tokens JWT :
 
 | Token | Durée de vie | Usage |
 |---|---|---|
-| **Access token** | Courte (ex. 15 min) | Envoyé dans chaque requête protégée |
+| **Access token** | 60 min (configurable via `JWT_ACCESS_EXPIRES`) | Envoyé dans chaque requête protégée |
 | **Refresh token** | Longue (ex. 7 jours) | Échangé contre un nouvel access token |
 
 Toutes les routes marquées `requireAuth` exigent l'en-tête suivant :

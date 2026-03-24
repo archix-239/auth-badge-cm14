@@ -38,8 +38,8 @@ La console distingue deux profils d'utilisateurs côté administration.
 | Voir les journaux d'accès | Oui | Oui |
 | Exporter les journaux CSV | Oui | Oui |
 | Recevoir et visualiser les alertes broadcast | Oui | Oui |
-| Ajouter / modifier un participant | Oui | Non |
-| Télécharger un badge PNG | Oui | Non |
+| Ajouter / modifier / supprimer un participant | Oui | Oui |
+| Télécharger un badge PNG | Oui | Oui |
 | Révoquer un badge | Oui | Non |
 | Créer / modifier une zone | Oui | Non |
 | Assigner un agent à un point de contrôle | Oui | Non |
@@ -49,7 +49,7 @@ La console distingue deux profils d'utilisateurs côté administration.
 | Envoyer une alerte broadcast | Oui | Non |
 | Décommissionner un terminal | Oui | Non |
 
-**En résumé :** le rôle Superviseur peut observer et exporter — le rôle Administrateur peut agir sur l'ensemble du système.
+**En résumé :** le rôle Superviseur peut observer, exporter et gérer les participants — le rôle Administrateur a en plus le contrôle sur les zones, les agents, la révocation et la gestion de crise.
 
 ### Connexion à la console
 

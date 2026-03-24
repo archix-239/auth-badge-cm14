@@ -275,7 +275,7 @@ pm2 save
 Vérifier que le backend répond :
 
 ```bash
-curl http://localhost:3001/api/health
+curl http://localhost:3001/health
 # Réponse attendue : {"status":"ok",...}
 ```
 
@@ -457,14 +457,18 @@ ssl_certificate_key /etc/ssl/authbadge/privkey.pem;
 #### Extraire le pin SHA-256 pour le Certificate Pinning
 
 ```bash
-openssl x509 -in /etc/letsencrypt/live/<domaine>/fullchain.pem \
+# Certificat auto-signé (procédure CM14)
+openssl x509 -in /etc/ssl/authbadge/fullchain.pem \
   -pubkey -noout \
   | openssl pkey -pubin -outform DER \
   | openssl dgst -sha256 -binary \
   | openssl enc -base64
-```
 
-> Pour un certificat auto-signé, remplacer le chemin par `/etc/ssl/authbadge/fullchain.pem`.
+# Certificat Let's Encrypt (si utilisé en phase de préparation)
+# openssl x509 -in /etc/letsencrypt/live/<domaine>/fullchain.pem \
+#   -pubkey -noout | openssl pkey -pubin -outform DER \
+#   | openssl dgst -sha256 -binary | openssl enc -base64
+```
 
 La commande affiche une chaîne de type :
 ```
@@ -680,7 +684,7 @@ adb install -r app-release.apk        # -r remplace l'installation existante
 |---|---|---|---|
 | 1 | Serveur accessible sur le réseau CM14-STAFF | `ping <ip_serveur>` | Réponse sans perte de paquets |
 | 2 | Backend Node.js en ligne | `pm2 status` | Processus `authbadge-backend` : **online** |
-| 3 | Backend répond sur /api/health | `curl https://<domaine>/api/health` | `{"status":"ok"}` |
+| 3 | Backend répond sur /health | `curl https://<domaine>/health` | `{"status":"ok"}` |
 | 4 | PostgreSQL opérationnel | `pg_isready -h localhost` | `/tmp/.s.PGSQL.5432 - accepting connections` |
 | 5 | Redis opérationnel | `redis-cli ping` | `PONG` |
 | 6 | Nginx opérationnel | `systemctl status nginx` | `active (running)` |
@@ -747,7 +751,7 @@ pm2 start src/index.js --name authbadge-backend
 ```bash
 pg_isready -h localhost && echo "PostgreSQL OK"
 redis-cli ping && echo "Redis OK"
-curl -s http://localhost:3001/api/health | python3 -m json.tool
+curl -s http://localhost:3001/health | python3 -m json.tool
 ```
 
 **Étape 4 — Connexion du PC administrateur**
@@ -912,7 +916,7 @@ Vérifier après rechargement :
 
 ```bash
 pm2 status
-curl -s http://localhost:3001/api/health
+curl -s http://localhost:3001/health
 ```
 
 > Ne pas utiliser `pm2 restart authbadge-backend` pendant l'événement : cette commande arrête le processus complètement avant de le redémarrer, ce qui provoque une interruption de quelques secondes.
@@ -1028,7 +1032,7 @@ sudo shutdown -h now
 | Redémarrer Nginx | `sudo systemctl reload nginx` |
 | Vérifier PostgreSQL | `pg_isready -h localhost` |
 | Vérifier Redis | `redis-cli ping` |
-| Vérifier le backend | `curl -s http://localhost:3001/api/health` |
+| Vérifier le backend | `curl -s http://localhost:3001/health` |
 | Sauvegarder la base | `pg_dump -U authbadge -h localhost -F c -f backup.dump authbadge_cm14` |
 | Déclencher un build APK | `git tag v1.x.x && git push origin v1.x.x` |
 

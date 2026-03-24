@@ -205,7 +205,7 @@ authbadge-cm14/
 │
 └── src/                                # ── Frontend React ──
     ├── context/
-    │   ├── AuthContext.jsx             # Auth : API réelle ou mock selon VITE_API_URL
+    │   ├── AuthContext.jsx             # Auth : gestion session JWT (login, refresh, logout)
     │   └── ThemeContext.jsx            # Mode sombre / clair
     ├── hooks/
     │   └── useSocket.js                # Hook Socket.io authentifié (temps réel admin)
