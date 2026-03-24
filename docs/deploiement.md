@@ -287,26 +287,46 @@ Le frontend est une application React/Vite compilée en fichiers statiques (`dis
 
 > **Important pour CM14 :** le réseau de la conférence est **isolé d'Internet** le jour J. Le build frontend et les APK Android doivent donc être entièrement préparés **avant l'arrivée sur site**, sur un poste de développement connecté à Internet.
 
+#### Prérequis — Connaître l'adresse IP (ou le nom) du serveur CM14 avant de builder
+
+`VITE_API_URL` est **compilée dans le bundle JavaScript au moment du build** par Vite. Cette valeur ne peut pas être changée après compilation — elle est figée dans les fichiers `dist/` et dans l'APK Android.
+
+```
+Build JS           dist/assets/index-xxxx.js
+                        └── ...fetch("https://192.168.1.10/api/...") ← URL figée
+```
+
+Conséquence directe : **si l'URL est fausse, ni l'interface web ni l'APK ne peuvent contacter le serveur**, même si le reste du déploiement est parfait.
+
+Pour l'APK Android, c'est doublement critique : l'URL est figée dans le bundle JS **ET** le Certificate Pinning de `network_security_config.xml` doit correspondre au même hôte.
+
+**À faire avant de builder :**
+
+1. Attribuer une **adresse IP fixe** au serveur CM14 sur le réseau local (exemple : `192.168.1.10`)
+2. OU configurer un **nom DNS local** résolvable depuis tous les appareils (exemple : `authbadge.cm14.local`)
+3. Noter cette adresse — elle sera utilisée dans toutes les étapes ci-dessous
+
 #### Étape 1 — Build sur le poste de développement (avant isolement réseau)
 
-Sur le poste de développement, configurer l'URL de production et compiler :
+Sur le poste de développement, renseigner l'URL du serveur CM14 et compiler :
 
 ```bash
-# Définir l'URL du serveur CM14 (IP fixe ou nom DNS local)
-echo "VITE_API_URL=https://<ip_ou_nom_serveur_cm14>" > .env.production
+# Remplacer par l'IP fixe ou le nom DNS local du serveur CM14
+echo "VITE_API_URL=https://192.168.1.10" > .env.production
 
 # Compiler le frontend
 npm ci
 npm run build:prod
-# → Le dossier dist/ est généré
+# → Le dossier dist/ est généré avec l'URL du serveur CM14 figée dedans
 ```
 
-Pour produire l'APK Android en même temps, utiliser le workflow GitHub Actions (disponible depuis un poste avec accès Internet, avant l'événement) :
+Pour produire l'APK Android, vérifier d'abord que le secret `VITE_API_URL` dans GitHub Actions contient la même adresse, puis déclencher le workflow :
 
 ```bash
+# Vérifier dans GitHub → Settings → Secrets → VITE_API_URL = https://192.168.1.10
 git tag v1.0.0
 git push origin v1.0.0
-# → GitHub Actions compile le dist/ ET génère l'APK signé dans la Release v1.0.0
+# → GitHub Actions compile le dist/ ET génère l'APK signé avec la bonne URL
 ```
 
 #### Étape 2 — Copier le dist/ sur le serveur CM14
