@@ -285,52 +285,40 @@ curl http://localhost:3001/api/health
 
 Le frontend est une application React/Vite compilée en fichiers statiques (`dist/`). Nginx sert ces fichiers directement.
 
-#### Option A — Build automatique via GitHub Actions (recommandé)
+> **Important pour CM14 :** le réseau de la conférence est **isolé d'Internet** le jour J. Le build frontend et les APK Android doivent donc être entièrement préparés **avant l'arrivée sur site**, sur un poste de développement connecté à Internet.
 
-Pousser un tag Git déclenche le workflow `android-release.yml`, qui compile le frontend **et** génère l'APK Android signé en une seule opération.
+#### Étape 1 — Build sur le poste de développement (avant isolement réseau)
+
+Sur le poste de développement, configurer l'URL de production et compiler :
+
+```bash
+# Définir l'URL du serveur CM14 (IP fixe ou nom DNS local)
+echo "VITE_API_URL=https://<ip_ou_nom_serveur_cm14>" > .env.production
+
+# Compiler le frontend
+npm ci
+npm run build:prod
+# → Le dossier dist/ est généré
+```
+
+Pour produire l'APK Android en même temps, utiliser le workflow GitHub Actions (disponible depuis un poste avec accès Internet, avant l'événement) :
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
+# → GitHub Actions compile le dist/ ET génère l'APK signé dans la Release v1.0.0
 ```
 
-Le workflow GitHub Actions effectue les étapes suivantes :
-1. Installe Node.js 22
-2. Exécute `npm ci`
-3. Exécute `npm run build:prod` (avec `VITE_API_URL` lu depuis les secrets GitHub)
-4. Synchronise Capacitor (`npx cap sync android`)
-5. Compile l'APK et l'AAB Android signés
-6. Publie les artefacts dans la GitHub Release correspondante au tag
+#### Étape 2 — Copier le dist/ sur le serveur CM14
 
-Télécharger ensuite le dossier `dist/` depuis les artefacts de la release et le copier sur le serveur :
+Transférer le dossier `dist/` généré vers le serveur (par clé USB, SCP en pré-déploiement, ou tout autre support) :
 
 ```bash
+# Via SCP depuis le poste de développement (réseau disponible en phase de préparation)
 scp -r dist/ ubuntu@<ip_serveur>:/var/www/authbadge/
-```
 
-#### Option B — Build manuel sur le serveur
-
-Si GitHub Actions n'est pas disponible, le build peut être réalisé directement sur le serveur.
-
-Configurer d'abord la variable d'environnement Vite de production :
-
-```bash
-cd /opt/authbadge-cm14
-echo "VITE_API_URL=https://<domaine_ou_ip_serveur>" > .env.production
-```
-
-Compiler le frontend :
-
-```bash
-npm ci
-npm run build:prod
-```
-
-Copier les fichiers compilés vers le répertoire servi par Nginx :
-
-```bash
-sudo mkdir -p /var/www/authbadge
-sudo cp -r dist/* /var/www/authbadge/
+# Ou via clé USB si le transfert réseau n'est pas possible
+sudo cp -r /media/usb/dist/* /var/www/authbadge/
 sudo chown -R www-data:www-data /var/www/authbadge
 ```
 
@@ -423,17 +411,9 @@ sudo systemctl reload nginx
 
 Cette section est critique pour la sécurité. Le Certificate Pinning garantit que l'application Android n'accepte **que** le certificat du serveur CM14, bloquant toute attaque de type man-in-the-middle.
 
-#### Générer le certificat avec Let's Encrypt (réseau avec accès Internet)
+> **Pour CM14 :** le réseau de la conférence est isolé d'Internet. Let's Encrypt n'est donc pas utilisable. La procédure normale est le **certificat auto-signé** décrite ci-dessous. Générer ce certificat **avant l'événement** (il sera intégré dans l'APK via le Certificate Pinning).
 
-```bash
-sudo certbot --nginx -d <domaine_serveur> --email <email_responsable> --agree-tos --no-eff-email
-```
-
-Certbot modifie automatiquement la configuration Nginx pour intégrer les chemins de certificats.
-
-#### Alternative : certificat auto-signé (réseau isolé sans accès Internet)
-
-Sur un réseau entièrement isolé, générer un certificat auto-signé :
+#### Générer le certificat auto-signé (procédure CM14)
 
 ```bash
 sudo mkdir -p /etc/ssl/authbadge
@@ -448,6 +428,11 @@ Mettre à jour les chemins dans la configuration Nginx :
 ssl_certificate     /etc/ssl/authbadge/fullchain.pem;
 ssl_certificate_key /etc/ssl/authbadge/privkey.pem;
 ```
+
+> **Note :** si le serveur dispose d'un accès Internet pendant la phase de préparation (avant l'isolement réseau), Let's Encrypt peut être utilisé à la place pour un certificat reconnu par les navigateurs :
+> ```bash
+> sudo certbot --nginx -d <domaine_serveur> --email <email_responsable> --agree-tos --no-eff-email
+> ```
 
 #### Extraire le pin SHA-256 pour le Certificate Pinning
 
@@ -706,35 +691,51 @@ df -h /
 
 ### 3.1 Publier une nouvelle version APK
 
-Une correction urgente ou une amélioration peut être déployée sur les téléphones agents sans interrompre l'événement.
+Une correction urgente peut être déployée sur les téléphones agents sans interrompre l'événement.
 
-**Sur le poste de développement — pousser le nouveau tag :**
+> **Contrainte CM14 :** le réseau est isolé d'Internet pendant la conférence. GitHub Actions et GitHub Releases ne sont **pas accessibles**. La mise à jour d'APK se fait entièrement en local, depuis un poste de développement apporté sur site.
 
-```bash
-git tag v1.1.0
-git push origin v1.1.0
-```
-
-Le workflow GitHub Actions compile et publie automatiquement le nouvel APK dans la section **Releases** du dépôt.
-
-**Télécharger le nouvel APK depuis GitHub Releases :**
-
-```
-https://github.com/<organisation>/authbadge-cm14/releases/tag/v1.1.0
-```
-
-**Installer le nouvel APK sur chaque téléphone agent via ADB :**
+**Étape 1 — Corriger et recompiler sur le poste de développement (apporté sur site)**
 
 ```bash
-adb devices                           # Vérifier les appareils connectés
-adb install -r authbadge-cm14-v1.1.0.apk
+# Corriger le code, puis compiler
+npm run build:prod
+
+# Synchroniser Capacitor et compiler l'APK
+npx cap sync android
+cd android
+./gradlew assembleRelease
+
+# Signer l'APK manuellement avec le keystore
+jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+  -keystore android/app/authbadge-cm14.jks \
+  android/app/build/outputs/apk/release/app-release-unsigned.apk \
+  authbadge-cm14
+zipalign -v 4 app-release-unsigned.apk authbadge-cm14-v1.1.0.apk
+```
+
+> Si le build CI/CD a déjà été déclenché depuis une connexion Internet avant l'événement, l'APK signé peut être stocké sur une clé USB apportée sur site — évitant ainsi la recompilation locale.
+
+**Étape 2 — Copier le nouvel APK sur une clé USB**
+
+```bash
+cp authbadge-cm14-v1.1.0.apk /media/usb/
+```
+
+**Étape 3 — Installer sur chaque téléphone agent via ADB (recommandé)**
+
+Brancher chaque téléphone au poste de développement en USB :
+
+```bash
+adb devices                                      # Vérifier que le téléphone est détecté
+adb install -r authbadge-cm14-v1.1.0.apk        # -r met à jour sans effacer les données
 ```
 
 > L'option `-r` (replace) met à jour l'application existante **sans effacer les données** ni déconnecter l'agent.
 
 **Procédure alternative si ADB n'est pas disponible :**
 
-1. Transférer l'APK sur le téléphone via câble USB
+1. Transférer l'APK depuis la clé USB sur le téléphone
 2. Ouvrir le fichier APK depuis le gestionnaire de fichiers
 3. Confirmer la mise à jour
 4. Relancer l'application et se reconnecter
