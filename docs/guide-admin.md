@@ -233,6 +233,38 @@ Chaque badge embarque un **QR Code signé cryptographiquement** (ECDSA P-256). L
 2. Le fichier se télécharge sous le nom `badge_P-002_Nakamura.png` (format automatique)
 3. Imprimer le fichier PNG sur le support badge prévu (carte plastifiée A7)
 
+**Format du fichier PNG généré :**
+
+```
+  Badge CM14 — format vertical
+  ┌─────────────────────────────┐  Dimensions : 840 × 1 320 px
+  │  █████ CM14 ████████████   │  (résolution 2× pour impression nette)
+  │  ─── DÉLÉGUÉ ──────────    │
+  │          ┌────┐             │
+  │          │ YN │ Avatar      │
+  │          └────┘             │
+  │      Yuki Nakamura          │
+  │         Japon               │
+  │  [Z1] [Z2] [Z3] [Z4]       │
+  │  ┌──────────────────────┐  │
+  │  │  ████ QR Code ██████ │  │
+  │  │  ██   190 × 190 px   │  │
+  │  └──────────────────────┘  │
+  │  ID : P-002                 │
+  │  AUTH-BADGE CM14 — OMC     │
+  └─────────────────────────────┘
+```
+
+| Caractéristique | Valeur |
+|---|---|
+| Dimensions du fichier PNG | 840 × 1 320 pixels |
+| Orientation | Verticale |
+| Résolution effective | 2× (impression jusqu'à 200 DPI sans perte) |
+| Taille d'impression recommandée | 54 × 85 mm (format carte ID-1) |
+| Fond | Blanc avec bandeau catégorie coloré |
+
+> Le badge téléchargé depuis la page **Participants** (fiche participant → "Télécharger le badge") utilise le même format que depuis la page **Badges**. Les deux sources produisent un fichier identique.
+
 ### 4.5 Procédure d'écriture NFC
 
 Les badges NFC permettent un scan plus rapide à la puce. La procédure d'écriture est réalisée sur le poste d'accréditation équipé d'un encodeur NFC.

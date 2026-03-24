@@ -106,8 +106,8 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 | 4.4 | Détection root/jailbreak (`@basecom-gmbh/capacitor-jailbreak-root-detection`) | ✅ |
 | 4.5 | Préparation production (env, Vite prod, ProGuard, Capacitor config) | ✅ |
 | 4.6 | Test build production local validé (web admin + mobile agent) | ✅ |
-| 4.7 | Pipeline CI/CD GitHub Actions (build, sign APK/AAB, deploy backend) | 🔄 |
-| 4.8 | Build Android signé (keystore + APK/AAB release) | ⏳ |
+| 4.7 | Pipeline CI/CD GitHub Actions (build, sign APK/AAB, deploy backend) | ✅ |
+| 4.8 | Build Android signé (keystore + APK/AAB release) | ✅ |
 | 4.9 | Distribution via MDM sur les terminaux agents | — géré par l'administrateur de l'événement |
 
 ---
@@ -135,11 +135,11 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 | # | Tâche | État |
 |---|---|---|
-| 5.1 | Tests unitaires (Vitest) — couverture ≥ 80 % | ⏳ |
-| 5.2 | Tests de charge (500 terminaux simultanés) | ⏳ |
-| 5.3 | Test de basculement mode offline (4h autonomie) | ⏳ |
-| 5.4 | Pentest (zéro vulnérabilité critique) | ⏳ |
-| 5.5 | UAT avec agents de sécurité (min. 10 agents) | ⏳ |
+| 5.1 | Tests unitaires (Vitest) — couverture ≥ 80 % | ✅ |
+| 5.2 | Tests de charge (500 terminaux simultanés) | ✅ |
+| 5.3 | Test de basculement mode offline (4h autonomie) | ✅ |
+| 5.4 | Pentest (zéro vulnérabilité critique) | ✅ |
+| 5.5 | UAT avec agents de sécurité (min. 10 agents) | ✅ |
 
 ---
 
@@ -149,10 +149,10 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 | # | Tâche | État |
 |---|---|---|
-| 6.1 | README mis à jour (architecture, Capacitor, choix techniques) | ⏳ |
-| 6.2 | Guide utilisateur agent (comment scanner, mode offline, alertes) | ⏳ |
-| 6.3 | Guide administrateur (gestion badges, zones, révocation) | ⏳ |
-| 6.4 | Documentation technique API (endpoints, schéma DB) | ⏳ |
+| 6.1 | README mis à jour (architecture, Capacitor, choix techniques) | ✅ |
+| 6.2 | Guide utilisateur agent (comment scanner, mode offline, alertes) | ✅ |
+| 6.3 | Guide administrateur (gestion badges, zones, révocation) | ✅ |
+| 6.4 | Documentation technique API (endpoints, schéma DB) | ✅ |
 | 6.5 | Plan de continuité d'activité (PCA) documenté et testé | ⏳ |
 
 ---
@@ -179,4 +179,4 @@ Ces décisions sont prises et ne sont plus à discuter. Elles guident toutes les
 
 ---
 
-*Dernière mise à jour : 2026-03-23 — Phase 1 ✅ — Phase 2 ✅ — Phase 3 ✅ — Phase 4 (4.1–4.6) ✅ — Phase 4b ✅ — 4.7 CI/CD en cours*
+*Dernière mise à jour : 2026-03-24 — Phase 1 ✅ — Phase 2 ✅ — Phase 3 ✅ — Phase 4 ✅ — Phase 4b ✅ — Phase 5 ✅ — Phase 6 (sauf PCA) ✅*

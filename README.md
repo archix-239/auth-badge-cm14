@@ -1,41 +1,12 @@
 # AUTH-BADGE CM14 — Système de contrôle d'accès OMC
 
-> Application de gestion des accréditations et de contrôle d'accès pour la **14ème Conférence Ministérielle de l'Organisation Mondiale du Commerce** — Yaoundé, Cameroun, 2025.
+> Application de gestion des accréditations et de contrôle d'accès pour la **14ème Conférence Ministérielle de l'Organisation Mondiale du Commerce** — Yaoundé, Cameroun, 2026.
 
 Après avoir lu ce document, vous saurez **lancer l'application** (avec ou sans backend), **comprendre son architecture**, et **où en est le développement**.
 
 ---
 
-## Deux modes de fonctionnement
-
-AUTH-BADGE CM14 peut fonctionner de deux façons selon vos besoins :
-
-| Mode | Quand l'utiliser | Prérequis |
-|---|---|---|
-| **Mock** (sans backend) | Développement frontend, démonstrations | Node.js uniquement |
-| **API réelle** (avec backend) | Intégration complète, recette, production | Node.js + PostgreSQL + Redis |
-
----
-
-## Mode mock — démarrage en 2 commandes
-
-Aucune base de données nécessaire. Les données sont simulées en mémoire.
-
-```bash
-# 1. Installer les dépendances frontend
-npm install
-
-# 2. Lancer le serveur de développement
-npm run dev
-```
-
-Ouvrir ensuite [http://localhost:5173](http://localhost:5173).
-
-> **Comment ça fonctionne ?** Si la variable `VITE_API_URL` n'est pas définie, l'application utilise automatiquement les données de `src/data/mockData.js`. Aucune configuration supplémentaire n'est requise.
-
----
-
-## Mode API réelle — démarrage avec backend
+## Démarrage avec backend
 
 ### Prérequis
 
@@ -94,16 +65,14 @@ Ouvrir [http://localhost:5173](http://localhost:5173). L'application contacte ma
 
 ## Comptes de démonstration
 
-Les deux modes utilisent les mêmes identifiants. La seule différence : en mode mock, les codes OTP sont affichés en direct sur la page de connexion.
+| Rôle | Identifiant | Mot de passe | Interface |
+|---|---|---|---|
+| Agent | `AG-8824` | `Agent@CM14!` | Mobile — scanner, dashboard, historique |
+| Agent | `AG-0031` | `Agent@CM14!` | Mobile |
+| Administrateur | `ADMIN-001` | `Admin@CM14!` | Desktop — console complète |
+| Superviseur | `SUPER-001` | `Supervisor@CM14!` | Desktop — supervision |
 
-| Rôle | Identifiant | Mot de passe | OTP | Interface |
-|---|---|---|---|---|
-| Agent | `AG-8824` | `Agent@CM14!` | Code TOTP live | Mobile — scanner, dashboard, historique |
-| Agent | `AG-0031` | `Agent@CM14!` | Code TOTP live | Mobile |
-| Administrateur | `ADMIN-001` | `Admin@CM14!` | Code TOTP live | Desktop — console complète |
-| Superviseur | `SUPER-001` | `Supervisor@CM14!` | Code TOTP live | Desktop — supervision |
-
-> **Code OTP** : l'authentification utilise le vrai protocole TOTP (RFC 6238, SHA-1, 6 chiffres, 30 secondes). En mode mock, les codes sont affichés sur la page de connexion avec un compte à rebours. En mode API réelle, utiliser une application comme **Google Authenticator** ou **Authy** avec les secrets TOTP du fichier `backend/src/db/seed.js`.
+> **Code OTP** : l'authentification utilise le protocole TOTP (RFC 6238, SHA-1, 6 chiffres, 30 secondes). Utiliser une application comme **Google Authenticator** ou **Authy** avec les secrets TOTP du fichier `backend/src/db/seed.js`. Le QR Code de configuration TOTP de chaque agent est accessible dans **Admin → Gestion des utilisateurs**.
 
 ---
 
@@ -242,6 +211,7 @@ authbadge-cm14/
     │   └── useSocket.js                # Hook Socket.io authentifié (temps réel admin)
     ├── utils/
     │   ├── api.js                      # Client fetch (Bearer token, auto-refresh, offline)
+    │   ├── badgeCanvas.js              # Génération du badge PNG vertical (canvas 840×1320)
     │   ├── badgeCrypto.js              # ECDSA P-256 : signature et vérification QR
     │   ├── badgeStore.js               # IndexedDB + AES-256-GCM (cache offline)
     │   ├── dataMappers.js              # Normalise les réponses backend → format frontend
@@ -392,7 +362,6 @@ Le détail complet est disponible dans [PROGRESS.md](PROGRESS.md).
 | [Guide administrateur](docs/guide-admin.md) | Gestion badges, agents, zones, incidents |
 | [Procédure de déploiement](docs/deploiement.md) | Installation serveur, Nginx, CI/CD, jour J |
 | [Documentation API](docs/api.md) | Endpoints REST + événements WebSocket |
-| [Plan de continuité (PCA)](docs/pca.md) | Procédures de reprise en cas d'incident |
 
 | Phase | Description | État |
 |---|---|---|
@@ -401,9 +370,9 @@ Le détail complet est disponible dans [PROGRESS.md](PROGRESS.md).
 | 2 | Fonctionnalités core : QR, TOTP, ECDSA, NFC, offline 4h | ✅ |
 | 3 | Backend : API REST, JWT, WebSocket, PostgreSQL, Redis | ✅ |
 | 4 | Capacitor Android, CI/CD, APK signé, sécurité mobile | ✅ |
-| 5 | Tests et validation | ⏳ |
-| 6 | Documentation finale | 🔄 |
+| 5 | Tests et validation | ✅ |
+| 6 | Documentation finale | ✅ |
 
 ---
 
-*AUTH-BADGE CM14 · OMC Yaoundé 2025 · v1.0.0*
+*AUTH-BADGE CM14 · OMC Yaoundé 2026 · v1.0.0*
