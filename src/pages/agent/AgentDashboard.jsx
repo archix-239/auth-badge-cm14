@@ -25,9 +25,10 @@ export default function AgentDashboard() {
     return now
   })
   const [now,        setNow]        = useState(new Date())
-  const [storeSize,   setStoreSize]   = useState(0)
-  const [recentLogs,  setRecentLogs]  = useState([])
+  const [storeSize,    setStoreSize]    = useState(0)
+  const [recentLogs,   setRecentLogs]   = useState([])
   const [sessionCount, setSessionCount] = useState(null) // null = non chargé
+  const [todayScans,   setTodayScans]   = useState([])   // tous les scans du jour pour les stats
 
   useEffect(() => {
     getBadgeStoreSize().then(setStoreSize)
@@ -39,7 +40,9 @@ export default function AgentDashboard() {
     ])
       .then(([recent, todayLogs]) => {
         setRecentLogs(recent.map(mapScanLog))
-        setSessionCount(todayLogs.length)
+        const mapped = todayLogs.map(mapScanLog)
+        setSessionCount(mapped.length)
+        setTodayScans(mapped)
       })
       .catch(() => { setRecentLogs([]); setSessionCount(0) })
 
@@ -51,7 +54,9 @@ export default function AgentDashboard() {
         api.get(`/api/scans?limit=500&from=${todayStart.toISOString()}`),
       ]).then(([recent, todayLogs]) => {
         setRecentLogs(recent.map(mapScanLog))
-        setSessionCount(todayLogs.length)
+        const mapped = todayLogs.map(mapScanLog)
+        setSessionCount(mapped.length)
+        setTodayScans(mapped)
       }).catch(() => {})
     }
 
@@ -97,11 +102,18 @@ export default function AgentDashboard() {
     // Mise à jour de l'horloge toutes les 30 secondes
     const tick = setInterval(() => setNow(new Date()), 30_000)
 
+    // Sync au montage si des scans sont en attente et qu'on est déjà en ligne
+    if (navigator.onLine && getPendingScans().length > 0) {
+      syncPendingAndReload()
+    }
+
     // Heartbeat toutes les 60s — détecte aussi la perte réseau
+    // Note : pas de référence à `isOnline` (state React) pour éviter le bug de closure.
+    // On appelle toujours syncPendingAndReload() : gratuit si la file est vide.
     const cpId = user?.checkpoint?.id
     const sendHeartbeat = () => {
       api.post(`/api/terminals/${cpId}/heartbeat`)
-        .then(() => { if (!isOnline) { setIsOnline(true); syncPendingAndReload() } })
+        .then(() => { setIsOnline(true); syncPendingAndReload() })
         .catch(() => setIsOnline(false))
     }
     if (cpId) { sendHeartbeat(); }
@@ -161,8 +173,9 @@ export default function AgentDashboard() {
   const myPC       = user?.checkpoint ?? null
   const locale     = i18n.language === 'en' ? 'en-GB' : i18n.language === 'es' ? 'es-ES' : 'fr-FR'
   const today      = new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
-  const autorises  = myLogs.filter(l => l.resultat === 'autorisé').length
-  const alertes    = myLogs.filter(l => ['révoqué','inconnu'].includes(l.resultat)).length
+  // Statistiques calculées sur tous les scans du jour (pas seulement les 5 derniers)
+  const autorises  = todayScans.filter(l => l.resultat === 'autorisé').length
+  const alertes    = todayScans.filter(l => ['révoqué','inconnu'].includes(l.resultat)).length
   const pendingCount = getPendingScans().length
   const totalScans = (sessionCount ?? (myPC?.scans ?? myLogs.length)) + pendingCount
 

@@ -42,6 +42,10 @@ async function refreshAccessToken() {
 }
 
 // ─── Fetch central ───────────────────────────────────────────────────────────
+// Timeout en ms : 8s pour les scans offline (évite les requêtes qui restent
+// pendantes sur Android quand le réseau est coupé mais navigator.onLine=true)
+const REQUEST_TIMEOUT_MS = 8_000
+
 export async function apiFetch(path, options = {}) {
   if (!navigator.onLine) {
     const err = new Error('OFFLINE')
@@ -55,7 +59,12 @@ export async function apiFetch(path, options = {}) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     }
-    return fetch(`${BASE_URL}${path}`, { ...options, headers })
+    const signal = options.signal ?? (
+      AbortSignal.timeout
+        ? AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+        : (() => { const c = new AbortController(); setTimeout(() => c.abort(), REQUEST_TIMEOUT_MS); return c.signal })()
+    )
+    return fetch(`${BASE_URL}${path}`, { ...options, headers, signal })
   }
 
   let res = await doRequest(_accessToken)

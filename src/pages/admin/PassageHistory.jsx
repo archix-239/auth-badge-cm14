@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { getResultConfig, getCategoryColor, formatDateTime } from '../../data/mockData'
 import { api } from '../../utils/api'
 import { mapScanLog } from '../../utils/dataMappers'
+import { useSocket } from '../../hooks/useSocket'
 
 const RESULT_OPTIONS = ['Tous', 'autorisé', 'révoqué', 'zone-refusée', 'inconnu']
 
@@ -15,12 +16,24 @@ export default function PassageHistory() {
   const [zoneFilter, setZone]    = useState('Toutes')
   const [sortDesc,  setSortDesc] = useState(true)
 
-  useEffect(() => {
+  const loadLogs = () =>
     api.get('/api/scans?limit=500')
       .then(rows => setLogs(rows.map(mapScanLog)))
       .catch(() => {})
-      .finally(() => setLoading(false))
+
+  useEffect(() => {
+    loadLogs().finally(() => setLoading(false))
   }, [])
+
+  // Ajoute le nouveau scan en tête sans recharger toute la liste
+  useSocket({
+    'scan:new': (data) => setLogs(prev => {
+      const mapped = mapScanLog(data)
+      // Évite les doublons (sync hors-ligne peut envoyer plusieurs événements)
+      if (prev.find(l => l.id === mapped.id)) return prev
+      return [mapped, ...prev]
+    }),
+  })
 
   // Liste dynamique des zones issues des données réelles
   const zoneOptions = ['Toutes', ...Array.from(new Set(logs.map(l => l.zone).filter(Boolean)))]
